@@ -227,7 +227,7 @@ public class RunMojo extends AbstractMojo
 
 		for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
 		{
-			File file = new File(libraryDirectory, bootArtifact.getValue());
+			File file = new File(libraryDirectory, bootArtifact.getValue() + ".jar");
 			if(file.exists())
 			{
 				try
