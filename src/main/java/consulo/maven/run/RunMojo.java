@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -45,7 +44,7 @@ public class RunMojo extends AbstractMojo
 
 	static
 	{
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-bootstrap"));
+		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-desktop-bootstrap"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-extensions"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util-rt"));
@@ -53,7 +52,6 @@ public class RunMojo extends AbstractMojo
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo.internal", "trove4j"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("net.java.dev.jna", "jna"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("net.java.dev.jna", "jna-platform"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("log4j", "log4j"));
 	}
 
 	private static final String ourMainClass = "com.intellij.idea.Main";
@@ -223,31 +221,29 @@ public class RunMojo extends AbstractMojo
 		return new URLClassLoader(classpathURLs.toArray(new URL[classpathURLs.size()]));
 	}
 
-	private void addAdditionalClasspathElements(List<URL> path, RunContext context)
+	private void addAdditionalClasspathElements(List<URL> path, RunContext context) throws MojoExecutionException
 	{
 		File libraryDirectory = context.getLibraryDirectory();
 
-		for(File file : libraryDirectory.listFiles())
+		for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
 		{
-			String name = file.getName();
-
-			for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
+			File file = new File(libraryDirectory, bootArtifact.getValue());
+			if(file.exists())
 			{
-				Pattern pattern = Pattern.compile(bootArtifact.getValue() + "-[2-SNAPSHOT]|[\\d(\\.\\d)+].jar");
-				if(pattern.matcher(name).find())
+				try
 				{
-					try
-					{
-						path.add(file.toURI().toURL());
-					}
-					catch(MalformedURLException e)
-					{
-						throw new RuntimeException(e);
-					}
+					path.add(file.toURI().toURL());
+				}
+				catch(MalformedURLException e)
+				{
+					throw new RuntimeException(e);
 				}
 			}
+			else
+			{
+				throw new MojoExecutionException("File " + file.getPath() + " is not exists");
+			}
 		}
-
 	}
 
 	private boolean validateBuild(RunContext context) throws MojoExecutionException
