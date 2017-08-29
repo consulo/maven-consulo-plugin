@@ -1,9 +1,9 @@
 package consulo.maven.run;
 
-import java.io.File;
-
-import org.apache.maven.project.MavenProject;
 import consulo.maven.run.util.SystemInfo;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
 
 /**
  * @author VISTALL
@@ -13,6 +13,7 @@ public class RunContext
 {
 	private final File mySandboxDirectory;
 	private File myBuildDirectory;
+	private boolean myForceBuildDirectory;
 
 	private String myInnerBuildNumber;
 
@@ -32,7 +33,7 @@ public class RunContext
 	public File getPlatformDirectory()
 	{
 		final File platformDir;
-		if(SystemInfo.getOS() == SystemInfo.OS.MACOS)
+		if(!myForceBuildDirectory && SystemInfo.getOS() == SystemInfo.OS.MACOS)
 		{
 			platformDir = new File(myBuildDirectory, "Consulo.app/Contents/platform");
 		}
@@ -52,6 +53,7 @@ public class RunContext
 
 	public void setBuildDirectory(File buildDirectory)
 	{
+		myForceBuildDirectory = true;
 		myBuildDirectory = buildDirectory;
 	}
 
