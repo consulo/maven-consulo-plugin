@@ -292,6 +292,7 @@ public class RunMojo extends AbstractMojo
 			else
 			{
 				getLog().info("No connection - using old Consulo build");
+				return true;
 			}
 		}
 		else
@@ -328,14 +329,14 @@ public class RunMojo extends AbstractMojo
 				extract(tmp, platformDirectory);
 
 				FileUtils.fileWrite(buildNumberFile.getPath(), repositoryNode.version);
+
+				return true;
 			}
 			catch(Exception e)
 			{
 				throw new MojoExecutionException(e.getMessage(), e);
 			}
 		}
-
-		return false;
 	}
 
 	public static void extract(File tarFile, File directory) throws IOException
