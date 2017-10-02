@@ -35,7 +35,7 @@ import consulo.maven.run.util.SystemInfo;
  * <p>
  * Threading impl from exec plugin on Apache 2
  */
-@Mojo(name = "run", threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
+@Mojo(name = "run", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class RunMojo extends AbstractMojo
 {
 	public static final String SNAPSHOT = "SNAPSHOT";
