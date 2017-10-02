@@ -62,6 +62,9 @@ public class RunMojo extends AbstractMojo
 	@Parameter(property = "buildDirectory", defaultValue = "")
 	private String buildDirectory;
 
+	@Parameter(property = "pluginDirectories")
+	private List<String> pluginDirectories = new ArrayList<>();
+
 	@Parameter(property = "buildDirectory", defaultValue = "https://hub.consulo.io/api/repository/")
 	private String apiUrl;
 
@@ -213,6 +216,12 @@ public class RunMojo extends AbstractMojo
 		map.put("idea.is.internal", "true");
 		map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
 		map.put("idea.system.path", context.getSandboxDirectory().getPath() + "/system");
+
+		if(!pluginDirectories.isEmpty())
+		{
+			map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginDirectories));
+			map.put("consulo.install.plugins.path", context.getSandboxDirectory().getPath() + "/config/plugins");
+		}
 		return map;
 	}
 
