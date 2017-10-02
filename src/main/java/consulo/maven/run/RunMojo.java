@@ -209,6 +209,8 @@ public class RunMojo extends AbstractMojo
 		Map<String, String> map = new HashMap<>();
 		map.put("idea.home.path", context.getPlatformDirectory().getPath());
 		map.put("consulo.in.sandbox", "true");
+		// deprecated option
+		map.put("idea.is.internal", "true");
 		map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
 		map.put("idea.system.path", context.getSandboxDirectory().getPath() + "/system");
 		return map;
