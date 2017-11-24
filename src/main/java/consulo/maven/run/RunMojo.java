@@ -17,7 +17,6 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -26,6 +25,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
+import consulo.maven.mojo.AbstractConsuloMojo;
 import consulo.maven.run.util.HubApiUtil;
 import consulo.maven.run.util.RepositoryNode;
 import consulo.maven.run.util.SystemInfo;
@@ -37,7 +37,7 @@ import consulo.maven.run.util.SystemInfo;
  * Threading impl from exec plugin on Apache 2
  */
 @Mojo(name = "run", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
-public class RunMojo extends AbstractMojo
+public class RunMojo extends AbstractConsuloMojo
 {
 	public static final String SNAPSHOT = "SNAPSHOT";
 
@@ -57,70 +57,41 @@ public class RunMojo extends AbstractMojo
 
 	private static final String ourMainClass = "com.intellij.idea.Main";
 
-	@Parameter(property = "buildNumber", defaultValue = SNAPSHOT)
-	private String buildNumber;
+	public static class ExecutionConfig
+	{
+		@Parameter(property = "buildNumber", defaultValue = SNAPSHOT)
+		private String buildNumber = SNAPSHOT;
 
-	@Parameter(property = "buildDirectory", defaultValue = "")
-	private String buildDirectory;
+		@Parameter(property = "buildDirectory", defaultValue = "")
+		private String buildDirectory;
 
-	@Parameter(property = "pluginDirectories")
-	private List<String> pluginDirectories = new ArrayList<>();
+		@Parameter(property = "useDefaultWorkspaceDirectory", defaultValue = "true")
+		private boolean useDefaultWorkspaceDirectory = true;
 
-	@Parameter(property = "buildDirectory", defaultValue = "https://hub.consulo.io/api/repository/")
-	private String apiUrl;
+		@Parameter(property = "pluginDirectories")
+		private List<String> pluginDirectories = new ArrayList<>();
 
-	@Parameter(property = "repositoryChannel", defaultValue = "release")
-	private String repositoryChannel;
+		@Parameter(property = "buildDirectory", defaultValue = "https://hub.consulo.io/api/repository/")
+		private String apiUrl = "https://hub.consulo.io/api/repository/";
 
-	@Parameter(property = "arguments")
-	private String[] arguments;
+		@Parameter(property = "repositoryChannel", defaultValue = "release")
+		private String repositoryChannel = "release";
 
-	@Parameter(defaultValue = "${project}", readonly = true)
-	private MavenProject project;
+		@Parameter(property = "arguments")
+		private String[] arguments = new String[0];
+	}
 
-	@Parameter(property = "exec.cleanupDaemonThreads", defaultValue = "true")
-	protected boolean cleanupDaemonThreads;
-
-	/**
-	 * This defines the number of milliseconds to wait for daemon threads to quit following their interruption.<br/>
-	 * This is only taken into account if {@link #cleanupDaemonThreads} is <code>true</code>. A value &lt;=0 means to
-	 * not timeout (i.e. wait indefinitely for threads to finish). Following a timeout, a warning will be logged.
-	 * <p>
-	 * Note: properly coded threads <i>should</i> terminate upon interruption but some threads may prove problematic: as
-	 * the VM does interrupt daemon threads, some code may not have been written to handle interruption properly. For
-	 * example java.util.Timer is known to not handle interruptions in JDK &lt;= 1.6. So it is not possible for us to
-	 * infinitely wait by default otherwise maven could hang. A sensible default value has been chosen, but this default
-	 * value <i>may change</i> in the future based on user feedback.
-	 * </p>
-	 *
-	 * @since 1.1-beta-1
-	 */
-	@Parameter(property = "exec.daemonThreadJoinTimeout", defaultValue = "15000")
-	protected long daemonThreadJoinTimeout;
-
-	/**
-	 * Wether to call {@link Thread#stop()} following a timing out of waiting for an interrupted thread to finish. This
-	 * is only taken into account if {@link #cleanupDaemonThreads} is <code>true</code> and the
-	 * {@link #daemonThreadJoinTimeout} threshold has been reached for an uncooperative thread. If this is
-	 * <code>false</code>, or if {@link Thread#stop()} fails to get the thread to stop, then a warning is logged and
-	 * Maven will continue on while the affected threads (and related objects in memory) linger on. Consider setting
-	 * this to <code>true</code> if you are invoking problematic code that you can't fix. An example is
-	 * {@link java.util.Timer} which doesn't respond to interruption. To have <code>Timer</code> fixed, vote for
-	 * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6336543">this bug</a>.
-	 *
-	 * @since 1.1-beta-1
-	 */
-	@Parameter(property = "exec.stopUnresponsiveDaemonThreads", defaultValue = "false")
-	protected boolean stopUnresponsiveDaemonThreads;
+	@Parameter(property = "execution")
+	private ExecutionConfig execution = new ExecutionConfig();
 
 	private Properties originalSystemProperties;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
-		if(arguments == null)
+		if(execution.arguments == null)
 		{
-			arguments = new String[0];
+			execution.arguments = new String[0];
 		}
 
 		RunContext context = new RunContext(getTopProject());
@@ -147,7 +118,7 @@ public class RunMojo extends AbstractMojo
 				{
 					throw new MojoExecutionException("Can't call main(String[])-method because it is not static.");
 				}
-				main.invoke(null, new Object[]{arguments});
+				main.invoke(null, new Object[]{execution.arguments});
 			}
 			catch(NoSuchMethodException e)
 			{ // just pass it on
@@ -169,19 +140,15 @@ public class RunMojo extends AbstractMojo
 
 		bootstrapThread.start();
 		joinNonDaemonThreads(threadGroup);
+		terminateThreads(threadGroup);
 
-		if(cleanupDaemonThreads)
+		try
 		{
-			terminateThreads(threadGroup);
-
-			try
-			{
-				threadGroup.destroy();
-			}
-			catch(IllegalThreadStateException e)
-			{
-				getLog().warn("Couldn't destroy threadgroup " + threadGroup, e);
-			}
+			threadGroup.destroy();
+		}
+		catch(IllegalThreadStateException e)
+		{
+			getLog().warn("Couldn't destroy threadgroup " + threadGroup, e);
 		}
 
 		if(originalSystemProperties != null)
@@ -218,9 +185,25 @@ public class RunMojo extends AbstractMojo
 		map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
 		map.put("idea.system.path", context.getSandboxDirectory().getPath() + "/system");
 
-		if(!pluginDirectories.isEmpty())
+		List<String> pluginPaths = new ArrayList<>();
+
+		if(execution.useDefaultWorkspaceDirectory)
 		{
-			map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginDirectories));
+			String directory = project.getBuild().getDirectory();
+
+			File targetDirectory = new File(directory, "workspace");
+
+			if(targetDirectory.exists())
+			{
+				pluginPaths.add(targetDirectory.getPath());
+			}
+		}
+
+		pluginPaths.addAll(execution.pluginDirectories);
+
+		if(!pluginPaths.isEmpty())
+		{
+			map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginPaths));
 			map.put("consulo.install.plugins.path", context.getSandboxDirectory().getPath() + "/config/plugins");
 		}
 		return map;
@@ -260,9 +243,9 @@ public class RunMojo extends AbstractMojo
 
 	private boolean validateBuild(RunContext context) throws MojoExecutionException
 	{
-		if(buildDirectory != null)
+		if(execution.buildDirectory != null)
 		{
-			context.setBuildDirectory(new File(buildDirectory));
+			context.setBuildDirectory(new File(execution.buildDirectory));
 			return true;
 		}
 
@@ -284,14 +267,14 @@ public class RunMojo extends AbstractMojo
 			}
 		}
 
-		if(buildNumber != null && buildNumber.equals(oldBuildNumber))
+		if(execution.buildNumber != null && execution.buildNumber.equals(oldBuildNumber))
 		{
-			getLog().info("Consulo Buid: " + buildNumber + " - ok");
+			getLog().info("Consulo Build: " + execution.buildNumber + " - ok");
 			return true;
 		}
 
 		getLog().info("Fetching platform info...");
-		RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(repositoryChannel, apiUrl, SystemInfo.getOS().getPlatformId(), buildNumber, null);
+		RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(execution.repositoryChannel, execution.apiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null);
 		if(repositoryNode == null)
 		{
 			if(oldBuildNumber == null)
@@ -325,7 +308,7 @@ public class RunMojo extends AbstractMojo
 			{
 				File tmp = File.createTempFile("consulo_build", "tar.gz");
 
-				HubApiUtil.downloadRepositoryNode(repositoryChannel, apiUrl, SystemInfo.getOS().getPlatformId(), buildNumber, null, tmp);
+				HubApiUtil.downloadRepositoryNode(execution.repositoryChannel, execution.apiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tmp);
 
 				if(oldBuildNumber != null)
 				{
@@ -483,6 +466,7 @@ public class RunMojo extends AbstractMojo
 				{
 					continue; // and, presumably it won't show up in getActiveThreads() next iteration
 				}
+				int daemonThreadJoinTimeout = 15000;
 				if(daemonThreadJoinTimeout <= 0)
 				{
 					joinThread(thread, 0); // waits until not alive; no timeout
@@ -498,6 +482,7 @@ public class RunMojo extends AbstractMojo
 					continue;
 				}
 				uncooperativeThreads.add(thread); // ensure we don't process again
+				boolean stopUnresponsiveDaemonThreads = false;
 				if(stopUnresponsiveDaemonThreads)
 				{
 					getLog().warn("thread " + thread + " will be Thread.stop()'ed");
