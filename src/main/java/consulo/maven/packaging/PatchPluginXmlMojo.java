@@ -29,7 +29,7 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
-		if(!packaging.skip)
+		if(packaging.skip)
 		{
 			return;
 		}
