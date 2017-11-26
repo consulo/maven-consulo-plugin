@@ -25,7 +25,7 @@ public class PackageMojo extends AbstractPackagingMojo
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
-		if(!packaging.skip)
+		if(packaging.skip)
 		{
 			getLog().info("Packaging - disabled");
 			return;
