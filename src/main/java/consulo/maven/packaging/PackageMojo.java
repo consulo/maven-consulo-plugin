@@ -11,6 +11,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.codehaus.plexus.util.FileUtils;
@@ -19,7 +20,7 @@ import org.codehaus.plexus.util.FileUtils;
  * @author VISTALL
  * @since 24-Nov-17
  */
-@Mojo(name = "package", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+@Mojo(name = "package", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.PACKAGE)
 public class PackageMojo extends AbstractPackagingMojo
 {
 	@Override
