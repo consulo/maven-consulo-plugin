@@ -42,7 +42,7 @@ public class PackageMojo extends AbstractPackagingMojo
 			}
 
 			File file = artifact.getFile();
-			if(!file.exists())
+			if(file == null || !file.exists())
 			{
 				throw new MojoFailureException("Project artifact is not build");
 			}
