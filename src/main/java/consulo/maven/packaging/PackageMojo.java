@@ -25,11 +25,7 @@ public class PackageMojo extends AbstractPackagingMojo
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
-		if(packaging.skip)
-		{
-			getLog().info("Packaging - disabled");
-			return;
-		}
+		patchPluginXml();
 
 		String directory = project.getBuild().getDirectory();
 
@@ -67,6 +63,11 @@ public class PackageMojo extends AbstractPackagingMojo
 		{
 			throw new MojoFailureException(e.getMessage(), e);
 		}
+	}
+
+	protected void patchPluginXml() throws MojoExecutionException, MojoFailureException
+	{
+		PatchPluginXmlMojo.patchPluginXml(this);
 	}
 
 	private void writeRuntimeFile(ZipArchiveOutputStream zipStream, File file) throws IOException

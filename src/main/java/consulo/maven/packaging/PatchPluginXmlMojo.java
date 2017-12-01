@@ -34,7 +34,12 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 			return;
 		}
 
-		String outputDirectory = project.getBuild().getOutputDirectory();
+		patchPluginXml(this);
+	}
+
+	static void patchPluginXml(AbstractPackagingMojo mojo) throws MojoFailureException
+	{
+		String outputDirectory = mojo.project.getBuild().getOutputDirectory();
 
 		File file = new File(outputDirectory);
 		if(!file.exists())
@@ -48,7 +53,7 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 			throw new MojoFailureException("'plugin.xml' file is not found");
 		}
 
-		Map<String, Artifact> artifactMap = project.getArtifactMap();
+		Map<String, Artifact> artifactMap = mojo.project.getArtifactMap();
 
 		Artifact coreApiArtifact = artifactMap.get("consulo:consulo-core-api");
 		if(coreApiArtifact == null)
@@ -74,7 +79,7 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 			throw new MojoFailureException(e.getMessage(), e);
 		}
 
-		getLog().info("patching xml: " + pluginXmlFile.getAbsolutePath());
+		mojo.getLog().info("patching xml: " + pluginXmlFile.getAbsolutePath());
 		try
 		{
 			SAXBuilder builder = new SAXBuilder();
@@ -87,11 +92,11 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 			Element versionElement = rootElement.getChild("version");
 			if(versionElement != null)
 			{
-				versionElement.setText(packaging.version);
+				versionElement.setText(mojo.packaging.version);
 			}
 			else
 			{
-				rootElement.addContent(new Element("version").setText(packaging.version));
+				rootElement.addContent(new Element("version").setText(mojo.packaging.version));
 			}
 
 			Element platformVersionElement = rootElement.getChild("platformVersion");

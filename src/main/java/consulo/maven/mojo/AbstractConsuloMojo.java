@@ -11,7 +11,7 @@ import org.apache.maven.project.MavenProject;
 public abstract class AbstractConsuloMojo extends AbstractMojo
 {
 	@Parameter(defaultValue = "${project}", readonly = true)
-	protected MavenProject project;
+	public MavenProject project;
 
 	@Parameter(property = "id", defaultValue = "${project.artifactId}")
 	protected String id;
