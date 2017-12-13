@@ -1,4 +1,4 @@
-package consulo.maven.run.util;
+package consulo.maven.base.util;
 
 /**
  * @author VISTALL

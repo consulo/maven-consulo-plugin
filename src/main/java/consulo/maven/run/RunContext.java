@@ -1,9 +1,9 @@
 package consulo.maven.run;
 
-import consulo.maven.run.util.SystemInfo;
-import org.apache.maven.project.MavenProject;
-
 import java.io.File;
+
+import org.apache.maven.project.MavenProject;
+import consulo.maven.base.util.SystemInfo;
 
 /**
  * @author VISTALL

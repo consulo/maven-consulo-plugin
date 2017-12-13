@@ -1,7 +1,7 @@
 package consulo.maven.packaging;
 
 import org.apache.maven.plugins.annotations.Parameter;
-import consulo.maven.mojo.AbstractConsuloMojo;
+import consulo.maven.base.AbstractConsuloMojo;
 
 /**
  * @author VISTALL

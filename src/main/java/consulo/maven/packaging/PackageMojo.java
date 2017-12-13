@@ -28,15 +28,15 @@ public class PackageMojo extends AbstractPackagingMojo
 	{
 		patchPluginXml();
 
-		String directory = project.getBuild().getDirectory();
+		String directory = myProject.getBuild().getDirectory();
 
-		File targetFile = new File(directory, id + ".consulo-plugin");
+		File targetFile = new File(directory, myId + ".consulo-plugin");
 
 		FileUtils.mkdir(directory);
 
 		try (ZipArchiveOutputStream zipStream = new ZipArchiveOutputStream(targetFile))
 		{
-			Artifact artifact = project.getArtifact();
+			Artifact artifact = myProject.getArtifact();
 			if(artifact == null)
 			{
 				throw new MojoFailureException("No project artifact");
@@ -50,7 +50,7 @@ public class PackageMojo extends AbstractPackagingMojo
 
 			writeRuntimeFile(zipStream, file);
 
-			Set<Artifact> dependencyArtifacts = project.getDependencyArtifacts();
+			Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
 			for(Artifact dependencyArtifact : dependencyArtifacts)
 			{
 				String scope = dependencyArtifact.getScope();
@@ -73,7 +73,7 @@ public class PackageMojo extends AbstractPackagingMojo
 
 	private void writeRuntimeFile(ZipArchiveOutputStream zipStream, File file) throws IOException
 	{
-		ArchiveEntry entry = zipStream.createArchiveEntry(file, id + "/lib/" + file.getName());
+		ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/lib/" + file.getName());
 
 		zipStream.putArchiveEntry(entry);
 

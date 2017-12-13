@@ -1,4 +1,4 @@
-package consulo.maven.run.util;
+package consulo.maven.base.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,7 +10,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import com.google.gson.Gson;
-import consulo.maven.run.RunMojo;
+import consulo.maven.run.RunDesktopMojo;
 
 /**
  * @author VISTALL
@@ -22,12 +22,12 @@ public class HubApiUtil
 	{
 		if(platformVersion == null)
 		{
-			platformVersion = RunMojo.SNAPSHOT;
+			platformVersion = RunDesktopMojo.SNAPSHOT;
 		}
 
 		if(version == null)
 		{
-			version = RunMojo.SNAPSHOT;
+			version = RunDesktopMojo.SNAPSHOT;
 		}
 
 		try (CloseableHttpClient client = HttpClients.createMinimal())
@@ -55,12 +55,12 @@ public class HubApiUtil
 	{
 		if(platformVersion == null)
 		{
-			platformVersion = RunMojo.SNAPSHOT;
+			platformVersion = RunDesktopMojo.SNAPSHOT;
 		}
 
 		if(version == null)
 		{
-			version = RunMojo.SNAPSHOT;
+			version = RunDesktopMojo.SNAPSHOT;
 		}
 
 		try (FileOutputStream fileOutputStream = new FileOutputStream(file))

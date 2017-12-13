@@ -11,6 +11,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -39,7 +40,7 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 
 	static void patchPluginXml(AbstractPackagingMojo mojo) throws MojoFailureException
 	{
-		String outputDirectory = mojo.project.getBuild().getOutputDirectory();
+		String outputDirectory = mojo.myProject.getBuild().getOutputDirectory();
 
 		File file = new File(outputDirectory);
 		if(!file.exists())
@@ -53,31 +54,7 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 			throw new MojoFailureException("'plugin.xml' file is not found");
 		}
 
-		Map<String, Artifact> artifactMap = mojo.project.getArtifactMap();
-
-		Artifact coreApiArtifact = artifactMap.get("consulo:consulo-core-api");
-		if(coreApiArtifact == null)
-		{
-			throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not resolved");
-		}
-
-		File coreApiJarFile = coreApiArtifact.getFile();
-
-		String platformVersion = null;
-		try (JarFile jarFile = new JarFile(coreApiJarFile))
-		{
-			String buildNumber = jarFile.getManifest().getMainAttributes().getValue("Consulo-Build-Number");
-			if(buildNumber == null)
-			{
-				throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not contains 'Consulo-Build-Number' attribute");
-			}
-
-			platformVersion = buildNumber;
-		}
-		catch(IOException e)
-		{
-			throw new MojoFailureException(e.getMessage(), e);
-		}
+		String platformVersion = findConsuloVersion(mojo.myProject);
 
 		mojo.getLog().info("patching xml: " + pluginXmlFile.getAbsolutePath());
 		try
@@ -119,5 +96,36 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 		{
 			throw new MojoFailureException(e.getMessage(), e);
 		}
+	}
+
+	public static String findConsuloVersion(MavenProject mavenProject) throws MojoFailureException
+	{
+		Map<String, Artifact> artifactMap = mavenProject.getArtifactMap();
+
+		Artifact coreApiArtifact = artifactMap.get("consulo:consulo-core-api");
+		if(coreApiArtifact == null)
+		{
+			throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not resolved");
+		}
+
+		File coreApiJarFile = coreApiArtifact.getFile();
+
+		String platformVersion;
+		try (JarFile jarFile = new JarFile(coreApiJarFile))
+		{
+			String buildNumber = jarFile.getManifest().getMainAttributes().getValue("Consulo-Build-Number");
+			if(buildNumber == null)
+			{
+				throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not contains 'Consulo-Build-Number' attribute");
+			}
+
+			platformVersion = buildNumber;
+		}
+		catch(IOException e)
+		{
+			throw new MojoFailureException(e.getMessage(), e);
+		}
+
+		return platformVersion;
 	}
 }
