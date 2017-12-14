@@ -84,13 +84,18 @@ public class WorkspaceMojo extends AbstractConsuloMojo
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
 				}
 			}
+
+			File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
+			if(distDirectory.exists())
+			{
+				FileUtils.copyDirectoryStructure(distDirectory, new File(targetDirectory, myId));
+			}
 		}
 		catch(IOException e)
 		{
 			throw new MojoFailureException(e.getMessage(), e);
 		}
 	}
-
 
 	private void createDependenciesWorkspace() throws MojoFailureException
 	{

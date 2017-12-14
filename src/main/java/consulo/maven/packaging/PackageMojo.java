@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -59,10 +60,48 @@ public class PackageMojo extends AbstractPackagingMojo
 					writeRuntimeFile(zipStream, dependencyArtifact.getFile());
 				}
 			}
+
+			File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
+			if(distDirectory.exists())
+			{
+				archiveFileOrDirectory(zipStream, distDirectory, child ->
+				{
+					String path = distDirectory.getPath();
+					String childPath = child.getPath();
+					// + 1 - eat path separator
+					return childPath.substring(path.length() + 1, childPath.length());
+				});
+			}
 		}
 		catch(IOException e)
 		{
 			throw new MojoFailureException(e.getMessage(), e);
+		}
+	}
+
+	private void archiveFileOrDirectory(ZipArchiveOutputStream zipStream, File file, Function<File, String> relativePathFunc) throws IOException
+	{
+		if(file.isFile())
+		{
+			ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/" + relativePathFunc.apply(file));
+
+			zipStream.putArchiveEntry(entry);
+
+			try (FileInputStream fileInputStream = new FileInputStream(file))
+			{
+				IOUtils.copy(fileInputStream, zipStream);
+			}
+
+			zipStream.closeArchiveEntry();
+		}
+		else if(file.isDirectory())
+		{
+			File[] files = file.listFiles();
+			assert files != null;
+			for(File child : files)
+			{
+				archiveFileOrDirectory(zipStream, child, relativePathFunc);
+			}
 		}
 	}
 
