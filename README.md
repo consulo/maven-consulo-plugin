@@ -42,6 +42,12 @@
 				<configuration>
 					<!--by default plugin id is artifactId from project-->
 					<id>${project.artifactId}</id>
+					<!--set nightly channel for executing & plugin dependencies-->
+					<repositoryChannel>nightly</repositoryChannel>
+					<!--plugin dependencies for execution-->
+					<dependencies>
+						<dependency>com.intellij.regexp</dependency>
+					</dependencies>
 					<packaging>
 						<!--do not build plugin artifact in dev mode-->
 						<!--'dev.mode' is parent property, it's true when no BUILD_NUMBER env var set-->
@@ -49,10 +55,6 @@
 						<!--change version in plugin.xml on building-->
 						<version>${build.number}</version>
 					</packaging>
-					<execution>
-						<!--set nightly channel for executing-->
-						<repositoryChannel>nightly</repositoryChannel>
-					</execution>
 				</configuration>
 				<executions>
 					<execution>
