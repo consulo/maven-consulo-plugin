@@ -81,6 +81,10 @@ public class WorkspaceMojo extends AbstractConsuloMojo
 				if(Artifact.SCOPE_COMPILE.equals(scope))
 				{
 					File artifactFile = dependencyArtifact.getFile();
+					if(artifactFile == null || !artifactFile.exists())
+					{
+						throw new MojoFailureException("Artifact " + dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId() + " is not build");
+					}
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
 				}
 			}
