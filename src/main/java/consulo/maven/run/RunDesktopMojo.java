@@ -152,7 +152,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		}
 	}
 
-	private void setSystemProperties(RunContext context)
+	private void setSystemProperties(RunContext context) throws MojoFailureException
 	{
 		originalSystemProperties = System.getProperties();
 		for(Map.Entry<String, String> entry : getSystemProperties(context).entrySet())
@@ -162,7 +162,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		}
 	}
 
-	private Map<String, String> getSystemProperties(RunContext context)
+	private Map<String, String> getSystemProperties(RunContext context) throws MojoFailureException
 	{
 		Map<String, String> map = new HashMap<>();
 		map.put("idea.home.path", context.getPlatformDirectory().getPath());
@@ -190,7 +190,21 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 			pluginPaths.add(dependenciesDirectory.getPath());
 		}
 
-		pluginPaths.addAll(execution.pluginDirectories);
+		for(String pluginDirectory : execution.pluginDirectories)
+		{
+			File dir = new File(pluginDirectory);
+			if(dir.exists())
+			{
+				try
+				{
+					pluginPaths.add(dir.getCanonicalPath());
+				}
+				catch(IOException e)
+				{
+					throw new MojoFailureException(e.getMessage(), e);
+				}
+			}
+		}
 
 		if(!pluginPaths.isEmpty())
 		{
