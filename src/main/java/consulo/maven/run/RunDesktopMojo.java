@@ -206,11 +206,10 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 			}
 		}
 
-		if(!pluginPaths.isEmpty())
-		{
-			map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginPaths));
-			map.put("consulo.install.plugins.path", context.getSandboxDirectory().getPath() + "/config/plugins");
-		}
+		pluginPaths.add(context.getSandboxDirectory().getPath() + "/config/plugins");
+
+		map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginPaths));
+		map.put("consulo.install.plugins.path", context.getSandboxDirectory().getPath() + "/config/plugins");
 		return map;
 	}
 
