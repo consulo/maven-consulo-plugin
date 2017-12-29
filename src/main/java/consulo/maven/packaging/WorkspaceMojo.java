@@ -12,7 +12,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
-import consulo.maven.base.AbstractConsuloMojo;
 import consulo.maven.base.util.ExtractUtil;
 import consulo.maven.base.util.HubApiUtil;
 import consulo.maven.base.util.RepositoryNode;
@@ -22,7 +21,7 @@ import consulo.maven.base.util.RepositoryNode;
  * @since 24-Nov-17
  */
 @Mojo(name = "workspace", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.PACKAGE)
-public class WorkspaceMojo extends AbstractConsuloMojo
+public class WorkspaceMojo extends AbstractPackagingMojo
 {
 	public static File getDependenciesDirectory(MavenProject mavenProject)
 	{
@@ -68,7 +67,9 @@ public class WorkspaceMojo extends AbstractConsuloMojo
 				throw new MojoFailureException("Project artifact is not build");
 			}
 
-			File libDirectory = new File(targetDirectory, myId + "/lib");
+			File pluginDirectory = new File(targetDirectory, myId);
+
+			File libDirectory = new File(pluginDirectory, "lib");
 
 			FileUtils.mkdir(libDirectory.getPath());
 
@@ -80,11 +81,8 @@ public class WorkspaceMojo extends AbstractConsuloMojo
 				String scope = dependencyArtifact.getScope();
 				if(Artifact.SCOPE_COMPILE.equals(scope))
 				{
-					File artifactFile = dependencyArtifact.getFile();
-					if(artifactFile == null || !artifactFile.exists())
-					{
-						throw new MojoFailureException("Artifact " + dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId() + " is not build");
-					}
+					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
 				}
 			}
@@ -93,6 +91,32 @@ public class WorkspaceMojo extends AbstractConsuloMojo
 			if(distDirectory.exists())
 			{
 				FileUtils.copyDirectoryStructure(distDirectory, new File(targetDirectory, myId));
+			}
+
+			for(Copy copy : packaging.copies)
+			{
+				boolean notFound = true;
+
+				for(Artifact dependencyArtifact : dependencyArtifacts)
+				{
+					String actual = dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId();
+
+					if(actual.equals(copy.artifact))
+					{
+						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+
+						FileUtils.copyFile(artifactFile, new File(pluginDirectory, copy.path));
+
+						notFound = false;
+
+						break;
+					}
+				}
+
+				if(notFound)
+				{
+					throw new MojoFailureException("Artifact is not found: " + copy.artifact + " for copy");
+				}
 			}
 		}
 		catch(IOException e)

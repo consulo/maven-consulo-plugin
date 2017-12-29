@@ -1,5 +1,11 @@
 package consulo.maven.packaging;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import consulo.maven.base.AbstractConsuloMojo;
 
@@ -16,8 +22,30 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 
 		@Parameter(property = "version", defaultValue = "SNAPSHOT")
 		public String version = "SNAPSHOT";
+
+		@Parameter(alias = "copies")
+		public List<Copy> copies = new ArrayList<>();
+	}
+
+	public static class Copy
+	{
+		@Parameter
+		public String artifact;
+
+		@Parameter
+		public String path;
 	}
 
 	@Parameter(property = "packaging")
 	protected PackagingConfig packaging = new PackagingConfig();
+
+	public static File getAndCheckArtifactFile(Artifact artifact) throws MojoFailureException
+	{
+		File artifactFile = artifact.getFile();
+		if(artifactFile == null || !artifactFile.exists())
+		{
+			throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not build");
+		}
+		return artifactFile;
+	}
 }

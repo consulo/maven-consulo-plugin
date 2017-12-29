@@ -57,7 +57,7 @@ public class PackageMojo extends AbstractPackagingMojo
 				String scope = dependencyArtifact.getScope();
 				if(Artifact.SCOPE_COMPILE.equals(scope))
 				{
-					writeRuntimeFile(zipStream, dependencyArtifact.getFile());
+					writeRuntimeFile(zipStream, getAndCheckArtifactFile(dependencyArtifact));
 				}
 			}
 
@@ -71,6 +71,32 @@ public class PackageMojo extends AbstractPackagingMojo
 					// + 1 - eat path separator
 					return childPath.substring(path.length() + 1, childPath.length());
 				});
+			}
+
+			for(Copy copy : packaging.copies)
+			{
+				boolean notFound = true;
+
+				for(Artifact dependencyArtifact : dependencyArtifacts)
+				{
+					String actual = dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId();
+
+					if(actual.equals(copy.artifact))
+					{
+						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+
+						archiveFileOrDirectory(zipStream, artifactFile, file1 -> copy.path);
+
+						notFound = false;
+
+						break;
+					}
+				}
+
+				if(notFound)
+				{
+					throw new MojoFailureException("Artifact is not found: " + copy.artifact + " for copy");
+				}
 			}
 		}
 		catch(IOException e)
