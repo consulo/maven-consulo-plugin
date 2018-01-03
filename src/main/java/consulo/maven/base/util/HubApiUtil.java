@@ -67,7 +67,7 @@ public class HubApiUtil
 		{
 			try (CloseableHttpClient client = HttpClients.createMinimal())
 			{
-				String url = String.format("%sdownload?id=%s&platformVersion=%s&version=%s&channel=%s&platformBuildSelect=true", baseUrl, id, platformVersion, version, channel);
+				String url = String.format("%sdownload?id=%s&platformVersion=%s&version=%s&channel=%s&noTracking=true&platformBuildSelect=true", baseUrl, id, platformVersion, version, channel);
 
 				HttpGet httpGet = new HttpGet(url);
 
