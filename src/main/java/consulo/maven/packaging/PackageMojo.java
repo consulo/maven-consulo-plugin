@@ -55,7 +55,7 @@ public class PackageMojo extends AbstractPackagingMojo
 			for(Artifact dependencyArtifact : dependencyArtifacts)
 			{
 				String scope = dependencyArtifact.getScope();
-				if(Artifact.SCOPE_COMPILE.equals(scope))
+				if(isValidArtifactForPackaging(dependencyArtifact))
 				{
 					writeRuntimeFile(zipStream, getAndCheckArtifactFile(dependencyArtifact));
 				}

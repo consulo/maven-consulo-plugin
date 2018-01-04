@@ -48,4 +48,9 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 		}
 		return artifactFile;
 	}
+
+	protected static boolean isValidArtifactForPackaging(Artifact artifact)
+	{
+		return Artifact.SCOPE_COMPILE.equals(artifact.getScope()) || Artifact.SCOPE_RUNTIME.equals(artifact.getScope());
+	}
 }

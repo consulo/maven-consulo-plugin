@@ -78,8 +78,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 			Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
 			for(Artifact dependencyArtifact : dependencyArtifacts)
 			{
-				String scope = dependencyArtifact.getScope();
-				if(Artifact.SCOPE_COMPILE.equals(scope))
+				if(isValidArtifactForPackaging(dependencyArtifact))
 				{
 					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
 
