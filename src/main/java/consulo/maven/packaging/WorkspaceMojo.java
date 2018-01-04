@@ -40,7 +40,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
-		if(!myDependencies.isEmpty())
+		if(!myDependencies.isEmpty() && !packaging.skip)
 		{
 			createDependenciesWorkspace();
 		}
