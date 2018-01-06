@@ -83,7 +83,7 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 			String classifier = get(m.group(6), "");
 			String version = m.group(7);
 
-			DefaultArtifact target = new DefaultArtifact(groupId, artifactId, version, Artifact.SCOPE_COMPILE, extension, classifier, new DefaultArtifactHandler());
+			DefaultArtifact target = new DefaultArtifact(groupId, artifactId, version, Artifact.SCOPE_COMPILE, extension, StringUtils.isEmpty(classifier) ? null : classifier, new DefaultArtifactHandler());
 
 			ArtifactResolutionRequest request = new ArtifactResolutionRequest();
 			request.setRemoteRepositories(myProject.getRemoteArtifactRepositories());
@@ -95,6 +95,12 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 			Set<Artifact> artifacts = artifactResult.getArtifacts();
 			for(Artifact artifact : artifacts)
 			{
+				File file = artifact.getFile();
+				if(file != null)
+				{
+					return artifact;
+				}
+
 				return artifact;
 			}
 		}
