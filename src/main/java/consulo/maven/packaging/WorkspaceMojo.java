@@ -94,28 +94,11 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 			for(Copy copy : packaging.copies)
 			{
-				boolean notFound = true;
+				Artifact copyArtifact = resolveArtifact(copy.artifact);
 
-				for(Artifact dependencyArtifact : dependencyArtifacts)
-				{
-					String actual = dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId();
+				File artifactFile = getAndCheckArtifactFile(copyArtifact);
 
-					if(actual.equals(copy.artifact))
-					{
-						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
-
-						FileUtils.copyFile(artifactFile, new File(pluginDirectory, getRelativePathForCopy(copy, artifactFile)));
-
-						notFound = false;
-
-						break;
-					}
-				}
-
-				if(notFound)
-				{
-					throw new MojoFailureException("Artifact is not found: " + copy.artifact + " for copy");
-				}
+				FileUtils.copyFile(artifactFile, new File(pluginDirectory, getRelativePathForCopy(copy, artifactFile)));
 			}
 		}
 		catch(IOException e)

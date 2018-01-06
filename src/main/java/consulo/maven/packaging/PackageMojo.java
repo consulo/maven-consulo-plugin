@@ -74,28 +74,11 @@ public class PackageMojo extends AbstractPackagingMojo
 
 			for(Copy copy : packaging.copies)
 			{
-				boolean notFound = true;
+				Artifact copyArtifact = resolveArtifact(copy.artifact);
 
-				for(Artifact dependencyArtifact : dependencyArtifacts)
-				{
-					String actual = dependencyArtifact.getGroupId() + ":" + dependencyArtifact.getArtifactId();
+				File artifactFile = getAndCheckArtifactFile(copyArtifact);
 
-					if(actual.equals(copy.artifact))
-					{
-						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
-
-						archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile));
-
-						notFound = false;
-
-						break;
-					}
-				}
-
-				if(notFound)
-				{
-					throw new MojoFailureException("Artifact is not found: " + copy.artifact + " for copy");
-				}
+				archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile));
 			}
 		}
 		catch(IOException e)
