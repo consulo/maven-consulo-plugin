@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
@@ -56,6 +57,9 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 	@Component(role = ArtifactResolver.class)
 	protected ArtifactResolver artifactResolver;
 
+	@Component(role = ArtifactHandlerManager.class)
+	protected ArtifactHandlerManager artifactHandlerManager;
+
 	public static File getAndCheckArtifactFile(Artifact artifact) throws MojoFailureException
 	{
 		File artifactFile = artifact.getFile();
@@ -83,7 +87,9 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 			String classifier = get(m.group(6), "");
 			String version = m.group(7);
 
-			DefaultArtifact target = new DefaultArtifact(groupId, artifactId, version, Artifact.SCOPE_COMPILE, extension, StringUtils.isEmpty(classifier) ? null : classifier, new DefaultArtifactHandler());
+			ArtifactHandler handler = artifactHandlerManager.getArtifactHandler(extension);
+
+			DefaultArtifact target = new DefaultArtifact(groupId, artifactId, version, Artifact.SCOPE_COMPILE, extension, StringUtils.isEmpty(classifier) ? null : classifier, handler);
 
 			ArtifactResolutionRequest request = new ArtifactResolutionRequest();
 			request.setRemoteRepositories(myProject.getRemoteArtifactRepositories());
