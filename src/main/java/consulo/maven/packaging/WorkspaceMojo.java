@@ -104,7 +104,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 					{
 						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
 
-						FileUtils.copyFile(artifactFile, new File(pluginDirectory, copy.path));
+						FileUtils.copyFile(artifactFile, new File(pluginDirectory, getRelativePathForCopy(copy, artifactFile)));
 
 						notFound = false;
 

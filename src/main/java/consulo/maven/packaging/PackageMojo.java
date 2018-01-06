@@ -84,7 +84,7 @@ public class PackageMojo extends AbstractPackagingMojo
 					{
 						File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
 
-						archiveFileOrDirectory(zipStream, artifactFile, file1 -> copy.path);
+						archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile));
 
 						notFound = false;
 
