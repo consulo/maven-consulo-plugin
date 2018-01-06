@@ -89,6 +89,7 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 			request.setRemoteRepositories(myProject.getRemoteArtifactRepositories());
 			request.setLocalRepository(mySession.getLocalRepository());
 			request.setArtifact(target);
+			request.setResolveTransitively(true);
 
 			ArtifactResolutionResult artifactResult = artifactResolver.resolve(request);
 
