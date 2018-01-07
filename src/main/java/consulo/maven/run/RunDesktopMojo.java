@@ -166,7 +166,8 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 	{
 		Map<String, String> map = new HashMap<>();
 		map.put("idea.home.path", context.getPlatformDirectory().getPath());
-		map.put("consulo.in.sandbox", "true");
+		map.put("consulo.in.sandbox", "true");  // sandbox mode
+		map.put("consulo.maven.console.log", "true"); // redirect file log to console
 		// deprecated option
 		map.put("idea.is.internal", "true");
 		map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
