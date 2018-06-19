@@ -37,7 +37,8 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 	private static void setSkeleton(boolean idea)
 	{
-		Skeleton.readSkelResource(idea ? "/skeleton/idea-jflex.skeleton" : "/skeleton/consulo-jflex.skeleton");
+		String url = idea ? "/skeleton/idea-jflex.skeleton" : "/skeleton/consulo-jflex.skeleton";
+		Skeleton.readSkelSteam(JFlexGeneratorMojo.class.getResourceAsStream(url));
 		Options.no_constructors = !idea;
 	}
 
@@ -52,16 +53,15 @@ public class JFlexGeneratorMojo extends AbstractMojo
 			{
 				File srcDirectory = new File(srcDir);
 
-				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null);
-				if(files.isEmpty())
+				FileUtil.visitFiles(srcDirectory, file ->
 				{
-					continue;
-				}
+					if("flex".equals(FileUtil.getExtension((CharSequence) file.getName())))
+					{
+						toGenerateFiles.add(Pair.create(file, srcDirectory));
+					}
 
-				for(File file : files)
-				{
-					toGenerateFiles.add(Pair.create(file, srcDirectory));
-				}
+					return true;
+				});
 			}
 
 			String outputDirectory = myMavenProject.getBuild().getDirectory();
