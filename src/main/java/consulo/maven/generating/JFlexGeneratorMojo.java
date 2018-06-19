@@ -35,10 +35,10 @@ public class JFlexGeneratorMojo extends AbstractMojo
 		Options.char_at = true;
 	}
 
-	private static void setSkeleton(boolean idea)
+	private void setSkeleton(boolean idea)
 	{
-		String url = idea ? "/skeleton/idea-jflex.skeleton" : "/skeleton/consulo-jflex.skeleton";
-		Skeleton.readSkelSteam(JFlexGeneratorMojo.class.getResourceAsStream(url));
+		String name = idea ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
+		Skeleton.readSkelSteam(getClass().getResourceAsStream(name));
 		Options.no_constructors = !idea;
 	}
 
