@@ -21,6 +21,7 @@
 					<lifecycle>
 						<id>default</id>
 						<phases>
+							<generate-sources>consulo.maven:consulo-maven-plugin:2-SNASHOT:generate-lexers</generate-sources>
 							<process-resources>org.apache.maven.plugins:maven-resources-plugin:2.4.3:resources,consulo.maven:consulo-maven-plugin:2-SNASHOT:patchPluginXml</process-resources>
 							<compile>org.apache.maven.plugins:maven-compiler-plugin:2.3.2:compile</compile>
 							<process-test-resources>org.apache.maven.plugins:maven-resources-plugin:2.4.3:testResources</process-test-resources>
