@@ -1,6 +1,7 @@
 package consulo.maven.generating;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -14,6 +15,7 @@ import org.codehaus.plexus.util.FileUtils;
 import JFlex.Main;
 import JFlex.Options;
 import JFlex.Skeleton;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 
 /**
@@ -44,32 +46,47 @@ public class JFlexGeneratorMojo extends AbstractMojo
 	{
 		try
 		{
-			String sourceDirectory = myMavenProject.getBuild().getSourceDirectory();
-			File sourceDirectoryFile = new File(sourceDirectory);
-			if(!sourceDirectoryFile.exists())
-			{
-				getLog().info(sourceDirectory + " is not exists");
-				return;
-			}
+			List<Pair<File, File>> toGenerateFiles = new ArrayList<>();
 
-			List<File> files = FileUtils.getFiles(sourceDirectoryFile, "**/*.flex", null);
-			if(files.isEmpty())
+			for(String srcDir : myMavenProject.getCompileSourceRoots())
 			{
-				return;
+				File srcDirectory = new File(srcDir);
+
+				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null);
+				if(files.isEmpty())
+				{
+					continue;
+				}
+
+				for(File file : files)
+				{
+					toGenerateFiles.add(Pair.create(file, srcDirectory));
+				}
 			}
 
 			String outputDirectory = myMavenProject.getBuild().getDirectory();
 			File outputDirectoryFile = new File(outputDirectory, "generated-sources/lexers");
-			if(!outputDirectoryFile.exists())
+			if(outputDirectoryFile.exists())
 			{
-				outputDirectoryFile.mkdirs();
+				FileUtils.deleteDirectory(outputDirectoryFile);
 			}
 
-
-			for(File file : files)
+			if(toGenerateFiles.isEmpty())
 			{
-				String relativePath = FileUtil.getRelativePath(sourceDirectoryFile, file.getParentFile());
-			   	if(relativePath != null)
+				return;
+			}
+
+			outputDirectoryFile.mkdirs();
+
+			myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+
+			for(Pair<File, File> info : toGenerateFiles)
+			{
+				File file = info.getFirst();
+				File sourceDirectory = info.getSecond();
+
+				String relativePath = FileUtil.getRelativePath(sourceDirectory, file.getParentFile());
+				if(relativePath != null)
 				{
 					File outDirWithPackage = new File(outputDirectoryFile, relativePath);
 					outDirWithPackage.mkdirs();
