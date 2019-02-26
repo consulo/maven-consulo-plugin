@@ -39,7 +39,6 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 	static
 	{
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-desktop-bootstrap"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-extensions"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util-rt"));
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo.internal", "jdom"));
