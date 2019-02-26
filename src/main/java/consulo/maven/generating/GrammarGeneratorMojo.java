@@ -22,9 +22,7 @@ import org.intellij.grammar.psi.BnfFile;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
-import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,8 +32,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.QueryExecutor;
 import consulo.annotations.RequiredReadAction;
 import consulo.psi.tree.ASTCompositeFactory;
 import consulo.psi.tree.ASTLazyFactory;
@@ -119,14 +115,14 @@ public class GrammarGeneratorMojo extends AbstractMojo
 			}
 		};
 
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.substitutor", LanguageExtensionPoint.class.getName());
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.fileViewProviderFactory", KeyedLazyInstanceEP.class.getName());
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.parserDefinition", KeyedLazyInstanceEP.class.getName());
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.versionResolver", LanguageExtensionPoint.class.getName());
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.defineVersion", LanguageExtensionPoint.class.getName());
-
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.psi.elementFactory", PsiElementFactory.class.getName());
-		Extensions.getRootArea().registerExtensionPoint("com.intellij.referencesSearch", QueryExecutor.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.substitutor", LanguageExtensionPoint.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.fileViewProviderFactory", KeyedLazyInstanceEP.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.parserDefinition", KeyedLazyInstanceEP.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.versionResolver", LanguageExtensionPoint.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.defineVersion", LanguageExtensionPoint.class.getName());
+//
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.lang.psi.elementFactory", PsiElementFactory.class.getName());
+//		Extensions.getRootArea().registerExtensionPoint("com.intellij.referencesSearch", QueryExecutor.class.getName());
 
 		applicationEnvironment.registerParserDefinition(new BnfParserDefinition());
 		applicationEnvironment.registerApplicationService(FileModificationService.class, new FileModificationService()
