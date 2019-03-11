@@ -1,6 +1,8 @@
 package consulo.maven.generating;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,9 +39,7 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 	private void setSkeleton(boolean idea)
 	{
-		String name = idea ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
-		Skeleton.readSkelSteam(getClass().getResourceAsStream(name));
-		Options.no_constructors = !idea;
+
 	}
 
 	@Override
@@ -95,9 +95,24 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 				getLog().info("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
-				File marker = new File(file.getParentFile(), file.getName() + ".idea");
-				// marker for using old IDEA skeleton or Consulo skeleton
-				setSkeleton(marker.exists());
+				File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
+				if(skeletonFile.exists())
+				{
+					try(InputStream stream = Files.newInputStream(skeletonFile.toPath()))
+					{
+						Skeleton.readSkelSteam(stream);
+					}
+					Options.no_constructors = true;
+				}
+				else
+				{
+					File marker = new File(file.getParentFile(), file.getName() + ".idea");
+					// marker for using old IDEA skeleton or Consulo skeleton
+					boolean ideaMarker = marker.exists();
+					String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
+					Skeleton.readSkelSteam(getClass().getResourceAsStream(name));
+					Options.no_constructors = !ideaMarker;
+				}
 
 				Main.generate(file);
 			}
