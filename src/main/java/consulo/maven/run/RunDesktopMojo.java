@@ -60,6 +60,9 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		@Parameter(property = "useDefaultWorkspaceDirectory", defaultValue = "true")
 		private boolean useDefaultWorkspaceDirectory = true;
 
+		@Parameter(property = "newBootLoader", defaultValue = "false")
+		private boolean newBootLoader = true;
+
 		@Parameter(property = "pluginDirectories")
 		private List<String> pluginDirectories = new ArrayList<>();
 
@@ -222,25 +225,50 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 
 	private void addAdditionalClasspathElements(List<URL> path, RunContext context) throws MojoExecutionException
 	{
-		File libraryDirectory = context.getLibraryDirectory();
-
-		for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
+		if(execution.newBootLoader)
 		{
-			File file = new File(libraryDirectory, bootArtifact.getValue() + ".jar");
-			if(file.exists())
+			File bootDirectory = context.getDirectory("boot");
+			if(!bootDirectory.exists())
 			{
-				try
+				throw new MojoExecutionException("Boot directory is not exists");
+			}
+
+			for(File file : bootDirectory.listFiles())
+			{
+				if(file.getName().endsWith(".jar"))
 				{
-					path.add(file.toURI().toURL());
-				}
-				catch(MalformedURLException e)
-				{
-					throw new RuntimeException(e);
+					try
+					{
+						path.add(file.toURI().toURL());
+					}
+					catch(MalformedURLException e)
+					{
+						throw new RuntimeException(e);
+					}
 				}
 			}
-			else
+		}
+		else
+		{
+			File libraryDirectory = context.getLibraryDirectory();
+			for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
 			{
-				throw new MojoExecutionException("File " + file.getPath() + " is not exists");
+				File file = new File(libraryDirectory, bootArtifact.getValue() + ".jar");
+				if(file.exists())
+				{
+					try
+					{
+						path.add(file.toURI().toURL());
+					}
+					catch(MalformedURLException e)
+					{
+						throw new RuntimeException(e);
+					}
+				}
+				else
+				{
+					throw new MojoExecutionException("File " + file.getPath() + " is not exists");
+				}
 			}
 		}
 	}
