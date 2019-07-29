@@ -61,7 +61,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		private boolean useDefaultWorkspaceDirectory = true;
 
 		@Parameter(property = "newBootLoader", defaultValue = "false")
-		private boolean newBootLoader = false;
+		private boolean newBootLoader = true;
 
 		@Parameter(property = "pluginDirectories")
 		private List<String> pluginDirectories = new ArrayList<>();
