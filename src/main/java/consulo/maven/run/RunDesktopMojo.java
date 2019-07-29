@@ -47,7 +47,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("net.java.dev.jna", "jna-platform"));
 	}
 
-	private static final String ourMainClass = "com.intellij.idea.Main";
+	private static final String ourMainClass = "consulo.desktop.boot.main.Main";
 
 	public static class ExecutionConfig
 	{
