@@ -1,9 +1,8 @@
 package consulo.maven.packaging;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Set;
-
+import consulo.maven.base.util.ExtractUtil;
+import consulo.maven.base.util.HubApiUtil;
+import consulo.maven.base.util.RepositoryNode;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -12,9 +11,11 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
-import consulo.maven.base.util.ExtractUtil;
-import consulo.maven.base.util.HubApiUtil;
-import consulo.maven.base.util.RepositoryNode;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author VISTALL
@@ -117,13 +118,36 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 		for(String dependencyId : myDependencies)
 		{
-			getLog().info("Fetching dependency info. Id: '" + dependencyId + "'...");
+			getLog().info("Checking dependency info. Id: '" + dependencyId + "'...");
 
 			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null);
 			if(repositoryNode == null)
 			{
 				throw new MojoFailureException("Dependency is not found. Id: " + dependencyId + ", consuloVersion: " + consuloVersion + ", channel: " + myRepositoryChannel);
 			}
+
+			File versionCheckFile = new File(targetDirectory, dependencyId + ".version");
+			if(versionCheckFile.exists())
+			{
+				try
+				{
+					String versionFromFile = FileUtils.fileRead(versionCheckFile);
+
+					if(Objects.equals(versionFromFile, repositoryNode.version))
+					{
+						getLog().info("Dependency version not changed. Id: '" + dependencyId + "'...");
+						continue;
+					}
+				}
+				catch(IOException e)
+				{
+					versionCheckFile.delete();
+
+					getLog().warn(e);
+				}
+			}
+
+			getLog().info("Fetching dependency info. Id: '" + dependencyId + "'...");
 
 			try
 			{
@@ -141,6 +165,8 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 				getLog().info("Extracting dependency: " + dependencyId);
 
 				ExtractUtil.extractZip(tempFile, targetDirectory);
+
+				FileUtils.fileWrite(versionCheckFile.getPath(), repositoryNode.version);
 			}
 			catch(Exception e)
 			{
