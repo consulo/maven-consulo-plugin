@@ -118,7 +118,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 		for(String dependencyId : myDependencies)
 		{
-			getLog().info("Checking dependency info. Id: '" + dependencyId + "'...");
+			logPluginStep(dependencyId, "checking...");
 
 			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null);
 			if(repositoryNode == null)
@@ -135,7 +135,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 					if(Objects.equals(versionFromFile, repositoryNode.version))
 					{
-						getLog().info("Dependency version not changed. Id: '" + dependencyId + "'...");
+						logPluginStep(dependencyId, "version not changed");
 						continue;
 					}
 				}
@@ -147,14 +147,12 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 				}
 			}
 
-			getLog().info("Fetching dependency info. Id: '" + dependencyId + "'...");
-
 			try
 			{
 				File tempFile = File.createTempFile("consulo-plugin", ".zip");
 				tempFile.deleteOnExit();
 
-				getLog().info("Downloading dependency: " + dependencyId);
+				logPluginStep(dependencyId, "downloading...");
 
 				HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, tempFile);
 
@@ -162,16 +160,23 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 				dependencyDirectory.delete();
 
-				getLog().info("Extracting dependency: " + dependencyId);
+				logPluginStep(dependencyId, "extracting...");
 
 				ExtractUtil.extractZip(tempFile, targetDirectory);
 
 				FileUtils.fileWrite(versionCheckFile.getPath(), repositoryNode.version);
+
+				logPluginStep(dependencyId, "extracted");
 			}
 			catch(Exception e)
 			{
 				throw new MojoFailureException(e.getMessage(), e);
 			}
 		}
+	}
+
+	private void logPluginStep(String pluginId, String info)
+	{
+		getLog().info(String.format("[%s] %s", pluginId, info));
 	}
 }
