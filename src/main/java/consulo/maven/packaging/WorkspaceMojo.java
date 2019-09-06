@@ -41,6 +41,11 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
 	{
+		if(getLog().isDebugEnabled())
+		{
+			getLog().info("Dependencies=" + myDependencies + ", skip=" + packaging.skip);
+		}
+
 		if(!myDependencies.isEmpty() && packaging.skip)
 		{
 			createDependenciesWorkspace();
