@@ -87,6 +87,7 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 				if(logic.isUpToDate(file))
 				{
+					getLog().info("JFlex: " + file.getPath() + " is up to date");
 					continue;
 				}
 				
@@ -98,7 +99,7 @@ public class JFlexGeneratorMojo extends AbstractMojo
 					Options.setDir(outDirWithPackage);
 				}
 
-				getLog().info("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+				getLog().info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
 				logic.putCacheEntry(file);
 
