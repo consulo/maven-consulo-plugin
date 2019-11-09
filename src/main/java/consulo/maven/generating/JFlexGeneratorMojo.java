@@ -5,6 +5,7 @@ import JFlex.Options;
 import JFlex.Skeleton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import consulo.maven.base.util.cache.CacheLogic;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -73,6 +74,10 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 			outputDirectoryFile.mkdirs();
 
+			CacheLogic logic = new CacheLogic(myMavenProject, "jflex-generate.cache");
+
+			logic.read();
+
 			myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
 			for(Pair<File, File> info : toGenerateFiles)
@@ -80,6 +85,11 @@ public class JFlexGeneratorMojo extends AbstractMojo
 				File file = info.getFirst();
 				File sourceDirectory = info.getSecond();
 
+				if(logic.isUpToDate(file))
+				{
+					continue;
+				}
+				
 				String relativePath = FileUtil.getRelativePath(sourceDirectory, file.getParentFile());
 				if(relativePath != null)
 				{
@@ -90,10 +100,12 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 				getLog().info("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
+				logic.putCacheEntry(file);
+
 				File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
 				if(skeletonFile.exists())
 				{
-					try(InputStream stream = Files.newInputStream(skeletonFile.toPath()))
+					try (InputStream stream = Files.newInputStream(skeletonFile.toPath()))
 					{
 						Skeleton.readSkelSteam(stream);
 					}
@@ -111,6 +123,8 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 				Main.generate(file);
 			}
+
+			logic.write();
 		}
 		catch(Exception e)
 		{
