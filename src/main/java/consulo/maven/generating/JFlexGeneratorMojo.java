@@ -1,11 +1,10 @@
 package consulo.maven.generating;
 
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-
+import JFlex.Main;
+import JFlex.Options;
+import JFlex.Skeleton;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -14,11 +13,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
-import JFlex.Main;
-import JFlex.Options;
-import JFlex.Skeleton;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author VISTALL
@@ -35,11 +35,6 @@ public class JFlexGeneratorMojo extends AbstractMojo
 		Options.no_constructors = true;
 		Options.no_backup = true;
 		Options.char_at = true;
-	}
-
-	private void setSkeleton(boolean idea)
-	{
-
 	}
 
 	@Override
