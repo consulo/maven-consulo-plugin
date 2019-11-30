@@ -4,37 +4,38 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.IOUtil;
 
 import java.io.*;
-import java.util.HashSet;
 
 /**
  * @author VISTALL
  * @since 29-May-17
  */
-public class CacheLogic
+public class CacheIO
 {
+	private static final int ourVersion = 1;
+
 	private File myFile;
 
-	private HashSet<CacheEntry> myCacheEntries;
+	private Cache myCache;
 
-	public CacheLogic(MavenProject mavenProject, String fileName)
+	public CacheIO(MavenProject mavenProject, String fileName)
 	{
 		myFile = new File(mavenProject.getBuild().getDirectory(), fileName);
 	}
 
 	public void read()
 	{
-		myCacheEntries = readImpl();
+		myCache = readImpl();
 	}
 
 	public void write()
 	{
-		if(myCacheEntries == null)
+		if(myCache == null)
 		{
 			throw new IllegalArgumentException("#read() is not called");
 		}
 
-		HashSet<CacheEntry> cacheEntries = myCacheEntries;
-		myCacheEntries = null;
+		Cache cache = myCache;
+		myCache = null;
 
 		File parentFile = myFile.getParentFile();
 		parentFile.mkdirs();
@@ -43,7 +44,7 @@ public class CacheLogic
 		try
 		{
 			stream = new ObjectOutputStream(new FileOutputStream(myFile));
-			stream.writeObject(cacheEntries);
+			stream.writeObject(cache);
 		}
 		catch(Exception ignored)
 		{
@@ -54,41 +55,24 @@ public class CacheLogic
 		}
 	}
 
-	public boolean isUpToDate(File classFile)
-	{
-		CacheEntry cacheEntry = findCacheEntry(classFile);
-		return cacheEntry != null && cacheEntry.getClassTimestamp() == classFile.lastModified();
-	}
-
-	public CacheEntry findCacheEntry(File classFile)
-	{
-		if(myCacheEntries == null)
-		{
-			throw new IllegalArgumentException("#read() is not called");
-		}
-
-		for(CacheEntry cacheEntry : myCacheEntries)
-		{
-			if(cacheEntry.getClassFile().equals(classFile))
-			{
-				return cacheEntry;
-			}
-		}
-		return null;
-	}
-
-	private HashSet<CacheEntry> readImpl()
+	private Cache readImpl()
 	{
 		if(!myFile.exists())
 		{
-			return new HashSet<CacheEntry>();
+			return new Cache(ourVersion);
 		}
 
 		ObjectInputStream stream = null;
 		try
 		{
 			stream = new ObjectInputStream(new FileInputStream(myFile));
-			return (HashSet<CacheEntry>) stream.readObject();
+			Cache cache = (Cache) stream.readObject();
+			// drop cache
+			if(cache.getVersion() != ourVersion)
+			{
+				return new Cache(ourVersion);
+			}
+			return cache;
 		}
 		catch(Exception ignored)
 		{
@@ -97,7 +81,7 @@ public class CacheLogic
 		{
 			IOUtil.close(stream);
 		}
-		return new HashSet<CacheEntry>();
+		return new Cache(ourVersion);
 	}
 
 	public boolean delete()
@@ -112,11 +96,16 @@ public class CacheLogic
 
 	public void removeCacheEntry(File classFile)
 	{
-		myCacheEntries.remove(new CacheEntry(classFile, -1));
+		myCache.removeCacheEntry(classFile);
 	}
 
 	public void putCacheEntry(File classFile)
 	{
-		myCacheEntries.add(new CacheEntry(classFile, classFile.lastModified()));
+		myCache.putCacheEntry(classFile);
+	}
+
+	public boolean isUpToDate(File classFile)
+	{
+		return myCache.isUpToDate(classFile);
 	}
 }
