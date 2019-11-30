@@ -22,7 +22,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.io.zip.ZipShort;
-import com.intellij.util.lang.JarMemoryLoader;
+import consulo.util.nodep.classloader.JarMemoryLoader;
 
 import java.io.File;
 import java.io.IOException;

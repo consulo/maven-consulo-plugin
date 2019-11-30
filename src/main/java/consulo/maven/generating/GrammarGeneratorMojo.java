@@ -1,24 +1,5 @@
 package consulo.maven.generating;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
-import org.intellij.grammar.BnfFileType;
-import org.intellij.grammar.BnfParserDefinition;
-import org.intellij.grammar.generator.ParserGenerator;
-import org.intellij.grammar.java.JavaHelper;
-import org.intellij.grammar.psi.BnfFile;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
@@ -32,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.PsiSearchHelper;
-import consulo.annotations.RequiredReadAction;
+import consulo.annotation.access.RequiredReadAction;
 import consulo.psi.tree.ASTCompositeFactory;
 import consulo.psi.tree.ASTLazyFactory;
 import consulo.psi.tree.ASTLeafFactory;
@@ -41,6 +22,24 @@ import consulo.psi.tree.impl.DefaultASTCompositeFactory;
 import consulo.psi.tree.impl.DefaultASTLazyFactory;
 import consulo.psi.tree.impl.DefaultASTLeafFactory;
 import consulo.psi.tree.impl.DefaultPsiElementFactory;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
+import org.intellij.grammar.BnfFileType;
+import org.intellij.grammar.BnfParserDefinition;
+import org.intellij.grammar.generator.ParserGenerator;
+import org.intellij.grammar.java.JavaHelper;
+import org.intellij.grammar.psi.BnfFile;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author VISTALL
