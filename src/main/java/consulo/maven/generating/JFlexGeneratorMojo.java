@@ -1,11 +1,11 @@
 package consulo.maven.generating;
 
-import JFlex.Main;
-import JFlex.Options;
-import JFlex.Skeleton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import consulo.maven.base.util.cache.CacheIO;
+import jflex.Main;
+import jflex.Options;
+import jflex.Skeleton;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -14,8 +14,10 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +34,9 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 	public JFlexGeneratorMojo()
 	{
-		Options.no_constructors = true;
+		Options.no_constructor = true;
 		Options.no_backup = true;
-		Options.char_at = true;
+		// integrated by default Options.char_at = true;
 	}
 
 	@Override
@@ -101,11 +103,11 @@ public class JFlexGeneratorMojo extends AbstractMojo
 				File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
 				if(skeletonFile.exists())
 				{
-					try (InputStream stream = Files.newInputStream(skeletonFile.toPath()))
+					try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8)))
 					{
-						Skeleton.readSkelSteam(stream);
+						Skeleton.readSkel(stream);
 					}
-					Options.no_constructors = true;
+					Options.no_constructor = true;
 				}
 				else
 				{
@@ -113,8 +115,11 @@ public class JFlexGeneratorMojo extends AbstractMojo
 					// marker for using old IDEA skeleton or Consulo skeleton
 					boolean ideaMarker = marker.exists();
 					String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
-					Skeleton.readSkelSteam(getClass().getResourceAsStream(name));
-					Options.no_constructors = !ideaMarker;
+					try (BufferedReader stream = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)))
+					{
+						Skeleton.readSkel(stream);
+					}
+					Options.no_constructor = !ideaMarker;
 				}
 
 				Main.generate(file);
