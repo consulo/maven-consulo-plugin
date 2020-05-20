@@ -138,9 +138,6 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 					continue;
 				}
 
-				File outDirWithPackage = new File(outputDirectoryFile, relativePath);
-				outDirWithPackage.mkdirs();
-
 				String pluginId = relativePath.replace("\\", "/").replace("localize/", "").replace("/", ".");
 				String packageName = pluginId + ".localize";
 
