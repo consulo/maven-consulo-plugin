@@ -57,6 +57,11 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 		{
 			List<Pair<File, File>> toGenerateFiles = new ArrayList<>();
 
+			if(log.isDebugEnabled())
+			{
+				log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
+			}
+
 			for(String srcDir : mavenProject.getCompileSourceRoots())
 			{
 				File srcDirectory = new File(srcDir);
@@ -91,6 +96,11 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 
 					return true;
 				});
+			}
+
+			if(log.isDebugEnabled())
+			{
+				log.debug("Files for generate: " + toGenerateFiles);
 			}
 
 			if(toGenerateFiles.isEmpty())
