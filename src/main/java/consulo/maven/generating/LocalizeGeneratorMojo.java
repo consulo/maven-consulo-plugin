@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.lang.model.element.Modifier;
 
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -62,9 +63,9 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 				log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
 			}
 
-			for(String srcDir : mavenProject.getCompileSourceRoots())
+			for(Resource resource : mavenProject.getResources())
 			{
-				File srcDirectory = new File(srcDir);
+				File srcDirectory = new File(resource.getDirectory());
 
 				File localizeDir = new File(srcDirectory, "localize");
 
