@@ -1,11 +1,16 @@
 package consulo.maven.generating;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import consulo.maven.base.util.cache.CacheIO;
-import jflex.Main;
-import jflex.Options;
-import jflex.Skeleton;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -13,14 +18,11 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import org.codehaus.plexus.util.FileUtils;
+import consulo.maven.base.util.cache.CacheIO;
+import jflex.Main;
+import jflex.Options;
+import jflex.Skeleton;
 
 /**
  * @author VISTALL
@@ -44,21 +46,17 @@ public class JFlexGeneratorMojo extends AbstractMojo
 	{
 		try
 		{
-			List<Pair<File, File>> toGenerateFiles = new ArrayList<>();
+			List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
 
 			for(String srcDir : myMavenProject.getCompileSourceRoots())
 			{
 				File srcDirectory = new File(srcDir);
 
-				FileUtil.visitFiles(srcDirectory, file ->
+				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null, true);
+				for(File file : files)
 				{
-					if("flex".equals(FileUtil.getExtension((CharSequence) file.getName())))
-					{
-						toGenerateFiles.add(Pair.create(file, srcDirectory));
-					}
-
-					return true;
-				});
+					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
+				}
 			}
 
 			if(toGenerateFiles.isEmpty())
@@ -77,18 +75,23 @@ public class JFlexGeneratorMojo extends AbstractMojo
 
 			myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-			for(Pair<File, File> info : toGenerateFiles)
+			for(Map.Entry<File, File> info : toGenerateFiles)
 			{
-				File file = info.getFirst();
-				File sourceDirectory = info.getSecond();
+				File file = info.getKey();
+				File sourceDirectory = info.getValue();
 
 				if(logic.isUpToDate(file))
 				{
 					getLog().info("JFlex: " + file.getPath() + " is up to date");
 					continue;
 				}
-				
-				String relativePath = FileUtil.getRelativePath(sourceDirectory, file.getParentFile());
+
+				Path sourcePath = sourceDirectory.toPath();
+
+				Path parentPath = file.getParentFile().toPath();
+
+				String relativePath = sourcePath.relativize(parentPath).toString();
+
 				if(relativePath != null)
 				{
 					File outDirWithPackage = new File(outputDirectoryFile, relativePath);

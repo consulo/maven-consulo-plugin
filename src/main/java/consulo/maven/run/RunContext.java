@@ -1,10 +1,9 @@
 package consulo.maven.run;
 
-import consulo.maven.base.util.SystemInfo;
-import org.apache.maven.project.MavenProject;
-
-import javax.annotation.Nonnull;
 import java.io.File;
+
+import org.apache.maven.project.MavenProject;
+import consulo.maven.base.util.SystemInfo;
 
 /**
  * @author VISTALL
@@ -31,8 +30,7 @@ public class RunContext
 		return new File(getPlatformDirectory(), "lib");
 	}
 
-	@Nonnull
-	public File getDirectory(@Nonnull String name)
+	public File getDirectory(String name)
 	{
 		return new File(getPlatformDirectory(), name);
 	}

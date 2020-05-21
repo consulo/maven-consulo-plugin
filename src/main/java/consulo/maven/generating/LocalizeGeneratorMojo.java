@@ -3,9 +3,10 @@ package consulo.maven.generating;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.Format;
 import java.text.MessageFormat;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +24,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -56,7 +56,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 	{
 		try
 		{
-			List<Pair<File, File>> toGenerateFiles = new ArrayList<>();
+			List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
 
 			if(log.isDebugEnabled())
 			{
@@ -80,7 +80,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 					continue;
 				}
 
-				String txt = FileUtil.loadFile(idFile, StandardCharsets.UTF_8);
+				String txt = FileUtils.fileRead(idFile, "UTF-8");
 
 				// ignore not en localize
 				if(!"en".equals(txt))
@@ -88,15 +88,11 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 					continue;
 				}
 
-				FileUtil.visitFiles(srcDirectory, file ->
+				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.yaml", null);
+				for(File file : files)
 				{
-					if("yaml".equals(FileUtil.getExtension((CharSequence) file.getName())))
-					{
-						toGenerateFiles.add(Pair.create(file, srcDirectory));
-					}
-
-					return true;
-				});
+					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<File, File>(file, srcDirectory));
+				}
 			}
 
 			if(log.isDebugEnabled())
@@ -115,15 +111,14 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 			outputDirectoryFile.mkdirs();
 
 			CacheIO logic = new CacheIO(mavenProject, "localize.cache");
-
 			logic.read();
 
 			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-			for(Pair<File, File> info : toGenerateFiles)
+			for(Map.Entry<File, File> info : toGenerateFiles)
 			{
-				File file = info.getFirst();
-				File sourceDirectory = info.getSecond();
+				File file = info.getKey();
+				File sourceDirectory = info.getValue();
 
 				if(logic.isUpToDate(file))
 				{
@@ -131,7 +126,11 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 					continue;
 				}
 
-				String relativePath = FileUtil.getRelativePath(sourceDirectory, file.getParentFile());
+				Path sourcePath = sourceDirectory.toPath();
+
+				Path parentPath = file.getParentFile().toPath();
+
+				String relativePath = sourcePath.relativize(parentPath).toString();
 				if(relativePath == null)
 				{
 					log.info("Localize: " + file.getPath() + " can't calculate relative path to " + sourceDirectory);
@@ -148,7 +147,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 				ClassName localizeKey = ClassName.get("consulo.localize", "LocalizeKey");
 				ClassName localizeValue = ClassName.get("consulo.localize", "LocalizeValue");
 
-				String localizeName = FileUtil.getNameWithoutExtension(file);
+				String localizeName = FileUtils.removeExtension(file.getName());
 
 				List<FieldSpec> fieldSpecs = new ArrayList<>();
 				List<MethodSpec> methodSpecs = new ArrayList<>();
@@ -164,7 +163,8 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 
 						Map<String, String> value = entry.getValue();
 
-						String text = StringUtil.notNullize(value.get("text"));
+						String t = value.get("text");
+						String text = t == null ? "" : t;
 
 						String fieldName = key.replace(".", "_");
 
@@ -177,7 +177,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 						MessageFormat format = new MessageFormat(text);
 
 						Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
-						
+
 						MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(methodName);
 						methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
 						methodSpec.returns(localizeValue);
@@ -195,7 +195,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 								{
 									argCall.append(", ");
 								}
-								
+
 								argCall.append(parameterName);
 							}
 
@@ -245,7 +245,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 		{
 			if(i != 0)
 			{
-				builder.append(StringUtil.capitalize(split[i]));
+				builder.append(StringUtils.capitalise(split[i]));
 			}
 			else
 			{
@@ -261,8 +261,10 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 		MavenProject mavenProject = new MavenProject();
 
 		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");
-		mavenProject.addCompileSourceRoot(new File(projectDir, "src\\main\\resources").getPath());
+		Resource resource = new Resource();
+		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();
+		build.addResource(resource);
 		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
 		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
 		mavenProject.setBuild(build);
