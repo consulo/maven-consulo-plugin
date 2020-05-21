@@ -96,12 +96,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>cglib</groupId>
-			<artifactId>cglib-nodep</artifactId>
-			<version>3.2.4</version>
-		</dependency>
-
-		<dependency>
 			<groupId>dk.brics.automaton</groupId>
 			<artifactId>automaton</artifactId>
 			<version>1.11-8</version>
@@ -120,50 +114,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>consulo.plugin</groupId>
-			<artifactId>consulo.devkit-grammar.kit.core</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo.plugin</groupId>
-			<artifactId>consulo.devkit-grammar.kit.hacky.api</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
 			<groupId>consulo</groupId>
-			<artifactId>consulo-extensions</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-core-api</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-core-impl</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>jsr305</artifactId>
-			<version>3.0.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-indexing-api</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-indexing-impl</artifactId>
+			<artifactId>consulo-util</artifactId>
 			<version>2-SNAPSHOT</version>
 		</dependency>
 
