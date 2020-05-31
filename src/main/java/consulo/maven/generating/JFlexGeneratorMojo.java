@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -134,5 +136,28 @@ public class JFlexGeneratorMojo extends AbstractMojo
 		{
 			getLog().error(e);
 		}
+	}
+
+	public static void main(String[] args) throws Exception
+	{
+		File projectDir = new File("W:\\_github.com\\consulo\\consulo-csharp\\csharp-psi-impl");
+
+
+		MavenProject mavenProject = new MavenProject();
+
+		mavenProject.addCompileSourceRoot(new File(projectDir, "src").getAbsolutePath());
+		Resource resource = new Resource();
+		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+		Build build = new Build();
+		build.addResource(resource);
+		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+		mavenProject.setBuild(build);
+
+
+		JFlexGeneratorMojo mojo = new JFlexGeneratorMojo();
+		mojo.myMavenProject = mavenProject;
+
+		mojo.execute();
 	}
 }

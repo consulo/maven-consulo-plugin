@@ -59,6 +59,8 @@ public class Cache implements Serializable
 
 	public void putCacheEntry(File classFile)
 	{
+		removeCacheEntry(classFile);
+
 		myCacheEntries.add(new CacheEntry(classFile, classFile.lastModified()));
 	}
 }
