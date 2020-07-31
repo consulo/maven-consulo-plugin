@@ -1,18 +1,7 @@
 package consulo.maven.generating;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.text.Format;
-import java.text.MessageFormat;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.lang.model.element.Modifier;
-
+import com.squareup.javapoet.*;
+import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
@@ -27,14 +16,18 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-import consulo.maven.base.util.cache.CacheIO;
+
+import javax.lang.model.element.Modifier;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.text.Format;
+import java.text.MessageFormat;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author VISTALL
@@ -111,6 +104,7 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 			outputDirectoryFile.mkdirs();
 
 			CacheIO logic = new CacheIO(mavenProject, "localize.cache");
+			logic.delete();
 			logic.read();
 
 			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
@@ -166,13 +160,13 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 						String t = value.get("text");
 						String text = t == null ? "" : t;
 
-						String fieldName = key.replace(".", "_");
+						String fieldName = normalizeFirstChar(key.replace(".", "_").replace(" ", "_"));
 
 						FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
 						fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S)", localizeKey, pluginId + "." + localizeName, key).build());
 						fieldSpecs.add(fieldSpec.build());
 
-						String methodName = captilizeByDot(key);
+						String methodName = normalizeFirstChar(captilizeByDot(key));
 
 						MessageFormat format = new MessageFormat(text);
 
@@ -200,11 +194,11 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 							}
 
 							argCall.append(")");
-							methodSpec.addStatement(argCall.toString());
+							methodSpec.addStatement("$L", argCall.toString());
 						}
 						else
 						{
-							methodSpec.addStatement("return " + fieldName + ".getValue()");
+							methodSpec.addStatement("$L", "return " + fieldName + ".getValue()");
 						}
 						methodSpecs.add(methodSpec.build());
 					}
@@ -236,9 +230,27 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 		}
 	}
 
+	private static String normalizeFirstChar(String text)
+	{
+		char c = text.charAt(0);
+		if(c == '0')
+		{
+			return "zero" + text.substring(1, text.length());
+		}
+		else if(c == '1')
+		{
+			return "one" + text.substring(1, text.length());
+		}
+		else if(c == '2')
+		{
+			return "two" + text.substring(1, text.length());
+		}
+		return text;
+	}
+
 	private static String captilizeByDot(String id)
 	{
-		String[] split = id.split("\\.");
+		String[] split = id.replace(" ", ".").split("\\.");
 
 		StringBuilder builder = new StringBuilder();
 		for(int i = 0; i < split.length; i++)
