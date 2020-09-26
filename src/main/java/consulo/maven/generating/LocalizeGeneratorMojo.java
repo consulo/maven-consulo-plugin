@@ -4,7 +4,6 @@ import com.squareup.javapoet.*;
 import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
@@ -14,7 +13,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.lang.model.element.Modifier;
@@ -34,7 +32,7 @@ import java.util.Map;
  * @since 2020-05-21
  */
 @Mojo(name = "generate-localize", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class LocalizeGeneratorMojo extends AbstractMojo
+public class LocalizeGeneratorMojo extends GenerateMojo
 {
 	@Parameter(property = "project", defaultValue = "${project}")
 	private MavenProject myMavenProject;
@@ -104,7 +102,10 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 			outputDirectoryFile.mkdirs();
 
 			CacheIO logic = new CacheIO(mavenProject, "localize.cache");
-			logic.delete();
+			if(TEST_GENERATE)
+			{
+				logic.delete();
+			}
 			logic.read();
 
 			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
@@ -230,46 +231,10 @@ public class LocalizeGeneratorMojo extends AbstractMojo
 		}
 	}
 
-	private static String normalizeFirstChar(String text)
-	{
-		char c = text.charAt(0);
-		if(c == '0')
-		{
-			return "zero" + text.substring(1, text.length());
-		}
-		else if(c == '1')
-		{
-			return "one" + text.substring(1, text.length());
-		}
-		else if(c == '2')
-		{
-			return "two" + text.substring(1, text.length());
-		}
-		return text;
-	}
-
-	private static String captilizeByDot(String id)
-	{
-		String[] split = id.replace(" ", ".").split("\\.");
-
-		StringBuilder builder = new StringBuilder();
-		for(int i = 0; i < split.length; i++)
-		{
-			if(i != 0)
-			{
-				builder.append(StringUtils.capitalise(split[i]));
-			}
-			else
-			{
-				builder.append(split[i]);
-			}
-		}
-
-		return builder.toString();
-	}
-
 	public static void main(String[] args)
 	{
+		TEST_GENERATE = true;
+		
 		MavenProject mavenProject = new MavenProject();
 
 		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");
