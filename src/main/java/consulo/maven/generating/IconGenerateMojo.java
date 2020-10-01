@@ -1,5 +1,6 @@
 package consulo.maven.generating;
 
+import ar.com.hjg.pngj.PngReader;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGRoot;
 import com.kitfox.svg.SVGUniverse;
@@ -19,6 +20,8 @@ import org.codehaus.plexus.util.FileUtils;
 
 import javax.lang.model.element.Modifier;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +106,7 @@ public class IconGenerateMojo extends GenerateMojo
 
 				File directory = new File(iconDir, path);
 
-				List<File> files = FileUtils.getFiles(directory, "**/*.svg", null);
+				List<File> files = FileUtils.getFiles(directory, "**/*.svg,**/*.png", null);
 
 				GenerateInfo g = new GenerateInfo();
 				g.baseDir = directory;
@@ -168,13 +171,13 @@ public class IconGenerateMojo extends GenerateMojo
 				for(File file : files)
 				{
 					String name = file.getName();
-					if(name.endsWith("@2x.svg"))
+					if(name.endsWith("@2x.svg") || name.endsWith("@2x.png"))
 					{
 						// ignore bigger icons
 						continue;
 					}
 
-					if(name.endsWith("_dark.svg"))
+					if(name.endsWith("_dark.svg") || name.endsWith("_dark.png"))
 					{
 						log.info("IconLibrary: " + file.getPath() + " unused dark icon");
 						continue;
@@ -189,24 +192,51 @@ public class IconGenerateMojo extends GenerateMojo
 						continue;
 					}
 
-					relativePath = relativePath.replace(".svg", "");
+					int width, height;
+					if(relativePath.endsWith(".svg"))
+					{
+						relativePath = relativePath.replace(".svg", "");
+
+						SVGDiagram diagram = svgUniverse.getDiagram(file.toURI());
+
+						SVGRoot root = diagram.getRoot();
+
+						height = (int) root.getDeviceHeight();
+						width = (int) root.getDeviceWidth();
+					}
+					else if(relativePath.endsWith(".png"))
+					{
+						relativePath = relativePath.replace(".png", "");
+
+						PngReader reader = null;
+						try (InputStream stream = new FileInputStream(file))
+						{
+							reader = new PngReader(stream);
+							width = reader.imgInfo.cols;
+							height = reader.imgInfo.rows;
+						}
+						finally
+						{
+							if(reader != null)
+							{
+								reader.close();
+							}
+						}
+					}
+					else
+					{
+						throw new UnsupportedOperationException(relativePath);
+					}
 
 					String fieldName = relativePath.replace("\\", "/").replace("/", "_");
 					String iconId = relativePath.replace("\\", "/").replace("/", ".");
-
 					IconInfo iconInfo = new IconInfo();
 					iconInfo.fieldName = fieldName.replace("-", "_");
 					iconInfo.id = iconId.replace("-", "_");
 
-					SVGDiagram diagram = svgUniverse.getDiagram(file.toURI());
 
-					SVGRoot root = diagram.getRoot();
-
-					int deviceHeight = (int) root.getDeviceHeight();
-					int deviceWidth = (int) root.getDeviceWidth();
-
-					iconInfo.width = deviceWidth;
-					iconInfo.height = deviceHeight;
+					iconInfo.width = width;
+					iconInfo.height = height;
 					icons.put(fieldName, iconInfo);
 				}
 
@@ -271,7 +301,7 @@ public class IconGenerateMojo extends GenerateMojo
 
 		MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\icon\\default-icon-library");
+		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\icon\\base-icon-library");
 		Resource resource = new Resource();
 		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();
