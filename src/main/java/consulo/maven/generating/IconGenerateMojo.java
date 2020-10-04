@@ -250,7 +250,7 @@ public class IconGenerateMojo extends GenerateMojo
 					logic.putCacheEntry(file);
 				}
 
-				ClassName imageClazz = ClassName.get("consulo.ui.image", "Image");
+				//ClassName imageClazz = ClassName.get("consulo.ui.image", "Image");
 				ClassName imageKeyClass = ClassName.get("consulo.ui.image", "ImageKey");
 
 				List<FieldSpec> fieldSpecs = new ArrayList<>();
@@ -258,7 +258,7 @@ public class IconGenerateMojo extends GenerateMojo
 
 				for(IconInfo iconInfo : icons.values())
 				{
-					FieldSpec.Builder fieldSpec = FieldSpec.builder(imageClazz, iconInfo.fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+					FieldSpec.Builder fieldSpec = FieldSpec.builder(imageKeyClass, iconInfo.fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
 					fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S, $L, $L)", imageKeyClass, id, iconInfo.id, iconInfo.width, iconInfo.height).build());
 					fieldSpecs.add(fieldSpec.build());
 				}
@@ -267,7 +267,7 @@ public class IconGenerateMojo extends GenerateMojo
 				{
 					MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(captilizeByDot(iconInfo.id));
 					methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-					methodSpec.returns(imageClazz);
+					methodSpec.returns(imageKeyClass);
 					methodSpec.addStatement("$L", "return " + iconInfo.fieldName);
 
 					methodSpecs.add(methodSpec.build());
