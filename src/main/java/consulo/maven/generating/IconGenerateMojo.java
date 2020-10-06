@@ -23,10 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author VISTALL
@@ -259,7 +256,7 @@ public class IconGenerateMojo extends GenerateMojo
 				for(IconInfo iconInfo : icons.values())
 				{
 					FieldSpec.Builder fieldSpec = FieldSpec.builder(imageKeyClass, iconInfo.fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-					fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S, $L, $L)", imageKeyClass, id, iconInfo.id, iconInfo.width, iconInfo.height).build());
+					fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S, $L, $L)", imageKeyClass, id, iconInfo.id.toLowerCase(Locale.ROOT), iconInfo.width, iconInfo.height).build());
 					fieldSpecs.add(fieldSpec.build());
 				}
 
