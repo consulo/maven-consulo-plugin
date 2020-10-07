@@ -39,6 +39,16 @@ public class IconGenerateMojo extends GenerateMojo
 		public File baseDir;
 
 		public String id;
+
+		@Override
+		public String toString()
+		{
+			return "GenerateInfo{" +
+					"files=" + files +
+					", baseDir=" + baseDir +
+					", id='" + id + '\'' +
+					'}';
+		}
 	}
 
 	private static class IconInfo
