@@ -3,7 +3,6 @@ package consulo.maven.generating;
 import ar.com.hjg.pngj.PngReader;
 import com.kitfox.svg.SVGDiagram;
 import com.kitfox.svg.SVGRoot;
-import com.kitfox.svg.SVGUniverse;
 import com.squareup.javapoet.*;
 import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Build;
@@ -147,7 +146,7 @@ public class IconGenerateMojo extends GenerateMojo
 
 			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-			SVGUniverse svgUniverse = new SVGUniverse();
+			ThreadLocalSVGUniverse svgUniverse = new ThreadLocalSVGUniverse();
 
 			for(GenerateInfo info : toGenerateFiles)
 			{
