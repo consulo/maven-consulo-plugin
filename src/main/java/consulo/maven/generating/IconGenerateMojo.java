@@ -96,12 +96,14 @@ public class IconGenerateMojo extends GenerateMojo
 
 				if(!new File(iconDir, "marker.txt").exists())
 				{
+					log.info("IconLibrary: no marker.txt file: " + iconDir);
 					continue;
 				}
 				
 				File lightDirectory = new File(iconDir, "_light");
 				if(!lightDirectory.exists())
 				{
+					log.info("IconLibrary: no _light directory");
 					continue;
 				}
 
@@ -115,6 +117,7 @@ public class IconGenerateMojo extends GenerateMojo
 					String name = iconGroup.getName();
 					if(!name.endsWith("IconGroup"))
 					{
+						log.info("IconLibrary: not endsWith IconGroup " + name);
 						continue;
 					}
 
