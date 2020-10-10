@@ -167,13 +167,13 @@ public class IconGenerateMojo extends GenerateMojo
 				}
 			}
 
+			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+
 			if(isAllUp)
 			{
 				log.info("IconLibrary: is up to date");
 				return;
 			}
-
-			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
 			ThreadLocalSVGUniverse svgUniverse = new ThreadLocalSVGUniverse();
 
