@@ -11,7 +11,7 @@ import java.io.*;
  */
 public class CacheIO
 {
-	private static final int ourVersion = 2;
+	private static final int ourVersion = 3;
 
 	private File myFile;
 

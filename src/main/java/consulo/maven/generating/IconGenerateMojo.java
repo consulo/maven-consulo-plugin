@@ -81,6 +81,8 @@ public class IconGenerateMojo extends GenerateMojo
 				log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
 			}
 
+			List<File> imageFiles = new ArrayList<>();
+
 			for(Resource resource : mavenProject.getResources())
 			{
 				File srcDirectory = new File(resource.getDirectory());
@@ -92,34 +94,40 @@ public class IconGenerateMojo extends GenerateMojo
 					continue;
 				}
 
-				File idFile = new File(iconDir, "id.txt");
-				if(!idFile.exists())
+				if(!new File(iconDir, "marker.txt").exists())
+				{
+					continue;
+				}
+				
+				File lightDirectory = new File(iconDir, "_light");
+				if(!lightDirectory.exists())
 				{
 					continue;
 				}
 
-				String iconLibraryAndId = FileUtils.fileRead(idFile, "UTF-8");
-
-				String[] split = iconLibraryAndId.split(":");
-
-				String iconLibrary = split[0];
-				if(!"Default".equals(iconLibrary))
+				for(File iconGroup : lightDirectory.listFiles())
 				{
-					continue;
+					if(!iconDir.isDirectory())
+					{
+						continue;
+					}
+
+					String name = iconGroup.getName();
+					if(!name.endsWith("IconGroup"))
+					{
+						continue;
+					}
+
+					List<File> files = FileUtils.getFiles(iconGroup, "**/*.svg,**/*.png", null);
+					imageFiles.addAll(files);
+					
+					GenerateInfo g = new GenerateInfo();
+					g.baseDir = iconGroup;
+					g.id = iconGroup.getName();
+					g.files = files;
+
+					toGenerateFiles.add(g);
 				}
-
-				String path = split[1].replace(".", "/");
-
-				File directory = new File(iconDir, path);
-
-				List<File> files = FileUtils.getFiles(directory, "**/*.svg,**/*.png", null);
-
-				GenerateInfo g = new GenerateInfo();
-				g.baseDir = directory;
-				g.id = split[1];
-				g.files = files;
-
-				toGenerateFiles.add(g);
 			}
 
 			if(log.isDebugEnabled())
@@ -129,6 +137,7 @@ public class IconGenerateMojo extends GenerateMojo
 
 			if(toGenerateFiles.isEmpty())
 			{
+				log.info("IconLibrary: No file for generate");
 				return;
 			}
 
@@ -144,6 +153,23 @@ public class IconGenerateMojo extends GenerateMojo
 			}
 			logic.read();
 
+			boolean isAllUp = true;
+
+			for(File file : imageFiles)
+			{
+				if(!logic.isUpToDate(file))
+				{
+					isAllUp = false;
+					break;
+				}
+			}
+
+			if(isAllUp)
+			{
+				log.info("IconLibrary: is up to date");
+				return;
+			}
+
 			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
 			ThreadLocalSVGUniverse svgUniverse = new ThreadLocalSVGUniverse();
@@ -153,23 +179,6 @@ public class IconGenerateMojo extends GenerateMojo
 				String id = info.id;
 				List<File> files = info.files;
 				File sourceDirectory = info.baseDir;
-
-				boolean isAllUp = true;
-
-				for(File file : files)
-				{
-					if(!logic.isUpToDate(file))
-					{
-						isAllUp = false;
-						break;
-					}
-				}
-
-				if(isAllUp)
-				{
-					log.info("IconLibrary: " + id + " is up to date");
-					continue;
-				}
 
 				Map<String, IconInfo> icons = new TreeMap<>();
 				Path sourcePath = sourceDirectory.toPath();
@@ -262,10 +271,14 @@ public class IconGenerateMojo extends GenerateMojo
 				List<FieldSpec> fieldSpecs = new ArrayList<>();
 				List<MethodSpec> methodSpecs = new ArrayList<>();
 
+				FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+				idField.initializer(CodeBlock.of("$S", id));
+				fieldSpecs.add(idField.build());
+
 				for(IconInfo iconInfo : icons.values())
 				{
 					FieldSpec.Builder fieldSpec = FieldSpec.builder(imageKeyClass, iconInfo.fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-					fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S, $L, $L)", imageKeyClass, id, iconInfo.id.toLowerCase(Locale.ROOT), iconInfo.width, iconInfo.height).build());
+					fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S, $L, $L)", imageKeyClass, "ID", iconInfo.id.toLowerCase(Locale.ROOT), iconInfo.width, iconInfo.height).build());
 					fieldSpecs.add(fieldSpec.build());
 				}
 
