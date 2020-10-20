@@ -1,5 +1,20 @@
 package consulo.maven.run;
 
+import consulo.maven.base.AbstractConsuloMojo;
+import consulo.maven.base.util.ExtractUtil;
+import consulo.maven.base.util.HubApiUtil;
+import consulo.maven.base.util.RepositoryNode;
+import consulo.maven.base.util.SystemInfo;
+import consulo.maven.packaging.WorkspaceMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -10,21 +25,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
-import consulo.maven.base.AbstractConsuloMojo;
-import consulo.maven.base.util.ExtractUtil;
-import consulo.maven.base.util.HubApiUtil;
-import consulo.maven.base.util.RepositoryNode;
-import consulo.maven.base.util.SystemInfo;
-import consulo.maven.packaging.WorkspaceMojo;
-
 /**
  * @author VISTALL
  * @since 06-Jun-17
@@ -34,19 +34,6 @@ import consulo.maven.packaging.WorkspaceMojo;
 @Mojo(name = "run-desktop", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class RunDesktopMojo extends AbstractConsuloMojo
 {
-	private static List<Map.Entry<String, String>> ourBootArtifacts = new ArrayList<>();
-
-	static
-	{
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-desktop-bootstrap"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo", "consulo-util-rt"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo.internal", "jdom"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("consulo.internal", "trove4j"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("net.java.dev.jna", "jna"));
-		ourBootArtifacts.add(new AbstractMap.SimpleEntry<>("net.java.dev.jna", "jna-platform"));
-	}
-
 	private static final String ourMainClass = "consulo.desktop.boot.main.Main";
 
 	public static class ExecutionConfig
@@ -59,9 +46,6 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 
 		@Parameter(property = "useDefaultWorkspaceDirectory", defaultValue = "true")
 		private boolean useDefaultWorkspaceDirectory = true;
-
-		@Parameter(property = "newBootLoader", defaultValue = "false")
-		private boolean newBootLoader = true;
 
 		@Parameter(property = "pluginDirectories")
 		private List<String> pluginDirectories = new ArrayList<>();
@@ -225,49 +209,23 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 
 	private void addAdditionalClasspathElements(List<URL> path, RunContext context) throws MojoExecutionException
 	{
-		if(execution.newBootLoader)
+		File bootDirectory = context.getDirectory("boot");
+		if(!bootDirectory.exists())
 		{
-			File bootDirectory = context.getDirectory("boot");
-			if(!bootDirectory.exists())
-			{
-				throw new MojoExecutionException("Boot directory is not exists");
-			}
-
-			for(File file : bootDirectory.listFiles())
-			{
-				if(file.getName().endsWith(".jar"))
-				{
-					try
-					{
-						path.add(file.toURI().toURL());
-					}
-					catch(MalformedURLException e)
-					{
-						throw new RuntimeException(e);
-					}
-				}
-			}
+			throw new MojoExecutionException("Boot directory is not exists");
 		}
-		else
+
+		for(File file : bootDirectory.listFiles())
 		{
-			File libraryDirectory = context.getLibraryDirectory();
-			for(Map.Entry<String, String> bootArtifact : ourBootArtifacts)
+			if(file.getName().endsWith(".jar"))
 			{
-				File file = new File(libraryDirectory, bootArtifact.getValue() + ".jar");
-				if(file.exists())
+				try
 				{
-					try
-					{
-						path.add(file.toURI().toURL());
-					}
-					catch(MalformedURLException e)
-					{
-						throw new RuntimeException(e);
-					}
+					path.add(file.toURI().toURL());
 				}
-				else
+				catch(MalformedURLException e)
 				{
-					throw new MojoExecutionException("File " + file.getPath() + " is not exists");
+					throw new RuntimeException(e);
 				}
 			}
 		}
