@@ -207,7 +207,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		return new URLClassLoader(classpathURLs.toArray(new URL[classpathURLs.size()]));
 	}
 
-	private void addAdditionalClasspathElements(List<URL> path, RunContext context) throws MojoExecutionException
+	private void addAdditionalClasspathElements(List<URL> paths, RunContext context) throws MojoExecutionException
 	{
 		File bootDirectory = context.getDirectory("boot");
 		if(!bootDirectory.exists())
@@ -215,7 +215,18 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 			throw new MojoExecutionException("Boot directory is not exists");
 		}
 
-		for(File file : bootDirectory.listFiles())
+		addJars(bootDirectory, paths);
+
+		File spiDir = new File(bootDirectory, "spi");
+		if(spiDir.exists())
+		{
+			addJars(spiDir, paths);
+		}
+	}
+
+	private void addJars(File dir, List<URL> path)
+	{
+		for(File file : dir.listFiles())
 		{
 			if(file.getName().endsWith(".jar"))
 			{
