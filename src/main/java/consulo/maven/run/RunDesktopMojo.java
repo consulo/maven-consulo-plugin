@@ -274,9 +274,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 			return true;
 		}
 
-		getLog().info("Fetching platform info...");
-		RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null);
-		if(repositoryNode == null)
+		if(mySession.isOffline())
 		{
 			if(oldBuildNumber == null)
 			{
@@ -291,45 +289,63 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		}
 		else
 		{
-			if(Objects.equals(repositoryNode.version, oldBuildNumber))
+			getLog().info("Fetching platform info...");
+			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null);
+			if(repositoryNode == null)
 			{
-				getLog().info("Consulo build is not changed: " + oldBuildNumber);
-				return true;
-			}
-			else if(oldBuildNumber != null)
-			{
-				getLog().info("Consulo build is changed. Old build: " + oldBuildNumber + ", downloading new build: " + repositoryNode.version);
+				if(oldBuildNumber == null)
+				{
+					getLog().error("No connection and no old Consulo build.");
+					return false;
+				}
+				else
+				{
+					getLog().info("No connection - using old Consulo build");
+					return true;
+				}
 			}
 			else
 			{
-				getLog().info("No old build, downloading Consulo build: " + repositoryNode.version);
-			}
-
-			try
-			{
-				File tempFile = File.createTempFile("consulo_build", "tar.gz");
-				tempFile.deleteOnExit();
-
-				HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tempFile);
-
-				if(oldBuildNumber != null)
+				if(Objects.equals(repositoryNode.version, oldBuildNumber))
 				{
-					getLog().info("Deleting old build");
+					getLog().info("Consulo build is not changed: " + oldBuildNumber);
+					return true;
+				}
+				else if(oldBuildNumber != null)
+				{
+					getLog().info("Consulo build is changed. Old build: " + oldBuildNumber + ", downloading new build: " + repositoryNode.version);
+				}
+				else
+				{
+					getLog().info("No old build, downloading Consulo build: " + repositoryNode.version);
 				}
 
-				FileUtils.deleteDirectory(platformDirectory);
+				try
+				{
+					File tempFile = File.createTempFile("consulo_build", "tar.gz");
+					tempFile.deleteOnExit();
 
-				getLog().info("Extracting new build");
+					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tempFile);
 
-				ExtractUtil.extractTarGz(tempFile, platformDirectory);
+					if(oldBuildNumber != null)
+					{
+						getLog().info("Deleting old build");
+					}
 
-				FileUtils.fileWrite(buildNumberFile.getPath(), repositoryNode.version);
+					FileUtils.deleteDirectory(platformDirectory);
 
-				return true;
-			}
-			catch(Exception e)
-			{
-				throw new MojoExecutionException(e.getMessage(), e);
+					getLog().info("Extracting new build");
+
+					ExtractUtil.extractTarGz(tempFile, platformDirectory);
+
+					FileUtils.fileWrite(buildNumberFile.getPath(), repositoryNode.version);
+
+					return true;
+				}
+				catch(Exception e)
+				{
+					throw new MojoExecutionException(e.getMessage(), e);
+				}
 			}
 		}
 	}

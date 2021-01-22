@@ -125,57 +125,70 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 		{
 			logPluginStep(dependencyId, "checking...");
 
-			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null);
-			if(repositoryNode == null)
+			if(mySession.isOffline())
 			{
-				throw new MojoFailureException("Dependency is not found. Id: " + dependencyId + ", consuloVersion: " + consuloVersion + ", channel: " + myRepositoryChannel);
-			}
+				File versionCheckFile = new File(targetDirectory, dependencyId + ".version");
 
-			File versionCheckFile = new File(targetDirectory, dependencyId + ".version");
-			if(versionCheckFile.exists())
-			{
-				try
+				if(!versionCheckFile.exists())
 				{
-					String versionFromFile = FileUtils.fileRead(versionCheckFile);
+					logPluginStep(dependencyId, "not found");
+					throw new MojoFailureException(dependencyId + " not found");
+				}
+			}
+			else
+			{
+				RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null);
+				if(repositoryNode == null)
+				{
+					throw new MojoFailureException("Dependency is not found. Id: " + dependencyId + ", consuloVersion: " + consuloVersion + ", channel: " + myRepositoryChannel);
+				}
 
-					if(Objects.equals(versionFromFile, repositoryNode.version))
+				File versionCheckFile = new File(targetDirectory, dependencyId + ".version");
+				if(versionCheckFile.exists())
+				{
+					try
 					{
-						logPluginStep(dependencyId, "version not changed");
-						continue;
+						String versionFromFile = FileUtils.fileRead(versionCheckFile);
+
+						if(Objects.equals(versionFromFile, repositoryNode.version))
+						{
+							logPluginStep(dependencyId, "version not changed");
+							continue;
+						}
+					}
+					catch(IOException e)
+					{
+						versionCheckFile.delete();
+
+						getLog().warn(e);
 					}
 				}
-				catch(IOException e)
+
+				try
 				{
-					versionCheckFile.delete();
+					File tempFile = File.createTempFile("consulo-plugin", ".zip");
+					tempFile.deleteOnExit();
 
-					getLog().warn(e);
+					logPluginStep(dependencyId, "downloading...");
+
+					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, tempFile);
+
+					File dependencyDirectory = new File(targetDirectory, dependencyId);
+
+					dependencyDirectory.delete();
+
+					logPluginStep(dependencyId, "extracting...");
+
+					ExtractUtil.extractZip(tempFile, targetDirectory);
+
+					FileUtils.fileWrite(versionCheckFile.getPath(), repositoryNode.version);
+
+					logPluginStep(dependencyId, "extracted");
 				}
-			}
-
-			try
-			{
-				File tempFile = File.createTempFile("consulo-plugin", ".zip");
-				tempFile.deleteOnExit();
-
-				logPluginStep(dependencyId, "downloading...");
-
-				HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, tempFile);
-
-				File dependencyDirectory = new File(targetDirectory, dependencyId);
-
-				dependencyDirectory.delete();
-
-				logPluginStep(dependencyId, "extracting...");
-
-				ExtractUtil.extractZip(tempFile, targetDirectory);
-
-				FileUtils.fileWrite(versionCheckFile.getPath(), repositoryNode.version);
-
-				logPluginStep(dependencyId, "extracted");
-			}
-			catch(Exception e)
-			{
-				throw new MojoFailureException(e.getMessage(), e);
+				catch(Exception e)
+				{
+					throw new MojoFailureException(e.getMessage(), e);
+				}
 			}
 		}
 	}

@@ -1,11 +1,12 @@
 package consulo.maven.base;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author VISTALL
@@ -17,6 +18,9 @@ public abstract class AbstractConsuloMojo extends AbstractMojo
 
 	@Parameter(property = "project", defaultValue = "${project}", readonly = true)
 	public MavenProject myProject;
+
+	@Parameter(property = "session", defaultValue = "${session}", readonly = true)
+	public MavenSession mySession;
 
 	@Parameter(property = "id", defaultValue = "${project.artifactId}")
 	protected String myId;

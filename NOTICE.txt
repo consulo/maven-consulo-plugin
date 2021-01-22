@@ -1,1 +1,1 @@
-Based on https://github.com/mojohaus/exec-maven-plugin code
+Contains some code from https://github.com/mojohaus/exec-maven-plugin
