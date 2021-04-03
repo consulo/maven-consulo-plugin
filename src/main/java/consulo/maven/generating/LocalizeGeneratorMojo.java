@@ -170,7 +170,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 						String fieldName = normalizeFirstChar(key.replace(".", "_").replace(" ", "_"));
 
 						FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-						fieldSpec.initializer(CodeBlock.builder().add("$T.of($T, $S)", localizeKey, idField, key).build());
+						fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S)", localizeKey, "ID", key).build());
 						fieldSpecs.add(fieldSpec.build());
 
 						String methodName = normalizeFirstChar(captilizeByDot(key));
