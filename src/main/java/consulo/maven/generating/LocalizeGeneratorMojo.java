@@ -147,6 +147,12 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 				List<FieldSpec> fieldSpecs = new ArrayList<>();
 				List<MethodSpec> methodSpecs = new ArrayList<>();
 
+				String id = pluginId + "." + localizeName;
+
+				FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+				idField.initializer(CodeBlock.of("$S", id));
+				fieldSpecs.add(idField.build());
+
 				Yaml yaml = new Yaml();
 				try (InputStream stream = new FileInputStream(file))
 				{
@@ -164,7 +170,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 						String fieldName = normalizeFirstChar(key.replace(".", "_").replace(" ", "_"));
 
 						FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-						fieldSpec.initializer(CodeBlock.builder().add("$T.of($S, $S)", localizeKey, pluginId + "." + localizeName, key).build());
+						fieldSpec.initializer(CodeBlock.builder().add("$T.of($T, $S)", localizeKey, idField, key).build());
 						fieldSpecs.add(fieldSpec.build());
 
 						String methodName = normalizeFirstChar(captilizeByDot(key));
