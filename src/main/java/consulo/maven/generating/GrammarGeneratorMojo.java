@@ -27,6 +27,7 @@ import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.CachedValuesManager;
@@ -217,6 +218,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 				super.registerServices(builder);
 
 				builder.bind(PsiDocumentManager.class).to(PsiDocumentManagerStub.class);
+				builder.bind(ResolveCache.class).to(ResolveCache.class);
 				builder.bind(PsiSearchHelper.class).to(PsiSearchHelperImpl.class);
 				builder.bind(DumbService.class).to(MockDumbService.class);
 				builder.bind(DocumentCommitProcessor.class).to(new DocumentCommitProcessor()
