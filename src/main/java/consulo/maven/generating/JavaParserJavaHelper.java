@@ -17,10 +17,12 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import org.intellij.grammar.java.JavaHelper;
 
@@ -408,6 +410,10 @@ class JavaParserJavaHelper extends JavaHelper
 				return IStubElementType.class.getName();
 			case "ReadWriteAccessDetector.Access":
 				return ReadWriteAccessDetector.Access.class.getName().replace("$", ".");
+			case "SearchScope":
+				return SearchScope.class.getName();
+			case "ItemPresentation":
+				return ItemPresentation.class.getName();
 		}
 		return typeString;
 	}
