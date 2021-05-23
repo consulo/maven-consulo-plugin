@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockDumbService;
+import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +29,7 @@ import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.CachedValuesManager;
@@ -160,6 +162,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 
 				builder.bind(PsiReferenceService.class).to(PsiReferenceServiceImpl.class);
 				builder.bind(VirtualFileManager.class).to(VirtualFileManagerImpl.class);
+				builder.bind(ReferenceProvidersRegistry.class).to(MockReferenceProvidersRegistry.class);
 			}
 
 			@Override
