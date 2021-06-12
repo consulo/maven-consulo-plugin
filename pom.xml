@@ -165,6 +165,7 @@
 			<groupId>consulo.plugin</groupId>
 			<artifactId>consulo.devkit-grammar.kit.core</artifactId>
 			<version>2-SNAPSHOT</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -176,6 +177,12 @@
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-util-nodep</artifactId>
+			<version>2-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-util-collection-runtime</artifactId>
 			<version>2-SNAPSHOT</version>
 		</dependency>
 
