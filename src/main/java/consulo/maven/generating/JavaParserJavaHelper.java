@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import org.intellij.grammar.java.JavaHelper;
 
 import javax.annotation.Nonnull;
@@ -137,16 +138,17 @@ class JavaParserJavaHelper extends JavaHelper
 	@Override
 	public List<NavigatablePsiElement> findClassMethods(@Nullable String className, @Nonnull MethodType methodType, @Nullable String methodName, int paramCount, String... paramTypes)
 	{
+		//System.out.println(className);
 		if(className == null)
 		{
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		NavigatablePsiElement element = findClass(className);
 		TypeDeclaration declaration = element instanceof TypeDeclarationDelegate ? ((TypeDeclarationDelegate) element).getDelegate() : null;
 		if(declaration == null)
 		{
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		List<NavigatablePsiElement> methodDelegates = new ArrayList<>();
@@ -242,6 +244,11 @@ class JavaParserJavaHelper extends JavaHelper
 	@Override
 	public String getSuperClassName(@Nullable String className)
 	{
+		if(Objects.equals(className, Object.class.getName()))
+		{
+			return null;
+		}
+
 		String superClass = myBaseClassNames.get(className);
 		if(superClass != null)
 		{
@@ -255,7 +262,7 @@ class JavaParserJavaHelper extends JavaHelper
 				//return Object.class.getName();
 			}
 		}
-		return super.getSuperClassName(className);
+		return Object.class.getName();
 	}
 
 	@Nonnull
@@ -297,7 +304,7 @@ class JavaParserJavaHelper extends JavaHelper
 	{
 		if(!(method instanceof MethodDelegate))
 		{
-			return Collections.emptyList();
+			return List.of();
 		}
 
 		CallableDeclaration<?> delegate = ((MethodDelegate) method).getDelegate();
@@ -324,7 +331,6 @@ class JavaParserJavaHelper extends JavaHelper
 
 	private String toQualified(Type type, CallableDeclaration<?> callableDeclaration)
 	{
-
 		ResolvedType resolvedType = null;
 		try
 		{
@@ -408,6 +414,8 @@ class JavaParserJavaHelper extends JavaHelper
 				return Nullable.class.getName();
 			case "IStubElementType":
 				return IStubElementType.class.getName();
+			case "IElementType":
+				return IElementType.class.getName();
 			case "ReadWriteAccessDetector.Access":
 				return ReadWriteAccessDetector.Access.class.getName().replace("$", ".");
 			case "SearchScope":

@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -91,7 +92,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 	{
 		MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo-google-go\\go-impl");
+		File projectDir = new File("W:\\_github.com\\consulo\\consulo-object-pascal\\plugin\\");
 		Resource resource = new Resource();
 		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();
@@ -270,13 +271,14 @@ public class GrammarGeneratorMojo extends AbstractMojo
 			ParserGeneratorUtil.NameFormat prefix = ParserGeneratorUtil.getPsiClassFormat(file);
 			ParserGeneratorUtil.NameFormat prefixImpl = ParserGeneratorUtil.getPsiImplClassFormat(file);
 
-			String qualifiedRuleClassName = ParserGeneratorUtil.getQualifiedRuleClassName(rule, false);
+			Couple<String> qualifiedRuleClassNames = ParserGeneratorUtil.getQualifiedRuleClassName(rule);
+			String qualifiedRuleClassName = qualifiedRuleClassNames.getFirst();
 			names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefix, Case.CAMEL), qualifiedRuleClassName);
-			names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefixImpl, Case.CAMEL), ParserGeneratorUtil.getQualifiedRuleClassName(rule, true));
+			names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefixImpl, Case.CAMEL), qualifiedRuleClassNames.getSecond());
 
 			List<String> ruleClasses = new ArrayList<>(ParserGeneratorUtil.getRuleClasses(rule));
 
-			String baseClass = ruleClasses.get(3);
+			String baseClass = ruleClasses.size() >= 4 ? ruleClasses.get(3) : ruleClasses.get(ruleClasses.size() - 1);
 
 			baseClassNames.put(qualifiedRuleClassName, baseClass);
 		}
@@ -286,6 +288,6 @@ public class GrammarGeneratorMojo extends AbstractMojo
 		helper.setRuleClassNames(names);
 		helper.setBaseClassNames(baseClassNames);
 
-		new ParserGenerator(file, ioFile.getParentFile().getPath(), directoryToGenerate).generate();
+		new ParserGenerator(file, ioFile.getParentFile().getPath(), directoryToGenerate, "").generate();
 	}
 }
