@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -92,7 +93,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 	{
 		MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo-object-pascal\\plugin\\");
+		File projectDir = new File("W:\\_github.com\\consulo\\consulo-apache-thrift\\");
 		Resource resource = new Resource();
 		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();
@@ -267,7 +268,6 @@ public class GrammarGeneratorMojo extends AbstractMojo
 		Map<String, String> baseClassNames = new HashMap<>();
 		for(BnfRule rule : rules)
 		{
-
 			ParserGeneratorUtil.NameFormat prefix = ParserGeneratorUtil.getPsiClassFormat(file);
 			ParserGeneratorUtil.NameFormat prefixImpl = ParserGeneratorUtil.getPsiImplClassFormat(file);
 
@@ -280,7 +280,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 
 			String baseClass = ruleClasses.size() >= 4 ? ruleClasses.get(3) : ruleClasses.get(ruleClasses.size() - 1);
 
-			baseClassNames.put(qualifiedRuleClassName, baseClass);
+			baseClassNames.put(qualifiedRuleClassName, getFirstImplClass(baseClass));
 		}
 
 		JavaParserJavaHelper helper = (JavaParserJavaHelper) JavaHelper.getJavaHelper(file);
@@ -289,5 +289,15 @@ public class GrammarGeneratorMojo extends AbstractMojo
 		helper.setBaseClassNames(baseClassNames);
 
 		new ParserGenerator(file, ioFile.getParentFile().getPath(), directoryToGenerate, "").generate();
+	}
+
+	private static String getFirstImplClass(String clazz)
+	{
+		if(clazz.contains(","))
+		{
+			List<String> split = StringUtil.split(clazz, ",");
+			return split.get(0).trim();
+		}
+		return clazz;
 	}
 }
