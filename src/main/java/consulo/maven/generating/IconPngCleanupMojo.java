@@ -39,7 +39,7 @@ public class IconPngCleanupMojo extends AbstractIconGeneratorMojo
 
 					if(_2x.exists())
 					{
-						file.delete();
+						_2x.delete();
 					}
 				}
 			}
