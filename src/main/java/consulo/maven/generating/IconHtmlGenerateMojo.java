@@ -88,6 +88,7 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 		for(String iconId : allIconIds)
 		{
 			boolean isSVG = false;
+			boolean svgVSpng = false;
 			String size = "??:??";
 
 			for(Map<String, IconInfo> map : myAllIcons.values())
@@ -100,7 +101,24 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 					isSVG = iconInfo.isSVG;
 				}
 			}
-			if(isSVG)
+
+			Map<String, IconInfo> light = myAllIcons.get("_light");
+			Map<String, IconInfo> dark = myAllIcons.get("_dark");
+			if(light != null && dark != null)
+			{
+				IconInfo lightIcon = light.get(iconId);
+				IconInfo darkIcon = dark.get(iconId);
+				if(lightIcon != null && darkIcon != null && lightIcon.isSVG != darkIcon.isSVG)
+				{
+					svgVSpng = true;
+				}
+			}
+
+			if(svgVSpng)
+			{
+				builder.append("<tr style=\"border: 1px solid gray; background: red\">");
+			}
+			else if(isSVG)
 			{
 				builder.append("<tr style=\"border: 1px solid gray; background: #baeeba\">");
 			}
@@ -111,6 +129,10 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 
 			builder.append("<td>");
 			builder.append(iconId);
+			if(svgVSpng)
+			{
+				builder.append(" (SVG/PNG error)");
+			}
 			builder.append("</td>");
 			builder.append("<td>").append(size).append("</td>");
 
@@ -121,11 +143,11 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 				String themeId = entry.getKey();
 				Map<String, IconInfo> icons = entry.getValue();
 
-				boolean dark = themeId.equals("_dark");
+				boolean isDark = themeId.equals("_dark");
 				IconInfo iconInfo = icons.get(iconId);
 				if(iconInfo != null)
 				{
-					if(dark)
+					if(isDark)
 					{
 						builder.append("<div class=\"theme-block icon-path-dark\">");
 					}
@@ -138,14 +160,14 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 
 					for(File file : iconInfo.files)
 					{
-						appendIconRow(builder, file, iconInfo, dark);
+						appendIconRow(builder, file, iconInfo, isDark);
 
 						if(file.getName().endsWith(".png"))
 						{
 							File _2x = new File(file.getParentFile(), file.getName().replace(".png", "@2x.png"));
 							if(_2x.exists())
 							{
-								appendIconRow(builder, _2x, iconInfo, dark);
+								appendIconRow(builder, _2x, iconInfo, isDark);
 							}
 						}
 						else if(file.getName().endsWith(".svg"))
@@ -153,7 +175,7 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 							File _2x = new File(file.getParentFile(), file.getName().replace(".svg", "@2x.svg"));
 							if(_2x.exists())
 							{
-								appendIconRow(builder, _2x, iconInfo, dark);
+								appendIconRow(builder, _2x, iconInfo, isDark);
 							}
 						}
 					}
