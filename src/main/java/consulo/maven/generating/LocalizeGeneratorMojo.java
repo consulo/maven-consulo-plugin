@@ -175,7 +175,15 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 
 						String methodName = normalizeFirstChar(captilizeByDot(key));
 
-						MessageFormat format = new MessageFormat(text);
+						MessageFormat format = null;
+						try
+						{
+							format = new MessageFormat(text);
+						}
+						catch(Exception e)
+						{
+							throw new MojoFailureException("Failed to parse text: " + text, e);
+						}
 
 						Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
 
@@ -212,7 +220,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 				}
 				catch(Exception e)
 				{
-					log.error(e);
+					throw new MojoFailureException(e.getMessage(), e);
 				}
 
 				TypeSpec typeSpec = TypeSpec.classBuilder(localizeName)
