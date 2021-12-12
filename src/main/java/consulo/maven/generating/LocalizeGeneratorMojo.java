@@ -167,13 +167,13 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 						String t = value.get("text");
 						String text = t == null ? "" : t;
 
-						String fieldName = normalizeFirstChar(key.replace(".", "_").replace(" ", "_"));
+						String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
 
 						FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
 						fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S)", localizeKey, "ID", key).build());
 						fieldSpecs.add(fieldSpec.build());
 
-						String methodName = normalizeFirstChar(captilizeByDot(key));
+						String methodName = normalizeName(captilizeByDot(key));
 
 						MessageFormat format = null;
 						try
@@ -248,7 +248,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 	public static void main(String[] args)
 	{
 		TEST_GENERATE = true;
-		
+
 		MavenProject mavenProject = new MavenProject();
 
 		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");

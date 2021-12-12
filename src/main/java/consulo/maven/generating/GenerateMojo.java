@@ -3,6 +3,8 @@ package consulo.maven.generating;
 import org.apache.maven.plugin.AbstractMojo;
 import org.codehaus.plexus.util.StringUtils;
 
+import javax.lang.model.SourceVersion;
+
 /**
  * @author VISTALL
  * @since 2020-09-26
@@ -11,7 +13,7 @@ public abstract class GenerateMojo extends AbstractMojo
 {
 	public static boolean TEST_GENERATE = false;
 
-	protected static String normalizeFirstChar(String text)
+	protected static String normalizeName(String text)
 	{
 		char c = text.charAt(0);
 		if(c == '0')
@@ -26,7 +28,17 @@ public abstract class GenerateMojo extends AbstractMojo
 		{
 			return "two" + text.substring(1, text.length());
 		}
-		return text;
+		return escapeString(text);
+	}
+
+	private static String escapeString(String name)
+	{
+		if(SourceVersion.isName(name))
+		{
+			return "_" + name;
+		}
+
+		return name;
 	}
 
 	protected static String captilizeByDot(String id)
