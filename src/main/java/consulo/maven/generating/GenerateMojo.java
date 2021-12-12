@@ -33,7 +33,7 @@ public abstract class GenerateMojo extends AbstractMojo
 
 	private static String escapeString(String name)
 	{
-		if(SourceVersion.isName(name))
+		if(!SourceVersion.isName(name))
 		{
 			return "_" + name;
 		}
