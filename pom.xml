@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>consulo.maven</groupId>
-	<artifactId>consulo-maven-plugin</artifactId>
+	<artifactId>maven-consulo-plugin</artifactId>
 	<version>2-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
