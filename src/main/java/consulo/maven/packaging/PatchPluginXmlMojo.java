@@ -1,11 +1,5 @@
 package consulo.maven.packaging;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Map;
-import java.util.jar.JarFile;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -19,6 +13,12 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaders;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Map;
+import java.util.jar.JarFile;
 
 /**
  * @author VISTALL
@@ -102,13 +102,13 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo
 	{
 		Map<String, Artifact> artifactMap = mavenProject.getArtifactMap();
 
-		Artifact coreApiArtifact = artifactMap.get("consulo:consulo-core-api");
-		if(coreApiArtifact == null)
+		Artifact ideApiArtifact = artifactMap.get("consulo:consulo-ide-api");
+		if(ideApiArtifact == null)
 		{
-			throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not resolved");
+			throw new MojoFailureException("Artifact 'consulo:consulo-ide-api' not resolved");
 		}
 
-		File coreApiJarFile = coreApiArtifact.getFile();
+		File coreApiJarFile = ideApiArtifact.getFile();
 
 		String platformVersion;
 		try (JarFile jarFile = new JarFile(coreApiJarFile))

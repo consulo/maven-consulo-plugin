@@ -87,16 +87,11 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 			{
 				File srcDirectory = new File(resource.getDirectory());
 
-				File iconDir = new File(srcDirectory, "icon");
+				File iconDir = new File(srcDirectory, "ICON-LIB");
 
 				if(!iconDir.exists())
 				{
-					throw new MojoFailureException("IconLibrary: icon directory not exists");
-				}
-
-				if(!new File(iconDir, "marker.txt").exists())
-				{
-					throw new MojoFailureException("IconLibrary: no marker.txt file: " + iconDir);
+					throw new MojoFailureException("IconLibrary: 'ICON-LIB' directory not exists");
 				}
 
 				for(File themeId : iconDir.listFiles((dir, name) -> name.startsWith("_")))
@@ -112,8 +107,7 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 						String name = iconGroup.getName();
 						if(!name.endsWith("IconGroup"))
 						{
-							log.info("IconLibrary: not endsWith IconGroup " + name);
-							continue;
+							throw new MojoFailureException("IconLibrary: not endsWith IconGroup " + name);
 						}
 
 						List<File> files = FileUtils.getFiles(iconGroup, "**/*.svg,**/*.png", null);

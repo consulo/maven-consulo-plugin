@@ -34,7 +34,7 @@ import java.util.*;
 @Mojo(name = "run-desktop", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class RunDesktopMojo extends AbstractConsuloMojo
 {
-	private static final String ourMainClass = "consulo.desktop.boot.main.Main";
+	private static final String ourMainClass = "consulo.desktop.awt.boot.main.Main";
 
 	public static class ExecutionConfig
 	{
@@ -154,11 +154,13 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		map.put("idea.home.path", context.getPlatformDirectory().getPath());
 		map.put("consulo.in.sandbox", "true");  // sandbox mode
 		map.put("consulo.maven.console.log", "true"); // redirect file log to console
+		map.put("consulo.config.path", context.getSandboxDirectory().getPath() + "/config");
+		map.put("consulo.system.path", context.getSandboxDirectory().getPath() + "/system");
+
 		// deprecated option
 		map.put("idea.is.internal", "true");
 		map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
 		map.put("idea.system.path", context.getSandboxDirectory().getPath() + "/system");
-
 		List<String> pluginPaths = new ArrayList<>();
 
 		if(execution.useDefaultWorkspaceDirectory)
