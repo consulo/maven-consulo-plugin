@@ -85,17 +85,22 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 
 			for(Resource resource : mavenProject.getResources())
 			{
-				File srcDirectory = new File(resource.getDirectory());
+				File resourceDirectory = new File(resource.getDirectory());
 
-				File iconDir = new File(srcDirectory, "ICON-LIB");
+				File iconDir = new File(resourceDirectory, "ICON-LIB");
 
 				if(!iconDir.exists())
 				{
-					throw new MojoFailureException("IconLibrary: 'ICON-LIB' directory not exists");
+					throw new MojoFailureException("IconLibrary: 'ICON-LIB' directory not exists. Path: " + iconDir);
 				}
 
-				for(File themeId : iconDir.listFiles((dir, name) -> name.startsWith("_")))
+				for(File themeId : iconDir.listFiles())
 				{
+					if(!themeId.isDirectory())
+					{
+						continue;
+					}
+
 					List<GenerateInfo> gen = toGenerateFiles.computeIfAbsent(themeId.getName(), (k) -> new ArrayList<>());
 					for(File iconGroup : themeId.listFiles())
 					{
