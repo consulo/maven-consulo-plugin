@@ -266,7 +266,7 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 						String iconId = relativePath.replace("\\", "/").replace("/", ".");
 						IconInfo iconInfo = new IconInfo();
 						iconInfo.fieldName = fieldName.replace("-", "_");
-						iconInfo.id = iconId.replace("-", "_");
+						iconInfo.id = iconId.replace("-", "_").toLowerCase(Locale.ROOT);
 						iconInfo.sourcePath = sourcePath;
 
 						iconInfo.files.add(iconFile);

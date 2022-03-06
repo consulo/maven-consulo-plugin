@@ -23,10 +23,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.text.Format;
 import java.text.MessageFormat;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author VISTALL
@@ -144,7 +141,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 
 					for(Map.Entry<String, Map<String, String>> entry : o.entrySet())
 					{
-						String key = entry.getKey();
+						String key = entry.getKey().toLowerCase(Locale.ROOT);
 
 						Map<String, String> value = entry.getValue();
 
