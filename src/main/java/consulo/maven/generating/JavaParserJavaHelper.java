@@ -16,15 +16,8 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.NavigatablePsiElement;
 import org.intellij.grammar.java.JavaHelper;
 
 import javax.annotation.Nonnull;
@@ -395,33 +388,33 @@ class JavaParserJavaHelper extends JavaHelper
 			case "String":
 				return String.class.getName();
 			case "ResolveState":
-				return ResolveState.class.getName();
+				return "consulo.language.psi.resolve.ResolveState";
 			case "PsiReference":
-				return PsiReference.class.getName();
+				return "consulo.language.psi.PsiReference";
 			case "PsiReference[]":
-				return PsiReference.class.getName() + "[]";
+				return "consulo.language.psi.PsiReference[]";
 			case "TextRange":
-				return TextRange.class.getName();
+				return "consulo.document.util.TextRange";
 			case "PsiElement":
-				return PsiElement.class.getName();
+				return "consulo.language.psi.PsiElement";
 			case "PsiDirectory":
-				return PsiDirectory.class.getName();
+				return "consulo.language.psi.PsiDirectory";
 			case "PsiScopeProcessor":
-				return PsiScopeProcessor.class.getName();
+				return "consulo.language.psi.resolve.PsiScopeProcessor";
 			case "Nonnull":
 				return Nonnull.class.getName();
 			case "Nullable":
 				return Nullable.class.getName();
 			case "IStubElementType":
-				return IStubElementType.class.getName();
+				return "consulo.language.psi.stub.IStubElementType";
 			case "IElementType":
-				return IElementType.class.getName();
+				return "consulo.language.ast.IElementType";
 			case "ReadWriteAccessDetector.Access":
-				return ReadWriteAccessDetector.Access.class.getName().replace("$", ".");
+				return "com.intellij.codeInsight.highlighting.ReadWriteAccessDetector.Access";
 			case "SearchScope":
-				return SearchScope.class.getName();
+				return "consulo.content.scope.SearchScope";
 			case "ItemPresentation":
-				return ItemPresentation.class.getName();
+				return "consulo.navigation.ItemPresentation";
 		}
 		return typeString;
 	}
