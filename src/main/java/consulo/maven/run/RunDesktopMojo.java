@@ -1,5 +1,6 @@
 package consulo.maven.run;
 
+import consulo.annotation.DeprecationInfo;
 import consulo.maven.base.AbstractConsuloMojo;
 import consulo.maven.base.util.ExtractUtil;
 import consulo.maven.base.util.HubApiUtil;
@@ -31,11 +32,11 @@ import java.util.*;
  * <p>
  * Threading impl from exec plugin on Apache 2
  */
+@Deprecated
+@DeprecationInfo("Don't use task 'run-desktop' mojo")
 @Mojo(name = "run-desktop", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class RunDesktopMojo extends AbstractConsuloMojo
 {
-	private static final String ourMainClass = "consulo.desktop.awt.boot.main.Main";
-
 	public static class ExecutionConfig
 	{
 		@Parameter(property = "buildNumber", defaultValue = SNAPSHOT)
@@ -76,12 +77,14 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 
 		context.findInnerBuildNumber();
 
-		IsolatedThreadGroup threadGroup = new IsolatedThreadGroup(ourMainClass);
+		String mainClassQualifiedName = getMainClassQualifiedName();
+
+		IsolatedThreadGroup threadGroup = new IsolatedThreadGroup(mainClassQualifiedName);
 		Thread bootstrapThread = new Thread(threadGroup, () ->
 		{
 			try
 			{
-				Method main = Thread.currentThread().getContextClassLoader().loadClass(ourMainClass).getMethod("main", new Class[]{String[].class});
+				Method main = Thread.currentThread().getContextClassLoader().loadClass(mainClassQualifiedName).getMethod("main", new Class[]{String[].class});
 				if(!main.isAccessible())
 				{
 					getLog().debug("Setting accessibility to true in order to invoke main().");
@@ -107,7 +110,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 			{ // just pass it on
 				Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);
 			}
-		}, ourMainClass + ".main()");
+		}, mainClassQualifiedName + ".main()");
 		bootstrapThread.setContextClassLoader(getClassLoader(context));
 		setSystemProperties(context);
 
@@ -200,6 +203,11 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		map.put("consulo.plugins.paths", String.join(File.pathSeparator, pluginPaths));
 		map.put("consulo.install.plugins.path", context.getSandboxDirectory().getPath() + "/config/plugins");
 		return map;
+	}
+
+	protected String getMainClassQualifiedName()
+	{
+		return RunDesktopAWTMojo.ourMainClass;
 	}
 
 	private ClassLoader getClassLoader(RunContext context) throws MojoExecutionException
