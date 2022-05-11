@@ -77,7 +77,7 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 
 		context.findInnerBuildNumber();
 
-		String mainClassQualifiedName = getMainClassQualifiedName();
+		String mainClassQualifiedName = getMainClassQualifiedName(myRepositoryChannel);
 
 		IsolatedThreadGroup threadGroup = new IsolatedThreadGroup(mainClassQualifiedName);
 		Thread bootstrapThread = new Thread(threadGroup, () ->
@@ -205,9 +205,9 @@ public class RunDesktopMojo extends AbstractConsuloMojo
 		return map;
 	}
 
-	protected String getMainClassQualifiedName()
+	protected String getMainClassQualifiedName(String repositoryChannel)
 	{
-		return RunDesktopAWTMojo.ourMainClass;
+		return RunDesktopAWTMojo.getMainClassQualifiedNameImpl(repositoryChannel);
 	}
 
 	private ClassLoader getClassLoader(RunContext context) throws MojoExecutionException

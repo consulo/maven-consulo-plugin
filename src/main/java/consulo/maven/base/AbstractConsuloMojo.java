@@ -25,10 +25,10 @@ public abstract class AbstractConsuloMojo extends AbstractMojo
 	@Parameter(property = "id", defaultValue = "${project.artifactId}")
 	protected String myId;
 
-	@Parameter(property = "repositoryChannel", defaultValue = "nightly")
+	@Parameter(alias = "repositoryChannel", defaultValue = "nightly")
 	protected String myRepositoryChannel = "nightly";
 
-	@Parameter(property = "apiUrl", defaultValue = "https://hub.consulo.io/api/repository/")
+	@Parameter(alias = "apiUrl", defaultValue = "https://hub.consulo.io/api/repository/")
 	protected String myApiUrl = "https://hub.consulo.io/api/repository/";
 
 	@Parameter(alias = "dependencies")
