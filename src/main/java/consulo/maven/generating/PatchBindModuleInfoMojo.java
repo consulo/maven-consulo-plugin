@@ -38,14 +38,14 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 	{
 		String outputDirectory = myMavenProject.getBuild().getOutputDirectory();
 
-		File moduleInfoClass = new File(outputDirectory, "classes/module-info.class");
+		File moduleInfoClass = new File(outputDirectory, "module-info.class");
 		if(!moduleInfoClass.exists())
 		{
 			getLog().info(moduleInfoClass + " not exists");
 			return;
 		}
 
-		File servicesFile = new File(outputDirectory, "classes/META-INF/services/" + INJECTING_BINDING.replace("/", "."));
+		File servicesFile = new File(outputDirectory, "META-INF/services/" + INJECTING_BINDING.replace("/", "."));
 		if(!servicesFile.exists())
 		{
 			getLog().info(servicesFile + " not exists");
@@ -148,7 +148,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\ide-impl");
 
 		Build build = new Build();
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+		build.setOutputDirectory(new File(projectDir, "target/classes").getAbsolutePath());
 		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
 		mavenProject.setBuild(build);
 
