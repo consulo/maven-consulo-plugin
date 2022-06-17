@@ -38,7 +38,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 	{
 		String outputDirectory = myMavenProject.getBuild().getOutputDirectory();
 
-		File moduleInfoClass = new File(outputDirectory, "classes/module-info2.class");
+		File moduleInfoClass = new File(outputDirectory, "classes/module-info.class");
 		if(!moduleInfoClass.exists())
 		{
 			getLog().info(moduleInfoClass + " not exists");
