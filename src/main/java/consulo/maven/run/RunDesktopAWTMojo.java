@@ -11,8 +11,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 @Mojo(name = "run-desktop-awt", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class RunDesktopAWTMojo extends RunDesktopMojo
 {
-	private static final String ourMainClassV3 = "consulo.desktop.awt.boot.main.Main";
-	private static final String ourMainClassV2 = "consulo.desktop.boot.main.Main";
+	public static final String ourMainClassV3 = "consulo.desktop.awt.boot.main.Main";
+	public static final String ourMainClassV2 = "consulo.desktop.boot.main.Main";
 
 	@Override
 	protected String getMainClassQualifiedName(String repositoryChannel)
@@ -22,7 +22,7 @@ public class RunDesktopAWTMojo extends RunDesktopMojo
 
 	public static String getMainClassQualifiedNameImpl(String repositoryChannel)
 	{
-		if("valhalla".equals(repositoryChannel))
+		if(VALHALLA_BRANCH.equals(repositoryChannel))
 		{
 			return ourMainClassV3;
 		}
