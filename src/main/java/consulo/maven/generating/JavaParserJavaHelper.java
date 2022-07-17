@@ -16,7 +16,6 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.NavigatablePsiElement;
 import org.intellij.grammar.java.JavaHelper;
 
@@ -129,7 +128,7 @@ class JavaParserJavaHelper extends JavaHelper
 
 	@Nonnull
 	@Override
-	public List<NavigatablePsiElement> findClassMethods(@Nullable String className, @Nonnull MethodType methodType, @Nullable String methodName, int paramCount, String... paramTypes)
+	public List<NavigatablePsiElement> findClassMethods(@Nullable String version, @Nullable String className, @Nonnull MethodType methodType, @Nullable String methodName, int paramCount, String... paramTypes)
 	{
 		//System.out.println(className);
 		if(className == null)
@@ -173,7 +172,7 @@ class JavaParserJavaHelper extends JavaHelper
 					continue;
 				}
 
-				if(!acceptMethod((MethodDeclaration) member, paramCount, paramTypes))
+				if(!acceptMethod(version, (MethodDeclaration) member, paramCount, paramTypes))
 				{
 					continue;
 				}
@@ -182,7 +181,7 @@ class JavaParserJavaHelper extends JavaHelper
 			}
 			else if(member instanceof ConstructorDeclaration && methodType == MethodType.CONSTRUCTOR)
 			{
-				if(!acceptMethod((ConstructorDeclaration) member, paramCount, paramTypes))
+				if(!acceptMethod(version, (ConstructorDeclaration) member, paramCount, paramTypes))
 				{
 					continue;
 				}
@@ -194,7 +193,7 @@ class JavaParserJavaHelper extends JavaHelper
 		return methodDelegates;
 	}
 
-	private boolean acceptMethod(CallableDeclaration<?> callableDeclaration, int paramsCount, String[] paramTypes)
+	private boolean acceptMethod(String version, CallableDeclaration<?> callableDeclaration, int paramsCount, String[] paramTypes)
 	{
 		NodeList<Parameter> parameters = callableDeclaration.getParameters();
 		if(paramsCount > 0 && parameters.size() != paramsCount)
@@ -217,7 +216,7 @@ class JavaParserJavaHelper extends JavaHelper
 			String paramType = paramTypes[i];
 			Parameter parameter = parameters.get(i);
 
-			String t = toQualified(parameter.getType(), callableDeclaration);
+			String t = toQualified(version, parameter.getType(), callableDeclaration);
 
 			if(acceptsName(paramType, t))
 			{
@@ -293,7 +292,7 @@ class JavaParserJavaHelper extends JavaHelper
 
 	@Nonnull
 	@Override
-	public List<String> getMethodTypes(@Nullable NavigatablePsiElement method)
+	public List<String> getMethodTypes(@Nullable String version, @Nullable NavigatablePsiElement method)
 	{
 		if(!(method instanceof MethodDelegate))
 		{
@@ -309,12 +308,12 @@ class JavaParserJavaHelper extends JavaHelper
 		}
 		else
 		{
-			list.add(toQualified(((MethodDeclaration) delegate).getType(), delegate));
+			list.add(toQualified(version, ((MethodDeclaration) delegate).getType(), delegate));
 		}
 
 		for(Parameter parameter : delegate.getParameters())
 		{
-			list.add(toQualified(parameter.getType(), delegate));
+			list.add(toQualified(version, parameter.getType(), delegate));
 
 			list.add(parameter.getNameAsString());
 		}
@@ -322,7 +321,7 @@ class JavaParserJavaHelper extends JavaHelper
 		return list;
 	}
 
-	private String toQualified(Type type, CallableDeclaration<?> callableDeclaration)
+	private String toQualified(String version, Type type, CallableDeclaration<?> callableDeclaration)
 	{
 		ResolvedType resolvedType = null;
 		try
@@ -378,9 +377,9 @@ class JavaParserJavaHelper extends JavaHelper
 			List<String> types = new ArrayList<>();
 			for(Type arg : typeArguments.get())
 			{
-				types.add(toQualified(arg, callableDeclaration));
+				types.add(toQualified(version, arg, callableDeclaration));
 			}
-			return Trinity.class.getName() + "<" + String.join(",", types) + ">";
+			return "consulo.util.lang.Trinity<" + String.join(",", types) + ">";
 		}
 
 		switch(typeString)
@@ -410,7 +409,7 @@ class JavaParserJavaHelper extends JavaHelper
 			case "IElementType":
 				return "consulo.language.ast.IElementType";
 			case "ReadWriteAccessDetector.Access":
-				return "com.intellij.codeInsight.highlighting.ReadWriteAccessDetector.Access";
+				return "consulo.language.editor.highlight.ReadWriteAccessDetector.Access";
 			case "SearchScope":
 				return "consulo.content.scope.SearchScope";
 			case "ItemPresentation":
