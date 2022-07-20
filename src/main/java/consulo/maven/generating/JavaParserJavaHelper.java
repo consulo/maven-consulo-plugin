@@ -136,7 +136,7 @@ class JavaParserJavaHelper extends JavaHelper
 
 	@Nonnull
 	@Override
-	public List<NavigatablePsiElement> findClassMethods(@Nullable String className, @Nonnull MethodType methodType, @Nullable String methodName, int paramCount, String... paramTypes)
+	public List<NavigatablePsiElement> findClassMethods(@Nullable String version, @Nullable String className, @Nonnull MethodType methodType, @Nullable String methodName, int paramCount, String... paramTypes)
 	{
 		//System.out.println(className);
 		if(className == null)
@@ -300,7 +300,7 @@ class JavaParserJavaHelper extends JavaHelper
 
 	@Nonnull
 	@Override
-	public List<String> getMethodTypes(@Nullable NavigatablePsiElement method)
+	public List<String> getMethodTypes(@Nullable String version, @Nullable NavigatablePsiElement method)
 	{
 		if(!(method instanceof MethodDelegate))
 		{
