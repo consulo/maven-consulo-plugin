@@ -1,12 +1,6 @@
 package consulo.maven.packaging;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import consulo.maven.base.AbstractConsuloMojo;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -18,8 +12,20 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
-import consulo.maven.base.AbstractConsuloMojo;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
 
 /**
  * @author VISTALL
@@ -60,6 +66,8 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 	@Component(role = ArtifactHandlerManager.class)
 	protected ArtifactHandlerManager artifactHandlerManager;
 
+	protected static final String REQUIRES_EXTENSION = ".requires";
+
 	public static File getAndCheckArtifactFile(Artifact artifact) throws MojoFailureException
 	{
 		File artifactFile = artifact.getFile();
@@ -68,6 +76,21 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 			throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not build");
 		}
 		return artifactFile;
+	}
+
+	@Nullable
+	protected String getPluginRequiresXml(File jarFile) throws IOException
+	{
+		try (JarFile jar = new JarFile(jarFile))
+		{
+			ZipEntry entry = jar.getEntry("META-INF/plugin-requires.xml");
+			if(entry != null)
+			{
+				InputStream stream = jar.getInputStream(entry);
+				return IOUtil.toString(stream);
+			}
+		}
+		return null;
 	}
 
 	public Artifact resolveArtifact(String coords) throws MojoFailureException

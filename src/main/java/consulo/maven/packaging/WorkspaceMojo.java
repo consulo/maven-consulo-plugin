@@ -14,6 +14,8 @@ import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Set;
 
@@ -89,6 +91,13 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
 
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
+
+					String requiresXml = getPluginRequiresXml(artifactFile);
+					if(requiresXml != null)
+					{
+						File requiresXmlFile = new File(libDirectory, artifactFile.getName() + REQUIRES_EXTENSION);
+						Files.writeString(requiresXmlFile.toPath(), requiresXml, StandardCharsets.UTF_8);
+					}
 				}
 			}
 
