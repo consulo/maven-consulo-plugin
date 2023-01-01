@@ -16,6 +16,8 @@ public abstract class AbstractConsuloMojo extends AbstractMojo
 {
 	public static final String SNAPSHOT = "SNAPSHOT";
 
+	public static final String VALHALLA_BRANCH = "valhalla";
+
 	@Parameter(property = "project", defaultValue = "${project}", readonly = true)
 	public MavenProject myProject;
 
@@ -25,10 +27,10 @@ public abstract class AbstractConsuloMojo extends AbstractMojo
 	@Parameter(property = "id", defaultValue = "${project.artifactId}")
 	protected String myId;
 
-	@Parameter(property = "repositoryChannel", defaultValue = "nightly")
-	protected String myRepositoryChannel = "nightly";
+	@Parameter(alias = "repositoryChannel", defaultValue = "nightly")
+	public String myRepositoryChannel = "nightly";
 
-	@Parameter(property = "apiUrl", defaultValue = "https://hub.consulo.io/api/repository/")
+	@Parameter(alias = "apiUrl", defaultValue = "https://hub.consulo.io/api/repository/")
 	protected String myApiUrl = "https://hub.consulo.io/api/repository/";
 
 	@Parameter(alias = "dependencies")

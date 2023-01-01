@@ -1,5 +1,7 @@
 package consulo.maven.generating;
 
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.squareup.javapoet.*;
 import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Build;
@@ -19,13 +21,9 @@ import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.text.Format;
 import java.text.MessageFormat;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author VISTALL
@@ -58,31 +56,24 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 			{
 				File srcDirectory = new File(resource.getDirectory());
 
-				File localizeDir = new File(srcDirectory, "localize");
+				File localizeDir = new File(srcDirectory, "LOCALIZE-LIB");
 
-				if(!localizeDir.exists())
+				File enUSDir = new File(localizeDir, "en_US");
+				if(!enUSDir.exists())
 				{
+					// skip not en_US localize
 					continue;
 				}
 
-				File idFile = new File(localizeDir, "id.txt");
-				if(!idFile.exists())
-				{
-					continue;
-				}
-
-				String txt = FileUtils.fileRead(idFile, "UTF-8");
-
-				// ignore not en localize
-				if(!"en".equals(txt))
-				{
-					continue;
-				}
-
-				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.yaml", null);
+				List<File> files = FileUtils.getFiles(enUSDir, "*.yaml", null);
 				for(File file : files)
 				{
-					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<File, File>(file, srcDirectory));
+					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
+				}
+
+				if(files.isEmpty())
+				{
+					throw new MojoFailureException("LocalizeLibrary: " + enUSDir + " exists, but no files.");
 				}
 			}
 
@@ -121,18 +112,12 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 					continue;
 				}
 
-				Path sourcePath = sourceDirectory.toPath();
+				// consulo.platform.base.ApplicationLocalize
+				String localizeFullPath = FileUtilRt.getNameWithoutExtension(file.getName());
 
-				Path parentPath = file.getParentFile().toPath();
+				String pluginId = StringUtil.getPackageName(localizeFullPath);
+				String localizeId = StringUtil.getShortName(localizeFullPath);
 
-				String relativePath = sourcePath.relativize(parentPath).toString();
-				if(relativePath == null)
-				{
-					log.info("Localize: " + file.getPath() + " can't calculate relative path to " + sourceDirectory);
-					continue;
-				}
-
-				String pluginId = relativePath.replace("\\", "/").replace("localize/", "").replace("/", ".");
 				String packageName = pluginId + ".localize";
 
 				log.info("Localize: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
@@ -142,15 +127,11 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 				ClassName localizeKey = ClassName.get("consulo.localize", "LocalizeKey");
 				ClassName localizeValue = ClassName.get("consulo.localize", "LocalizeValue");
 
-				String localizeName = FileUtils.removeExtension(file.getName());
-
 				List<FieldSpec> fieldSpecs = new ArrayList<>();
 				List<MethodSpec> methodSpecs = new ArrayList<>();
 
-				String id = pluginId + "." + localizeName;
-
 				FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
-				idField.initializer(CodeBlock.of("$S", id));
+				idField.initializer(CodeBlock.of("$S", localizeFullPath));
 				fieldSpecs.add(idField.build());
 
 				Yaml yaml = new Yaml();
@@ -160,7 +141,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 
 					for(Map.Entry<String, Map<String, String>> entry : o.entrySet())
 					{
-						String key = entry.getKey();
+						String key = entry.getKey().toLowerCase(Locale.ROOT);
 
 						Map<String, String> value = entry.getValue();
 
@@ -223,7 +204,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 					throw new MojoFailureException(e.getMessage(), e);
 				}
 
-				TypeSpec typeSpec = TypeSpec.classBuilder(localizeName)
+				TypeSpec typeSpec = TypeSpec.classBuilder(localizeId)
 						.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "ALL").build())
 						.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 						.addFields(fieldSpecs)

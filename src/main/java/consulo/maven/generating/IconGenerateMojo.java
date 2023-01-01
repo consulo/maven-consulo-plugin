@@ -35,16 +35,16 @@ public class IconGenerateMojo extends AbstractIconGeneratorMojo
 	@Override
 	protected void validateGeneration(Map<String, List<GenerateInfo>> toGenerateFiles) throws MojoFailureException
 	{
-		if(!toGenerateFiles.containsKey("_light"))
+		if(!toGenerateFiles.containsKey("light"))
 		{
-			throw new MojoFailureException("IconLibrary: no _light theme icons");
+			throw new MojoFailureException("IconLibrary: no 'light' theme icons");
 		}
 	}
 
 	@Override
 	protected void generate(String themeId, String parentPackage, String name, String id, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException
 	{
-		if(!themeId.equals("_light"))
+		if(!themeId.equals("light"))
 		{
 			return;
 		}
@@ -95,7 +95,7 @@ public class IconGenerateMojo extends AbstractIconGeneratorMojo
 
 		MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\icon\\base-icon-library");
+		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
 		Resource resource = new Resource();
 		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();

@@ -4,10 +4,10 @@
 
 	<groupId>consulo.maven</groupId>
 	<artifactId>maven-consulo-plugin</artifactId>
-	<version>2-SNAPSHOT</version>
+	<version>3-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
-	<name>Maven Consulo Run Plugin</name>
+	<name>Maven Consulo Plugin</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -190,6 +190,17 @@
 			<groupId>consulo.internal</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>3.0.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo.internal.org.objectweb.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>9.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>consulo.internal.org.objectweb.asm</groupId>
+			<artifactId>asm-commons</artifactId>
+			<version>9.2-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

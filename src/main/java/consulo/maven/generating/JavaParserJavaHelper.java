@@ -16,15 +16,7 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.NavigatablePsiElement;
 import org.intellij.grammar.java.JavaHelper;
 
 import javax.annotation.Nonnull;
@@ -180,7 +172,7 @@ class JavaParserJavaHelper extends JavaHelper
 					continue;
 				}
 
-				if(!acceptMethod((MethodDeclaration) member, paramCount, paramTypes))
+				if(!acceptMethod(version, (MethodDeclaration) member, paramCount, paramTypes))
 				{
 					continue;
 				}
@@ -189,7 +181,7 @@ class JavaParserJavaHelper extends JavaHelper
 			}
 			else if(member instanceof ConstructorDeclaration && methodType == MethodType.CONSTRUCTOR)
 			{
-				if(!acceptMethod((ConstructorDeclaration) member, paramCount, paramTypes))
+				if(!acceptMethod(version, (ConstructorDeclaration) member, paramCount, paramTypes))
 				{
 					continue;
 				}
@@ -201,7 +193,7 @@ class JavaParserJavaHelper extends JavaHelper
 		return methodDelegates;
 	}
 
-	private boolean acceptMethod(CallableDeclaration<?> callableDeclaration, int paramsCount, String[] paramTypes)
+	private boolean acceptMethod(String version, CallableDeclaration<?> callableDeclaration, int paramsCount, String[] paramTypes)
 	{
 		NodeList<Parameter> parameters = callableDeclaration.getParameters();
 		if(paramsCount > 0 && parameters.size() != paramsCount)
@@ -224,7 +216,7 @@ class JavaParserJavaHelper extends JavaHelper
 			String paramType = paramTypes[i];
 			Parameter parameter = parameters.get(i);
 
-			String t = toQualified(parameter.getType(), callableDeclaration);
+			String t = toQualified(version, parameter.getType(), callableDeclaration);
 
 			if(acceptsName(paramType, t))
 			{
@@ -316,12 +308,12 @@ class JavaParserJavaHelper extends JavaHelper
 		}
 		else
 		{
-			list.add(toQualified(((MethodDeclaration) delegate).getType(), delegate));
+			list.add(toQualified(version, ((MethodDeclaration) delegate).getType(), delegate));
 		}
 
 		for(Parameter parameter : delegate.getParameters())
 		{
-			list.add(toQualified(parameter.getType(), delegate));
+			list.add(toQualified(version, parameter.getType(), delegate));
 
 			list.add(parameter.getNameAsString());
 		}
@@ -329,7 +321,7 @@ class JavaParserJavaHelper extends JavaHelper
 		return list;
 	}
 
-	private String toQualified(Type type, CallableDeclaration<?> callableDeclaration)
+	private String toQualified(String version, Type type, CallableDeclaration<?> callableDeclaration)
 	{
 		ResolvedType resolvedType = null;
 		try
@@ -385,9 +377,9 @@ class JavaParserJavaHelper extends JavaHelper
 			List<String> types = new ArrayList<>();
 			for(Type arg : typeArguments.get())
 			{
-				types.add(toQualified(arg, callableDeclaration));
+				types.add(toQualified(version, arg, callableDeclaration));
 			}
-			return Trinity.class.getName() + "<" + String.join(",", types) + ">";
+			return "consulo.util.lang.Trinity<" + String.join(",", types) + ">";
 		}
 
 		switch(typeString)
@@ -395,33 +387,33 @@ class JavaParserJavaHelper extends JavaHelper
 			case "String":
 				return String.class.getName();
 			case "ResolveState":
-				return ResolveState.class.getName();
+				return "consulo.language.psi.resolve.ResolveState";
 			case "PsiReference":
-				return PsiReference.class.getName();
+				return "consulo.language.psi.PsiReference";
 			case "PsiReference[]":
-				return PsiReference.class.getName() + "[]";
+				return "consulo.language.psi.PsiReference[]";
 			case "TextRange":
-				return TextRange.class.getName();
+				return "consulo.document.util.TextRange";
 			case "PsiElement":
-				return PsiElement.class.getName();
+				return "consulo.language.psi.PsiElement";
 			case "PsiDirectory":
-				return PsiDirectory.class.getName();
+				return "consulo.language.psi.PsiDirectory";
 			case "PsiScopeProcessor":
-				return PsiScopeProcessor.class.getName();
+				return "consulo.language.psi.resolve.PsiScopeProcessor";
 			case "Nonnull":
 				return Nonnull.class.getName();
 			case "Nullable":
 				return Nullable.class.getName();
 			case "IStubElementType":
-				return IStubElementType.class.getName();
+				return "consulo.language.psi.stub.IStubElementType";
 			case "IElementType":
-				return IElementType.class.getName();
+				return "consulo.language.ast.IElementType";
 			case "ReadWriteAccessDetector.Access":
-				return ReadWriteAccessDetector.Access.class.getName().replace("$", ".");
+				return "consulo.language.editor.highlight.ReadWriteAccessDetector.Access";
 			case "SearchScope":
-				return SearchScope.class.getName();
+				return "consulo.content.scope.SearchScope";
 			case "ItemPresentation":
-				return ItemPresentation.class.getName();
+				return "consulo.navigation.ItemPresentation";
 		}
 		return typeString;
 	}

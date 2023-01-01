@@ -85,22 +85,22 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 
 			for(Resource resource : mavenProject.getResources())
 			{
-				File srcDirectory = new File(resource.getDirectory());
+				File resourceDirectory = new File(resource.getDirectory());
 
-				File iconDir = new File(srcDirectory, "icon");
+				File iconDir = new File(resourceDirectory, "ICON-LIB");
 
 				if(!iconDir.exists())
 				{
-					throw new MojoFailureException("IconLibrary: icon directory not exists");
+					throw new MojoFailureException("IconLibrary: 'ICON-LIB' directory not exists. Path: " + iconDir);
 				}
 
-				if(!new File(iconDir, "marker.txt").exists())
+				for(File themeId : iconDir.listFiles())
 				{
-					throw new MojoFailureException("IconLibrary: no marker.txt file: " + iconDir);
-				}
+					if(!themeId.isDirectory())
+					{
+						continue;
+					}
 
-				for(File themeId : iconDir.listFiles((dir, name) -> name.startsWith("_")))
-				{
 					List<GenerateInfo> gen = toGenerateFiles.computeIfAbsent(themeId.getName(), (k) -> new ArrayList<>());
 					for(File iconGroup : themeId.listFiles())
 					{
@@ -112,8 +112,7 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 						String name = iconGroup.getName();
 						if(!name.endsWith("IconGroup"))
 						{
-							log.info("IconLibrary: not endsWith IconGroup " + name);
-							continue;
+							throw new MojoFailureException("IconLibrary: not endsWith IconGroup " + name);
 						}
 
 						List<File> files = FileUtils.getFiles(iconGroup, "**/*.svg,**/*.png", null);
@@ -266,8 +265,8 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo
 
 						String iconId = relativePath.replace("\\", "/").replace("/", ".");
 						IconInfo iconInfo = new IconInfo();
-						iconInfo.fieldName = fieldName.replace("-", "_");
-						iconInfo.id = iconId.replace("-", "_");
+						iconInfo.fieldName = fieldName.replace("-", "_").toLowerCase(Locale.ROOT);
+						iconInfo.id = iconId.replace("-", "_").toLowerCase(Locale.ROOT);
 						iconInfo.sourcePath = sourcePath;
 
 						iconInfo.files.add(iconFile);

@@ -102,8 +102,8 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 				}
 			}
 
-			Map<String, IconInfo> light = myAllIcons.get("_light");
-			Map<String, IconInfo> dark = myAllIcons.get("_dark");
+			Map<String, IconInfo> light = myAllIcons.get("light");
+			Map<String, IconInfo> dark = myAllIcons.get("dark");
 			if(light != null && dark != null)
 			{
 				IconInfo lightIcon = light.get(iconId);
@@ -143,7 +143,7 @@ public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
 				String themeId = entry.getKey();
 				Map<String, IconInfo> icons = entry.getValue();
 
-				boolean isDark = themeId.equals("_dark");
+				boolean isDark = themeId.equals("dark");
 				IconInfo iconInfo = icons.get(iconId);
 				if(iconInfo != null)
 				{

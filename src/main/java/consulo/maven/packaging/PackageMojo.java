@@ -1,12 +1,7 @@
 package consulo.maven.packaging;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Set;
-import java.util.function.Function;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.maven.artifact.Artifact;
@@ -16,6 +11,11 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.codehaus.plexus.util.FileUtils;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author VISTALL
@@ -56,7 +56,15 @@ public class PackageMojo extends AbstractPackagingMojo
 			{
 				if(isValidArtifactForPackaging(dependencyArtifact))
 				{
-					writeRuntimeFile(zipStream, getAndCheckArtifactFile(dependencyArtifact));
+					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+
+					writeRuntimeFile(zipStream, artifactFile);
+
+					String requiresXml = getPluginRequiresXml(artifactFile);
+					if(requiresXml != null)
+					{
+						writeText(zipStream, artifactFile.getName() + REQUIRES_EXTENSION, requiresXml);
+					}
 				}
 			}
 
@@ -129,6 +137,15 @@ public class PackageMojo extends AbstractPackagingMojo
 			IOUtils.copy(fileInputStream, zipStream);
 		}
 
+		zipStream.closeArchiveEntry();
+	}
+
+	private void writeText(ZipArchiveOutputStream zipStream, String fileName, String text) throws IOException
+	{
+		ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/lib/" + fileName);
+		zipStream.putArchiveEntry(entry);
+
+		IOUtils.copy(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), zipStream);
 		zipStream.closeArchiveEntry();
 	}
 }
