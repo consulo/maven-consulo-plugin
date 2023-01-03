@@ -22,15 +22,10 @@ public class RunDesktopAWTForkMojo extends RunForkMojo
 	@Override
 	protected String getMainClassQualifiedName(String repositoryChannel)
 	{
-		return getMainClassQualifiedNameImpl(repositoryChannel);
-	}
-
-	public static String getMainClassQualifiedNameImpl(String repositoryChannel)
-	{
-		if(VALHALLA_BRANCH.equals(repositoryChannel))
+		if(execution.useOldMainClass)
 		{
-			return RunDesktopAWTMojo.ourMainClassV3;
+			return RunDesktopAWTMojo.ourMainClassV2;
 		}
-		return RunDesktopAWTMojo.ourMainClassV2;
+		return RunDesktopAWTMojo.ourMainClassV3;
 	}
 }

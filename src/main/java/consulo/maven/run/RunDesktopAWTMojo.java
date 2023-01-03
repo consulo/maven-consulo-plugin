@@ -17,15 +17,15 @@ public class RunDesktopAWTMojo extends RunDesktopMojo
 	@Override
 	protected String getMainClassQualifiedName(String repositoryChannel)
 	{
-		return getMainClassQualifiedNameImpl(repositoryChannel);
+		return getMainClassQualifiedNameImpl(execution.useOldMainClass);
 	}
 
-	public static String getMainClassQualifiedNameImpl(String repositoryChannel)
+	public static String getMainClassQualifiedNameImpl(boolean useOldMainClass)
 	{
-		if(VALHALLA_BRANCH.equals(repositoryChannel))
+		if(useOldMainClass)
 		{
-			return ourMainClassV3;
+			return ourMainClassV2;
 		}
-		return ourMainClassV2;
+		return ourMainClassV3;
 	}
 }
