@@ -28,13 +28,18 @@ import java.util.stream.Collectors;
 @Mojo(name = "patch-bind-module-info", defaultPhase = LifecyclePhase.PROCESS_CLASSES, requiresOnline = false, requiresDependencyResolution = ResolutionScope.COMPILE, threadSafe = true)
 public class PatchBindModuleInfoMojo extends AbstractMojo
 {
-	private static final String INJECTING_BINDING = "consulo/component/bind/InjectingBinding";
-
 	@Parameter(property = "project", defaultValue = "${project}")
 	private MavenProject myMavenProject;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException
+	{
+		patchModuleInfo("consulo/component/bind/InjectingBinding");
+
+		patchModuleInfo("consulo/component/bind/TopicBinding");
+	}
+
+	private void patchModuleInfo(String serviceClassName) throws MojoExecutionException, MojoFailureException
 	{
 		String outputDirectory = myMavenProject.getBuild().getOutputDirectory();
 
@@ -45,7 +50,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 			return;
 		}
 
-		File servicesFile = new File(outputDirectory, "META-INF/services/" + INJECTING_BINDING.replace("/", "."));
+		File servicesFile = new File(outputDirectory, "META-INF/services/" + serviceClassName.replace("/", "."));
 		if(!servicesFile.exists())
 		{
 			getLog().info(servicesFile + " not exists");
@@ -89,7 +94,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 					@Override
 					public void visitProvide(String service, String... providers)
 					{
-						if(service.equals(INJECTING_BINDING))
+						if(service.equals(serviceClassName))
 						{
 							myFoundBindings = true;
 
@@ -110,7 +115,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 						if(!myFoundBindings)
 						{
 							String[] classes = lines.stream().filter(s -> !s.startsWith("#") && !s.trim().isEmpty()).map(s -> s.replace(".", "/")).toArray(String[]::new);
-							mv.visitProvide(INJECTING_BINDING, classes);
+							mv.visitProvide(serviceClassName, classes);
 						}
 						super.visitEnd();
 					}
@@ -132,7 +137,7 @@ public class PatchBindModuleInfoMojo extends AbstractMojo
 
 		try
 		{
-			getLog().info("patched module-info.class " + moduleInfoClass2);
+			getLog().info("patched module-info.class " + moduleInfoClass2 + ", service " + serviceClassName);
 			Files.write(moduleInfoClass2.toPath(), bytes, StandardOpenOption.CREATE);
 		}
 		catch(IOException e)
