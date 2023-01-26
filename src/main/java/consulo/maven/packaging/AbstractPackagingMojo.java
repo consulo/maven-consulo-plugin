@@ -79,12 +79,11 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 	}
 
 	@Nullable
-	protected JarXmlInfo readJarXml(File jarFile) throws IOException
+	protected String readPluginRequires(File jarFile) throws IOException
 	{
 		try (JarFile jar = new JarFile(jarFile))
 		{
 			String pluginRequires = null;
-			String pluginXml = null;
 
 			ZipEntry entry = jar.getEntry("META-INF/plugin-requires.xml");
 			if(entry != null)
@@ -93,19 +92,8 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 				pluginRequires = IOUtil.toString(stream);
 			}
 
-			entry = jar.getEntry("META-INF/plugin.xml");
-			if(entry != null)
-			{
-				InputStream stream = jar.getInputStream(entry);
-				pluginXml = IOUtil.toString(stream);
-			}
-
-			if(pluginRequires != null || pluginXml != null)
-			{
-				return new JarXmlInfo(pluginRequires, pluginXml);
-			}
+			return pluginRequires;
 		}
-		return null;
 	}
 
 	public Artifact resolveArtifact(String coords) throws MojoFailureException

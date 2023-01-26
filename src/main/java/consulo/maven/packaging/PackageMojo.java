@@ -51,6 +51,9 @@ public class PackageMojo extends AbstractPackagingMojo
 
 			writeRuntimeFile(zipStream, file);
 
+			MetaFiles metaFiles = new MetaFiles();
+			metaFiles.readFromJar(file);
+
 			Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
 			for(Artifact dependencyArtifact : dependencyArtifacts)
 			{
@@ -60,23 +63,27 @@ public class PackageMojo extends AbstractPackagingMojo
 
 					writeRuntimeFile(zipStream, artifactFile);
 
-					JarXmlInfo jarXmlInfo = readJarXml(artifactFile);
-					if(jarXmlInfo != null)
-					{
-						String pluginRequiresXml = jarXmlInfo.getPluginRequiresXml();
-						if(pluginRequiresXml != null)
-						{
-							writeText(zipStream, "lib/" + artifactFile.getName() + REQUIRES_EXTENSION, pluginRequiresXml);
-						}
+					metaFiles.readFromJar(artifactFile);
 
-						String pluginXml = jarXmlInfo.getPluginXml();
-						if(pluginXml != null)
-						{
-							writeText(zipStream, "plugin.xml", pluginXml);
-						}
+					String pluginRequiresXml = readPluginRequires(artifactFile);
+					if(pluginRequiresXml != null)
+					{
+						writeText(zipStream, "lib/" + artifactFile.getName() + REQUIRES_EXTENSION, pluginRequiresXml);
 					}
 				}
 			}
+
+			metaFiles.forEachData((filePath, data) ->
+			{
+				try
+				{
+					writeText(zipStream, filePath, data);
+				}
+				catch(IOException e)
+				{
+					throw new IllegalArgumentException(e);
+				}
+			});
 
 			File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
 			if(distDirectory.exists())

@@ -83,6 +83,9 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 			FileUtils.copyFile(file, new File(libDirectory, file.getName()));
 
+			MetaFiles metaFiles = new MetaFiles();
+			metaFiles.readFromJar(file);
+
 			Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
 			for(Artifact dependencyArtifact : dependencyArtifacts)
 			{
@@ -92,24 +95,30 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
 
-					JarXmlInfo jarXmlInfo = readJarXml(artifactFile);
-					if(jarXmlInfo != null)
-					{
-						String pluginRequiresXml = jarXmlInfo.getPluginRequiresXml();
-						if(pluginRequiresXml != null)
-						{
-							File requiresXmlFile = new File(libDirectory, artifactFile.getName() + REQUIRES_EXTENSION);
-							Files.writeString(requiresXmlFile.toPath(), pluginRequiresXml, StandardCharsets.UTF_8);
-						}
+					metaFiles.readFromJar(artifactFile);
 
-						String pluginXml = jarXmlInfo.getPluginXml();
-						if(pluginXml != null)
-						{
-							Files.writeString(pluginDirectory.toPath().resolve("plugin.xml"), pluginXml, StandardCharsets.UTF_8);
-						}
+					String pluginRequiresXml = readPluginRequires(artifactFile);
+					if(pluginRequiresXml != null)
+					{
+						File requiresXmlFile = new File(libDirectory, artifactFile.getName() + REQUIRES_EXTENSION);
+						Files.writeString(requiresXmlFile.toPath(), pluginRequiresXml, StandardCharsets.UTF_8);
 					}
 				}
 			}
+
+			metaFiles.forEachData((filePath, data) ->
+			{
+				try
+				{
+					File outFile = new File(pluginDirectory, filePath);
+					outFile.getParentFile().mkdirs();
+					Files.writeString(outFile.toPath(), data, StandardCharsets.UTF_8);
+				}
+				catch(IOException e)
+				{
+					throw new IllegalArgumentException(e);
+				}
+			});
 
 			File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
 			if(distDirectory.exists())
