@@ -60,10 +60,20 @@ public class PackageMojo extends AbstractPackagingMojo
 
 					writeRuntimeFile(zipStream, artifactFile);
 
-					String requiresXml = getPluginRequiresXml(artifactFile);
-					if(requiresXml != null)
+					JarXmlInfo jarXmlInfo = readJarXml(artifactFile);
+					if(jarXmlInfo != null)
 					{
-						writeText(zipStream, artifactFile.getName() + REQUIRES_EXTENSION, requiresXml);
+						String pluginRequiresXml = jarXmlInfo.getPluginRequiresXml();
+						if(pluginRequiresXml != null)
+						{
+							writeText(zipStream, "lib/" + artifactFile.getName() + REQUIRES_EXTENSION, pluginRequiresXml);
+						}
+
+						String pluginXml = jarXmlInfo.getPluginXml();
+						if(pluginXml != null)
+						{
+							writeText(zipStream, "plugin.xml", pluginXml);
+						}
 					}
 				}
 			}
@@ -142,7 +152,7 @@ public class PackageMojo extends AbstractPackagingMojo
 
 	private void writeText(ZipArchiveOutputStream zipStream, String fileName, String text) throws IOException
 	{
-		ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/lib/" + fileName);
+		ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/" + fileName);
 		zipStream.putArchiveEntry(entry);
 
 		IOUtils.copy(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), zipStream);

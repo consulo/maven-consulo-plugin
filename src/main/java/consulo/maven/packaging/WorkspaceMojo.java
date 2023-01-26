@@ -92,11 +92,21 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 					FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
 
-					String requiresXml = getPluginRequiresXml(artifactFile);
-					if(requiresXml != null)
+					JarXmlInfo jarXmlInfo = readJarXml(artifactFile);
+					if(jarXmlInfo != null)
 					{
-						File requiresXmlFile = new File(libDirectory, artifactFile.getName() + REQUIRES_EXTENSION);
-						Files.writeString(requiresXmlFile.toPath(), requiresXml, StandardCharsets.UTF_8);
+						String pluginRequiresXml = jarXmlInfo.getPluginRequiresXml();
+						if(pluginRequiresXml != null)
+						{
+							File requiresXmlFile = new File(libDirectory, artifactFile.getName() + REQUIRES_EXTENSION);
+							Files.writeString(requiresXmlFile.toPath(), pluginRequiresXml, StandardCharsets.UTF_8);
+						}
+
+						String pluginXml = jarXmlInfo.getPluginXml();
+						if(pluginXml != null)
+						{
+							Files.writeString(pluginDirectory.toPath().resolve("plugin.xml"), pluginXml, StandardCharsets.UTF_8);
+						}
 					}
 				}
 			}
