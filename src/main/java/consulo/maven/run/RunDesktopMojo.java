@@ -29,9 +29,6 @@ import java.util.*;
  * <p>
  * Threading impl from exec plugin on Apache 2
  */
-@Deprecated
-@DeprecationInfo("Don't use task 'run-desktop' mojo")
-@Mojo(name = "run-desktop", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class RunDesktopMojo extends RunMojo
 {
 	private Properties originalSystemProperties;
