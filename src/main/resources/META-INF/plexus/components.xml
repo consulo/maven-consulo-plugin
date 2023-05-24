@@ -21,13 +21,13 @@
 					<lifecycle>
 						<id>default</id>
 						<phases>
-							<generate-sources>consulo.maven:maven-consulo-plugin:2-SNASHOT:generate-lexers</generate-sources>
-							<process-resources>org.apache.maven.plugins:maven-resources-plugin:2.4.3:resources,consulo.maven:maven-consulo-plugin:2-SNASHOT:patchPluginXml</process-resources>
+							<generate-sources>consulo.maven:maven-consulo-plugin:3-SNASHOT:generate-lexers</generate-sources>
+							<process-resources>org.apache.maven.plugins:maven-resources-plugin:2.4.3:resources,consulo.maven:maven-consulo-plugin:3-SNASHOT:patchPluginXml</process-resources>
 							<compile>org.apache.maven.plugins:maven-compiler-plugin:2.3.2:compile</compile>
 							<process-test-resources>org.apache.maven.plugins:maven-resources-plugin:2.4.3:testResources</process-test-resources>
 							<test-compile>org.apache.maven.plugins:maven-compiler-plugin:2.3.2:testCompile</test-compile>
 							<test>org.apache.maven.plugins:maven-surefire-plugin:2.5:test</test>
-							<package>org.apache.maven.plugins:maven-jar-plugin:2.3.1:jar,consulo.maven:maven-consulo-plugin:2-SNASHOT:packageWithCheck</package>
+							<package>org.apache.maven.plugins:maven-jar-plugin:2.3.1:jar,consulo.maven:maven-consulo-plugin:3-SNASHOT:packageWithCheck</package>
 							<install>org.apache.maven.plugins:maven-install-plugin:2.3.1:install</install>
 							<!--<deploy>org.apache.maven.plugins:maven-deploy-plugin:2.5:deploy</deploy>-->
 						</phases>
