@@ -209,7 +209,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 			}
 			else
 			{
-				RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null);
+				RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, getLog());
 				if(repositoryNode == null)
 				{
 					throw new MojoFailureException("Dependency is not found. Id: " + dependencyId + ", consuloVersion: " + consuloVersion + ", channel: " + myRepositoryChannel);
@@ -243,7 +243,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 
 					logPluginStep(dependencyId, "downloading...");
 
-					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, tempFile);
+					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, dependencyId, consuloVersion, null, tempFile, getLog());
 
 					File dependencyDirectory = new File(targetDirectory, dependencyId);
 

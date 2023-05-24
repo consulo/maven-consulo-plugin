@@ -145,7 +145,7 @@ public abstract class RunMojo extends AbstractConsuloMojo
 		return map;
 	}
 
-	private boolean validateBuild(RunContext context) throws MojoExecutionException
+	private boolean validateBuild(RunContext context) throws MojoExecutionException, MojoFailureException
 	{
 		if(execution.buildDirectory != null)
 		{
@@ -193,7 +193,7 @@ public abstract class RunMojo extends AbstractConsuloMojo
 		else
 		{
 			getLog().info("Fetching platform info...");
-			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null);
+			RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, getLog());
 			if(repositoryNode == null)
 			{
 				if(oldBuildNumber == null)
@@ -228,7 +228,7 @@ public abstract class RunMojo extends AbstractConsuloMojo
 					File tempFile = File.createTempFile("consulo_build", "tar.gz");
 					tempFile.deleteOnExit();
 
-					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tempFile);
+					HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tempFile, getLog());
 
 					if(oldBuildNumber != null)
 					{

@@ -1,16 +1,18 @@
 package consulo.maven.base.util;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import com.google.gson.Gson;
 import consulo.maven.run.RunDesktopMojo;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.codehaus.plexus.util.IOUtil;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author VISTALL
@@ -18,7 +20,7 @@ import consulo.maven.run.RunDesktopMojo;
  */
 public class HubApiUtil
 {
-	public static RepositoryNode requestRepositoryNodeInfo(String channel, String baseUrl, String id, String platformVersion, String version)
+	public static RepositoryNode requestRepositoryNodeInfo(String channel, String baseUrl, String id, String platformVersion, String version, Log log) throws MojoFailureException
 	{
 		if(platformVersion == null)
 		{
@@ -30,57 +32,63 @@ public class HubApiUtil
 			version = RunDesktopMojo.SNAPSHOT;
 		}
 
-		try (CloseableHttpClient client = HttpClients.createMinimal())
+		String urlStr = String.format("%sinfo?id=%s&platformVersion=%s&version=%s&channel=%s", baseUrl, id, platformVersion, version, channel);
+
+		log.debug("URL: " + urlStr);
+		return connect(urlStr, inputStream ->
 		{
-			String url = String.format("%sinfo?id=%s&platformVersion=%s&version=%s&channel=%s", baseUrl, id, platformVersion, version, channel);
+			byte[] bytes = IOUtil.toByteArray(inputStream);
+			return new Gson().fromJson(new String(bytes, StandardCharsets.UTF_8), RepositoryNode.class);
+		});
+	}
 
-			HttpGet httpGet = new HttpGet(url);
-
-			return client.execute(httpGet, httpResponse ->
-			{
-				if(httpResponse.getStatusLine().getStatusCode() != HttpURLConnection.HTTP_OK)
-				{
-					return null;
-				}
-				return new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()), RepositoryNode.class);
-			});
+	public static void downloadRepositoryNode(String channel, String baseUrl, String id, String platformVersion, String version, File file, Log log) throws Exception
+	{
+		if(platformVersion == null)
+		{
+			platformVersion = RunDesktopMojo.SNAPSHOT;
 		}
-		catch(IOException e)
+
+		if(version == null)
 		{
-			return null;
+			version = RunDesktopMojo.SNAPSHOT;
+		}
+
+		String urlStr = String.format("%sdownload?id=%s&platformVersion=%s&version=%s&channel=%s&noTracking=true&platformBuildSelect=true", baseUrl, id, platformVersion, version, channel);
+
+		log.debug("URL: " + urlStr);
+		try (FileOutputStream fileOutputStream = new FileOutputStream(file))
+		{
+			connect(urlStr, inputStream ->
+			{
+				IOUtil.copy(inputStream, fileOutputStream);
+				return null;
+			});
 		}
 	}
 
-	public static void downloadRepositoryNode(String channel, String baseUrl, String id, String platformVersion, String version, File file) throws Exception
+	private static <V> V connect(String urlStr, StreamReader<InputStream, V> inputStreamConsumer) throws MojoFailureException
 	{
-		if(platformVersion == null)
+		URL url = null;
+		try
 		{
-			platformVersion = RunDesktopMojo.SNAPSHOT;
-		}
+			url = new URL(urlStr);
 
-		if(version == null)
-		{
-			version = RunDesktopMojo.SNAPSHOT;
-		}
-
-		try (FileOutputStream fileOutputStream = new FileOutputStream(file))
-		{
-			try (CloseableHttpClient client = HttpClients.createMinimal())
+			URLConnection urlConnection = url.openConnection();
+			if(urlConnection instanceof HttpURLConnection)
 			{
-				String url = String.format("%sdownload?id=%s&platformVersion=%s&version=%s&channel=%s&noTracking=true&platformBuildSelect=true", baseUrl, id, platformVersion, version, channel);
-
-				HttpGet httpGet = new HttpGet(url);
-
-				client.execute(httpGet, httpResponse ->
-				{
-					if(httpResponse.getStatusLine().getStatusCode() != HttpURLConnection.HTTP_OK)
-					{
-						return null;
-					}
-					httpResponse.getEntity().writeTo(fileOutputStream);
-					return null;
-				});
+				// allow redirect
+				((HttpURLConnection) urlConnection).setInstanceFollowRedirects(true);
 			}
+
+			try (InputStream inputStream = url.openStream())
+			{
+				return inputStreamConsumer.read(inputStream);
+			}
+		}
+		catch(Exception e)
+		{
+			throw new MojoFailureException(e.getMessage(), e);
 		}
 	}
 }

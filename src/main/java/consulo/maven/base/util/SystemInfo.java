@@ -8,7 +8,7 @@ public class SystemInfo
 {
 	public enum OS
 	{
-		WINDOWS("consulo.dist.windows.no.jre.zip"),
+		WINDOWS("consulo.dist.windows.no.jre"),
 		MACOS("consulo.dist.mac64.no.jre"),
 		LINUX("consulo.dist.linux.no.jre");
 
