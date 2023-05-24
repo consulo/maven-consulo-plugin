@@ -8,9 +8,9 @@ public class SystemInfo
 {
 	public enum OS
 	{
-		WINDOWS("consulo-win-no-jre"),
-		MACOS("consulo-mac-no-jre"),
-		LINUX("consulo-linux-no-jre");
+		WINDOWS("consulo.dist.windows.no.jre.zip"),
+		MACOS("consulo.dist.mac64.no.jre"),
+		LINUX("consulo.dist.linux.no.jre");
 
 		private String myId;
 

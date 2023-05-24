@@ -32,8 +32,8 @@ public abstract class AbstractConsuloMojo extends AbstractMojo
 	@Parameter(alias = "repositoryChannel", defaultValue = "nightly")
 	public String myRepositoryChannel = "nightly";
 
-	@Parameter(alias = "apiUrl", defaultValue = "https://hub.consulo.io/api/repository/")
-	protected String myApiUrl = "https://hub.consulo.io/api/repository/";
+	@Parameter(alias = "apiUrl", defaultValue = "https://p-api.consulo.io/repository/")
+	protected String myApiUrl = "https://p-api.consulo.io/repository/";
 
 	@Parameter(alias = "dependencies")
 	protected List<String> myDependencies = new ArrayList<>();
