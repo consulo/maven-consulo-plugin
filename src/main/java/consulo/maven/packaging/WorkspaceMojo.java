@@ -3,9 +3,6 @@ package consulo.maven.packaging;
 import consulo.maven.base.util.ExtractUtil;
 import consulo.maven.base.util.HubApiUtil;
 import consulo.maven.base.util.RepositoryNode;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -17,13 +14,8 @@ import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.Set;
 
@@ -101,43 +93,9 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 				{
 					getLog().debug("Dependency artifact: " + dependencyArtifact.getFile());
 
-					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+					MavenArtifactWrapper artifactWrapper = getAndCheckArtifact(dependencyArtifact);
 
-					if(artifactFile.isDirectory())
-					{
-						// classes directory we need pack it to jar
-						String artifactName = dependencyArtifact.getArtifactId() + "-" + dependencyArtifact.getBaseVersion() + ".jar";
-						File jarArchiveFile = new File(libDirectory, artifactName);
-
-						try (ZipArchiveOutputStream zipStream = new ZipArchiveOutputStream(jarArchiveFile))
-						{
-							Path classesDir = artifactFile.toPath();
-							Files.walkFileTree(classesDir, new SimpleFileVisitor<Path>()
-							{
-								@Override
-								public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-								{
-									String relativePath = classesDir.relativize(file).toString().replace("\\", "/");
-									ZipArchiveEntry entry = new ZipArchiveEntry(relativePath);
-									zipStream.putArchiveEntry(entry);
-
-									try (InputStream stream = Files.newInputStream(file))
-									{
-										IOUtils.copy(stream, zipStream);
-										zipStream.closeArchiveEntry();
-									}
-
-									return super.visitFile(file, attrs);
-								}
-							});
-						}
-
-						artifactFile = jarArchiveFile;
-					}
-					else
-					{
-						FileUtils.copyFile(artifactFile, new File(libDirectory, artifactFile.getName()));
-					}
+					File artifactFile = artifactWrapper.copyTo(libDirectory, null);
 
 					metaFiles.readFromJar(artifactFile);
 
@@ -174,9 +132,9 @@ public class WorkspaceMojo extends AbstractPackagingMojo
 			{
 				Artifact copyArtifact = resolveArtifact(copy.artifact);
 
-				File artifactFile = getAndCheckArtifactFile(copyArtifact);
+				MavenArtifactWrapper wrapper = getAndCheckArtifact(copyArtifact);
 
-				FileUtils.copyFile(artifactFile, new File(pluginDirectory, getRelativePathForCopy(copy, artifactFile)));
+				wrapper.copyTo(pluginDirectory, getRelativePathForCopy(copy, wrapper.getArtifactName()));
 			}
 		}
 		catch(IOException e)

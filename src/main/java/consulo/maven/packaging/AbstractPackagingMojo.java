@@ -68,6 +68,18 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 
 	protected static final String REQUIRES_EXTENSION = ".requires";
 
+	public static MavenArtifactWrapper getAndCheckArtifact(Artifact artifact) throws MojoFailureException
+	{
+		File artifactFile = artifact.getFile();
+		if(artifactFile == null || !artifactFile.exists())
+		{
+			throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not build");
+		}
+
+		return new MavenArtifactWrapper(artifactFile, artifact);
+	}
+
+	@Deprecated
 	public static File getAndCheckArtifactFile(Artifact artifact) throws MojoFailureException
 	{
 		File artifactFile = artifact.getFile();
@@ -146,7 +158,7 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 
 				if(actual.equals(coords))
 				{
-					getAndCheckArtifactFile(dependencyArtifact);
+					getAndCheckArtifact(dependencyArtifact);
 
 					return dependencyArtifact;
 				}
@@ -161,11 +173,11 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo
 		return (value == null || value.length() <= 0) ? defaultValue : value;
 	}
 
-	protected static String getRelativePathForCopy(Copy copy, File file)
+	protected static String getRelativePathForCopy(Copy copy, String fileName)
 	{
 		if(copy.path.endsWith("/"))
 		{
-			return copy.path + file.getName();
+			return copy.path + fileName;
 		}
 		return copy.path;
 	}

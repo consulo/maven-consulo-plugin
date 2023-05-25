@@ -103,7 +103,7 @@ public class PackageMojo extends AbstractPackagingMojo
 
 				File artifactFile = getAndCheckArtifactFile(copyArtifact);
 
-				archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile));
+				archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile.getName()));
 			}
 		}
 		catch(IOException e)
