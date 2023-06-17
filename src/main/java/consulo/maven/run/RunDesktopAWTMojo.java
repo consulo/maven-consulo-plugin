@@ -10,7 +10,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * @since 11-May-22
  */
 @Mojo(name = "run-desktop-awt", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
-@Execute(phase = LifecyclePhase.PACKAGE)
 public class RunDesktopAWTMojo extends RunDesktopMojo
 {
 	public static final String ourMainClassV3 = "consulo.desktop.awt.boot.main.Main";

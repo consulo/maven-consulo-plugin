@@ -12,7 +12,6 @@ import javax.annotation.Nonnull;
  * @since 08-Jul-22
  */
 @Mojo(name = "run-desktop-awt-fork", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
-@Execute(phase = LifecyclePhase.PACKAGE)
 public class RunDesktopAWTForkMojo extends RunForkMojo
 {
 	@Override
