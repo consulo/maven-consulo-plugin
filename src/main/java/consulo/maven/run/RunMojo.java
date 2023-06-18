@@ -9,7 +9,6 @@ import consulo.maven.packaging.WorkspaceMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
@@ -51,7 +50,7 @@ public abstract class RunMojo extends AbstractConsuloMojo
 			execution.arguments = new String[0];
 		}
 
-		RunContext context = new RunContext(getTopProject());
+		RunContext context = new RunContext(myProject);
 
 		if(!validateBuild(context))
 		{
@@ -69,27 +68,6 @@ public abstract class RunMojo extends AbstractConsuloMojo
 	protected ExecutionConfig execution = new ExecutionConfig();
 
 	protected abstract void run(String mainClassQualifiedName, RunContext context) throws MojoExecutionException, MojoFailureException;
-
-	private MavenProject getTopProject()
-	{
-		MavenProject temp = myProject.getParent();
-		if(temp == null)
-		{
-			return myProject;
-		}
-
-		while(true)
-		{
-			MavenProject parent = temp.getParent();
-			if(parent == null)
-			{
-				break;
-			}
-			temp = parent;
-		}
-
-		return temp;
-	}
 
 	protected Map<String, String> getSystemProperties(RunContext context) throws MojoFailureException
 	{

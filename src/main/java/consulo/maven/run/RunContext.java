@@ -1,9 +1,9 @@
 package consulo.maven.run;
 
-import java.io.File;
-
-import org.apache.maven.project.MavenProject;
 import consulo.maven.base.util.SystemInfo;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
 
 /**
  * @author VISTALL
@@ -17,9 +17,9 @@ public class RunContext
 
 	private String myInnerBuildNumber;
 
-	public RunContext(MavenProject topProject)
+	public RunContext(MavenProject project)
 	{
-		mySandboxDirectory = new File(topProject.getBasedir(), ".consulo/sandbox");
+		mySandboxDirectory = new File(project.getBasedir(), "sandbox");
 		mySandboxDirectory.mkdirs();
 
 		myBuildDirectory = new File(mySandboxDirectory, "platform");
