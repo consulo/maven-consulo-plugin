@@ -20,6 +20,7 @@ import org.yaml.snakeyaml.Yaml;
 import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.Format;
 import java.text.MessageFormat;
@@ -41,7 +42,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 		generate(getLog(), myMavenProject);
 	}
 
-	private static void generate(Log log, MavenProject mavenProject)
+	private static void generate(Log log, MavenProject mavenProject) throws MojoExecutionException, MojoFailureException
 	{
 		try
 		{
@@ -220,13 +221,13 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 
 			logic.write();
 		}
-		catch(Exception e)
+		catch(IOException e)
 		{
 			log.error(e);
 		}
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
 		TEST_GENERATE = true;
 
