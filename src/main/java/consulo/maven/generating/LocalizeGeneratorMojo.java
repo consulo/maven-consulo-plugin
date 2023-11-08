@@ -1,9 +1,9 @@
 package consulo.maven.generating;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.squareup.javapoet.*;
 import consulo.maven.base.util.cache.CacheIO;
+import consulo.util.io.FileUtil;
+import consulo.util.lang.StringUtil;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -114,7 +114,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo
 				}
 
 				// consulo.platform.base.ApplicationLocalize
-				String localizeFullPath = FileUtilRt.getNameWithoutExtension(file.getName());
+				String localizeFullPath = FileUtil.getNameWithoutExtension(file.getName());
 
 				String pluginId = StringUtil.getPackageName(localizeFullPath);
 				String localizeId = StringUtil.getShortName(localizeFullPath);

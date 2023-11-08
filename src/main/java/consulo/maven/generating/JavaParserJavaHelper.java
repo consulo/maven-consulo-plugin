@@ -16,7 +16,8 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
-import com.intellij.psi.NavigatablePsiElement;
+import consulo.annotation.access.RequiredReadAction;
+import consulo.language.psi.NavigatablePsiElement;
 import org.intellij.grammar.java.JavaHelper;
 
 import javax.annotation.Nonnull;
@@ -48,6 +49,7 @@ class JavaParserJavaHelper extends JavaHelper
 			myDeclarationQName = declarationQName;
 		}
 
+		@RequiredReadAction
 		@Override
 		public String getName()
 		{

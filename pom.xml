@@ -4,7 +4,7 @@
 
 	<groupId>consulo.maven</groupId>
 	<artifactId>maven-consulo-plugin</artifactId>
-	<version>3-SNAPSHOT</version>
+	<version>3.1-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>Maven Consulo Plugin</name>
@@ -14,10 +14,11 @@
 		<mavenVersion>3.0</mavenVersion>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<java.version>17</java.version>
 	</properties>
 
 	<prerequisites>
-		<maven>${mavenVersion}</maven>
+		<maven>3.6</maven>
 	</prerequisites>
 
 	<repositories>
@@ -40,12 +41,6 @@
 	</licenses>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.jdom</groupId>
-			<artifactId>jdom2</artifactId>
-			<version>2.0.6</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
@@ -91,12 +86,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>dk.brics.automaton</groupId>
-			<artifactId>automaton</artifactId>
-			<version>1.11-8</version>
-		</dependency>
-
-		<dependency>
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-core</artifactId>
 			<version>3.22.1</version>
@@ -106,6 +95,12 @@
 			<groupId>com.github.javaparser</groupId>
 			<artifactId>javaparser-symbol-solver-core</artifactId>
 			<version>3.22.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.javassist</groupId>
+					<artifactId>javassist</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -129,62 +124,100 @@
 		<dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
-			<version>1.24</version>
+			<version>1.29</version>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo.internal</groupId>
 			<artifactId>svg-salamander</artifactId>
-			<version>2-SNAPSHOT</version>
+			<version>2.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
-			<artifactId>consulo-core-api</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-core-impl</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo</groupId>
-			<artifactId>consulo-disposer-impl</artifactId>
-			<version>2-SNAPSHOT</version>
-		</dependency>
-
-		<dependency>
-			<groupId>consulo.plugin</groupId>
-			<artifactId>consulo.devkit-grammar.kit.core</artifactId>
-			<version>2-SNAPSHOT</version>
+			<artifactId>consulo-application-api</artifactId>
+			<version>3-SNAPSHOT</version>
 			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
+			<artifactId>consulo-component-impl</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-language-api</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-language-impl</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-disposer-impl</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-document-impl</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
+			<artifactId>consulo-platform-impl</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>net.java.dev.jna</groupId>
+					<artifactId>jna-jpms</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.java.dev.jna</groupId>
+					<artifactId>jna-platform-jpms</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
 			<artifactId>consulo-test-impl</artifactId>
-			<version>2-SNAPSHOT</version>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-util-nodep</artifactId>
-			<version>2-SNAPSHOT</version>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
-			<artifactId>consulo-util-collection-runtime</artifactId>
-			<version>2-SNAPSHOT</version>
+			<artifactId>consulo-util-collection-via-trove</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
-			<groupId>consulo.internal</groupId>
-			<artifactId>jsr305</artifactId>
-			<version>3.0.3</version>
+			<groupId>consulo.plugin</groupId>
+			<artifactId>consulo.devkit-grammar.kit.core</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>

@@ -1,20 +1,9 @@
 package consulo.maven.run;
 
-import consulo.annotation.DeprecationInfo;
-import consulo.maven.base.util.ExtractUtil;
-import consulo.maven.base.util.HubApiUtil;
-import consulo.maven.base.util.RepositoryNode;
-import consulo.maven.base.util.SystemInfo;
-import consulo.maven.packaging.WorkspaceMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -29,6 +18,7 @@ import java.util.*;
  * <p>
  * Threading impl from exec plugin on Apache 2
  */
+@SuppressWarnings("PlatformError")
 public class RunDesktopMojo extends RunMojo
 {
 	private Properties originalSystemProperties;

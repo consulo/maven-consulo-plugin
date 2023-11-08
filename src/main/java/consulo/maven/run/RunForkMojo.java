@@ -17,6 +17,7 @@ import java.util.Map;
  * @author VISTALL
  * @since 08-Jul-22
  */
+@SuppressWarnings("PlatformError")
 public abstract class RunForkMojo extends RunMojo
 {
 	@Override
