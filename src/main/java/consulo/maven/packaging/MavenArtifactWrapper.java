@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.maven.artifact.Artifact;
-import org.codehaus.plexus.util.FileUtils;
+import org.apache.maven.shared.utils.io.FileUtils;
 
 import javax.annotation.Nullable;
 import java.io.File;

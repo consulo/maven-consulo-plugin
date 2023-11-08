@@ -1,7 +1,7 @@
 package consulo.maven.generating;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.maven.shared.utils.StringUtils;
 
 import javax.lang.model.SourceVersion;
 

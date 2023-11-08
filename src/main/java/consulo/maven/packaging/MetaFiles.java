@@ -1,6 +1,6 @@
 package consulo.maven.packaging;
 
-import org.codehaus.plexus.util.IOUtil;
+import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
 import java.io.IOException;

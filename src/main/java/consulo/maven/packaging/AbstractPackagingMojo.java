@@ -12,8 +12,8 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.maven.shared.utils.StringUtils;
+import org.apache.maven.shared.utils.io.IOUtil;
 
 import javax.annotation.Nullable;
 import java.io.File;

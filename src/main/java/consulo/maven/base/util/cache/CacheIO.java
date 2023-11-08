@@ -1,7 +1,7 @@
 package consulo.maven.base.util.cache;
 
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.IOUtil;
+import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.*;
 

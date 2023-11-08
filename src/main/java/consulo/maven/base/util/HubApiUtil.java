@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import consulo.maven.run.RunDesktopMojo;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.codehaus.plexus.util.IOUtil;
+import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
