@@ -6,6 +6,7 @@ import consulo.annotation.access.RequiredReadAction;
 import consulo.application.Application;
 import consulo.component.internal.inject.InjectingContainerBuilder;
 import consulo.disposer.AutoDisposable;
+import consulo.language.inject.InjectedLanguageManager;
 import consulo.language.psi.PsiManager;
 import consulo.project.Project;
 import consulo.test.light.LightApplicationBuilder;
@@ -56,7 +57,7 @@ public class GrammarGeneratorMojo extends AbstractMojo
 	{
 		MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\ConsulorRepos\\consulo-apache-thrift");
+		File projectDir = new File("W:\\ConsulorRepos\\consulo-devkit\\grammar-kit-core");
 		Resource resource = new Resource();
 		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
 		Build build = new Build();
@@ -132,6 +133,8 @@ public class GrammarGeneratorMojo extends AbstractMojo
 				public void registerServices(@Nonnull InjectingContainerBuilder builder)
 				{
 					super.registerServices(builder);
+
+					builder.bind(InjectedLanguageManager.class).forceSingleton().to(InjectedLanguageManagerStub.class);
 
 					builder.bind(JavaHelper.class).forceSingleton().to(new JavaParserJavaHelper(sourceDirectory, directoryToGenerate));
 				}

@@ -403,9 +403,9 @@ class JavaParserJavaHelper extends JavaHelper
 			case "PsiScopeProcessor":
 				return "consulo.language.psi.resolve.PsiScopeProcessor";
 			case "Nonnull":
-				return Nonnull.class.getName();
+				return jakarta.annotation.Nonnull.class.getName();
 			case "Nullable":
-				return Nullable.class.getName();
+				return jakarta.annotation.Nullable.class.getName();
 			case "IStubElementType":
 				return "consulo.language.psi.stub.IStubElementType";
 			case "IElementType":
