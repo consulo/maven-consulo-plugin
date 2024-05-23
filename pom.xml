@@ -211,6 +211,13 @@
 
 		<dependency>
 			<groupId>consulo</groupId>
+			<artifactId>consulo-util-lang</artifactId>
+			<version>3-SNAPSHOT</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>consulo</groupId>
 			<artifactId>consulo-util-collection-via-trove</artifactId>
 			<version>3-SNAPSHOT</version>
 			<optional>true</optional>
