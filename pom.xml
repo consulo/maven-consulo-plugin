@@ -140,49 +140,42 @@
 			<groupId>consulo</groupId>
 			<artifactId>consulo-application-api</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-component-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-language-api</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-language-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-disposer-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-document-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-platform-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 			<exclusions>
 				<exclusion>
 					<groupId>net.java.dev.jna</groupId>
@@ -199,35 +192,31 @@
 			<groupId>consulo</groupId>
 			<artifactId>consulo-test-impl</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-util-nodep</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-util-lang</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
+
 		</dependency>
 
 		<dependency>
 			<groupId>consulo</groupId>
 			<artifactId>consulo-util-collection-via-trove</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>consulo.plugin</groupId>
 			<artifactId>consulo.devkit-grammar.kit.core</artifactId>
 			<version>3-SNAPSHOT</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
