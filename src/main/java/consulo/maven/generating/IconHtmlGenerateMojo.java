@@ -23,268 +23,235 @@ import java.util.*;
  * @since 27/11/2021
  */
 @Mojo(name = "generate-icon-html", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo
-{
-	private Map<String, Map<String, IconInfo>> myAllIcons = new TreeMap<>(Comparator.reverseOrder());
+public class IconHtmlGenerateMojo extends AbstractIconGeneratorMojo {
+    private Map<String, Map<String, IconInfo>> myAllIcons = new TreeMap<>(Comparator.reverseOrder());
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		try
-		{
-			super.execute();
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            super.execute();
 
-			generateHtml();
-		}
-		finally
-		{
-			myAllIcons.clear();
-		}
-	}
+            generateHtml();
+        }
+        finally {
+            myAllIcons.clear();
+        }
+    }
 
-	private void generateHtml() throws MojoFailureException
-	{
-		File outputDirectory = new File(myMavenProject.getBuild().getDirectory());
+    private void generateHtml() throws MojoFailureException {
+        File outputDirectory = new File(myMavenProject.getBuild().getDirectory());
 
-		Set<String> allIconIds = new TreeSet<>();
+        Set<String> allIconIds = new TreeSet<>();
 
-		for(Map<String, IconInfo> map : myAllIcons.values())
-		{
-			allIconIds.addAll(map.keySet());
-		}
+        for (Map<String, IconInfo> map : myAllIcons.values()) {
+            allIconIds.addAll(map.keySet());
+        }
 
-		File f = new File(outputDirectory, "icon.html");
+        File f = new File(outputDirectory, "icon.html");
 
-		StringBuilder builder = new StringBuilder();
-		builder.append("<html>");
-		builder.append("<head>");
-		builder.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
-				"<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
-				"<link href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\" rel=\"stylesheet\">");
-		builder.append("<style>");
-		builder.append("html,body {font-family: 'Roboto', sans-serif; margin: 0px !important; padding: 0px !important}");
-		builder.append("table,td {border-collapse: collapse; }");
-		builder.append(".obsolete-png { text-decoration: line-through; }");
-		builder.append(".icon-path { font-size: 12px; }");
-		builder.append(".icon-path-dark { color: white; background: #282e33;}");
-		builder.append(".theme-block {border: 1px solid gray}");
-		builder.append(".main-table > table > tr > td {\n" +
-				"  border: 1px solid black;\n" +
-				"  border-collapse: collapse;\n" +
-				"}");
-		builder.append("</style>");
-		builder.append("</head>");
-		builder.append("<body style=\"width: 100%\">");
+        StringBuilder builder = new StringBuilder();
+        builder.append("<html>");
+        builder.append("<head>");
+        builder.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
+            "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
+            "<link href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\" rel=\"stylesheet\">");
+        builder.append("<style>");
+        builder.append("html,body {font-family: 'Roboto', sans-serif; margin: 0px !important; padding: 0px !important}");
+        builder.append("table,td {border-collapse: collapse; }");
+        builder.append(".obsolete-png { text-decoration: line-through; }");
+        builder.append(".icon-path { font-size: 12px; }");
+        builder.append(".icon-path-dark { color: white; background: #282e33;}");
+        builder.append(".theme-block {border: 1px solid gray}");
+        builder.append(".main-table > table > tr > td {\n" +
+            "  border: 1px solid black;\n" +
+            "  border-collapse: collapse;\n" +
+            "}");
+        builder.append("</style>");
+        builder.append("</head>");
+        builder.append("<body style=\"width: 100%\">");
 
-		builder.append("<table style=\"width: 100%\" class=\"main-table\">");
-		builder.append("<thead>");
-		builder.append("<tr>");
-		builder.append("<td>Image ID</td>");
-		builder.append("<td>W:H</td>");
-		builder.append("<td>").append("Icon").append("</td>");
-		builder.append("</tr>");
-		builder.append("</thead>");
+        builder.append("<table style=\"width: 100%\" class=\"main-table\">");
+        builder.append("<thead>");
+        builder.append("<tr>");
+        builder.append("<td>Image ID</td>");
+        builder.append("<td>W:H</td>");
+        builder.append("<td>").append("Icon").append("</td>");
+        builder.append("</tr>");
+        builder.append("</thead>");
 
-		for(String iconId : allIconIds)
-		{
-			boolean isSVG = false;
-			boolean svgVSpng = false;
-			String size = "??:??";
+        for (String iconId : allIconIds) {
+            boolean isSVG = false;
+            boolean svgVSpng = false;
+            String size = "??:??";
 
-			for(Map<String, IconInfo> map : myAllIcons.values())
-			{
-				IconInfo iconInfo = map.get(iconId);
-				if(iconInfo != null)
-				{
-					size = iconInfo.width + ":" + iconInfo.height;
+            for (Map<String, IconInfo> map : myAllIcons.values()) {
+                IconInfo iconInfo = map.get(iconId);
+                if (iconInfo != null) {
+                    size = iconInfo.width + ":" + iconInfo.height;
 
-					isSVG = iconInfo.isSVG;
-				}
-			}
+                    isSVG = iconInfo.isSVG;
+                }
+            }
 
-			Map<String, IconInfo> light = myAllIcons.get("light");
-			Map<String, IconInfo> dark = myAllIcons.get("dark");
-			if(light != null && dark != null)
-			{
-				IconInfo lightIcon = light.get(iconId);
-				IconInfo darkIcon = dark.get(iconId);
-				if(lightIcon != null && darkIcon != null && lightIcon.isSVG != darkIcon.isSVG)
-				{
-					svgVSpng = true;
-				}
-			}
+            Map<String, IconInfo> light = myAllIcons.get("light");
+            Map<String, IconInfo> dark = myAllIcons.get("dark");
+            if (light != null && dark != null) {
+                IconInfo lightIcon = light.get(iconId);
+                IconInfo darkIcon = dark.get(iconId);
+                if (lightIcon != null && darkIcon != null && lightIcon.isSVG != darkIcon.isSVG) {
+                    svgVSpng = true;
+                }
+            }
 
-			if(svgVSpng)
-			{
-				builder.append("<tr style=\"border: 1px solid gray; background: red\">");
-			}
-			else if(isSVG)
-			{
-				builder.append("<tr style=\"border: 1px solid gray; background: #baeeba\">");
-			}
-			else
-			{
-				builder.append("<tr style=\"border: 1px solid gray\">");
-			}
+            if (svgVSpng) {
+                builder.append("<tr style=\"border: 1px solid gray; background: red\">");
+            }
+            else if (isSVG) {
+                builder.append("<tr style=\"border: 1px solid gray; background: #baeeba\">");
+            }
+            else {
+                builder.append("<tr style=\"border: 1px solid gray\">");
+            }
 
-			builder.append("<td>");
-			builder.append(iconId);
-			if(svgVSpng)
-			{
-				builder.append(" (SVG/PNG error)");
-			}
-			builder.append("</td>");
-			builder.append("<td>").append(size).append("</td>");
+            builder.append("<td>");
+            builder.append(iconId);
+            if (svgVSpng) {
+                builder.append(" (SVG/PNG error)");
+            }
+            builder.append("</td>");
+            builder.append("<td>").append(size).append("</td>");
 
-			builder.append("<td>");
+            builder.append("<td>");
 
-			for(Map.Entry<String, Map<String, IconInfo>> entry : myAllIcons.entrySet())
-			{
-				String themeId = entry.getKey();
-				Map<String, IconInfo> icons = entry.getValue();
+            for (Map.Entry<String, Map<String, IconInfo>> entry : myAllIcons.entrySet()) {
+                String themeId = entry.getKey();
+                Map<String, IconInfo> icons = entry.getValue();
 
-				boolean isDark = themeId.equals("dark");
-				IconInfo iconInfo = icons.get(iconId);
-				if(iconInfo != null)
-				{
-					if(isDark)
-					{
-						builder.append("<div class=\"theme-block icon-path-dark\">");
-					}
-					else
-					{
-						builder.append("<div class=\"theme-block\">");
-					}
+                boolean isDark = themeId.equals("dark");
+                IconInfo iconInfo = icons.get(iconId);
+                if (iconInfo != null) {
+                    if (isDark) {
+                        builder.append("<div class=\"theme-block icon-path-dark\">");
+                    }
+                    else {
+                        builder.append("<div class=\"theme-block\">");
+                    }
 
-					builder.append(themeId).append("<br>");
+                    builder.append(themeId).append("<br>");
 
-					for(File file : iconInfo.files)
-					{
-						appendIconRow(builder, file, iconInfo, isDark);
+                    for (File file : iconInfo.files) {
+                        appendIconRow(builder, file, iconInfo, isDark);
 
-						if(file.getName().endsWith(".png"))
-						{
-							File _2x = new File(file.getParentFile(), file.getName().replace(".png", "@2x.png"));
-							if(_2x.exists())
-							{
-								appendIconRow(builder, _2x, iconInfo, isDark);
-							}
-						}
-						else if(file.getName().endsWith(".svg"))
-						{
-							File _2x = new File(file.getParentFile(), file.getName().replace(".svg", "@2x.svg"));
-							if(_2x.exists())
-							{
-								appendIconRow(builder, _2x, iconInfo, isDark);
-							}
-						}
-					}
-					builder.append("</div>");
-				}
-			}
-			builder.append("</td>");
+                        if (file.getName().endsWith(".png")) {
+                            File _2x = new File(file.getParentFile(), file.getName().replace(".png", "@2x.png"));
+                            if (_2x.exists()) {
+                                appendIconRow(builder, _2x, iconInfo, isDark);
+                            }
+                        }
+                        else if (file.getName().endsWith(".svg")) {
+                            File _2x = new File(file.getParentFile(), file.getName().replace(".svg", "@2x.svg"));
+                            if (_2x.exists()) {
+                                appendIconRow(builder, _2x, iconInfo, isDark);
+                            }
+                        }
+                    }
+                    builder.append("</div>");
+                }
+            }
+            builder.append("</td>");
 
-			builder.append("</tr>");
-		}
-		builder.append("</table>");
+            builder.append("</tr>");
+        }
+        builder.append("</table>");
 
-		builder.append("</body></html");
-		try
-		{
-			Files.write(f.toPath(), builder.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
-		}
-		catch(IOException e)
-		{
-			throw new MojoFailureException(e.getMessage(), e);
-		}
-	}
+        builder.append("</body></html");
+        try {
+            Files.write(f.toPath(), builder.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+        }
+        catch (IOException e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        }
+    }
 
-	private void appendIconRow(StringBuilder builder, File file, IconInfo iconInfo, boolean dark)
-	{
-		int width = iconInfo.width;
-		int height = iconInfo.height;
+    private void appendIconRow(StringBuilder builder, File file, IconInfo iconInfo, boolean dark) {
+        int width = iconInfo.width;
+        int height = iconInfo.height;
 
-		if(iconInfo.height < 32 && iconInfo.width < 32)
-		{
-			width = width * 2;
-			height = height * 2;
-		}
+        if (iconInfo.height < 32 && iconInfo.width < 32) {
+            width = width * 2;
+            height = height * 2;
+        }
 
-		Path relativePath = iconInfo.sourcePath.relativize(file.toPath());
+        Path relativePath = iconInfo.sourcePath.relativize(file.toPath());
 
-		builder.append("<table>");
-		builder.append("<tr>");
+        builder.append("<table>");
+        builder.append("<tr>");
 
-		// image
-		builder.append("<td>");
-		builder.append("<img style=\"width: ");
-		builder.append(width);
-		builder.append("px;");
-		builder.append("height: ");
-		builder.append(height);
-		builder.append("px;");
-		builder.append("\" src=\"");
-		builder.append(file.toURI());
-		builder.append("\">");
-		builder.append("</td>");
+        // image
+        builder.append("<td>");
+        builder.append("<img style=\"width: ");
+        builder.append(width);
+        builder.append("px;");
+        builder.append("height: ");
+        builder.append(height);
+        builder.append("px;");
+        builder.append("\" src=\"");
+        builder.append(file.toURI());
+        builder.append("\">");
+        builder.append("</td>");
 
-		// icon path
-		builder.append("<td>");
-		List<String> classes = new ArrayList<>();
-		classes.add("icon-path");
-		if(iconInfo.isSVG && file.getName().endsWith(".png"))
-		{
-			classes.add("obsolete-png");
-		}
-		if(dark)
-		{
-			classes.add("icon-path-dark");
-		}
+        // icon path
+        builder.append("<td>");
+        List<String> classes = new ArrayList<>();
+        classes.add("icon-path");
+        if (iconInfo.isSVG && file.getName().endsWith(".png")) {
+            classes.add("obsolete-png");
+        }
+        if (dark) {
+            classes.add("icon-path-dark");
+        }
 
-		builder.append("<span class=\"").append(String.join(" ", classes)).append("\">");
+        builder.append("<span class=\"").append(String.join(" ", classes)).append("\">");
 
-		builder.append(relativePath);
-		builder.append("</span>");
-		builder.append("</td>");
+        builder.append(relativePath);
+        builder.append("</span>");
+        builder.append("</td>");
 
-		builder.append("</tr>");
-		builder.append("</table>");
+        builder.append("</tr>");
+        builder.append("</table>");
 
-	}
+    }
 
-	@Override
-	protected void generate(String themeId, String parentPackage, String name, String groupId, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException
-	{
-		Map<String, IconInfo> map = myAllIcons.computeIfAbsent(themeId, k -> new TreeMap<>());
+    @Override
+    protected void generate(String themeId, String parentPackage, String name, String groupId, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException {
+        Map<String, IconInfo> map = myAllIcons.computeIfAbsent(themeId, k -> new TreeMap<>());
 
-		for(Map.Entry<String, IconInfo> entry : icons.entrySet())
-		{
-			String fieldName = entry.getKey();
-			IconInfo iconInfo = entry.getValue();
+        for (Map.Entry<String, IconInfo> entry : icons.entrySet()) {
+            String fieldName = entry.getKey();
+            IconInfo iconInfo = entry.getValue();
 
-			map.put(groupId + "." + fieldName, iconInfo);
-		}
-	}
+            map.put(groupId + "." + fieldName, iconInfo);
+        }
+    }
 
-	public static void main(String[] args) throws Exception
-	{
-		TEST_GENERATE = true;
+    public static void main(String[] args) throws Exception {
+        TEST_GENERATE = true;
 
-		MavenProject mavenProject = new MavenProject();
+        MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
-		Resource resource = new Resource();
-		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
-		Build build = new Build();
-		build.addResource(resource);
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
-		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
-		mavenProject.setBuild(build);
+        File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
 
-		IconHtmlGenerateMojo mojo = new IconHtmlGenerateMojo();
-		mojo.myMavenProject = mavenProject;
-		mojo.setLog(new SystemStreamLog());
+        IconHtmlGenerateMojo mojo = new IconHtmlGenerateMojo();
+        mojo.myMavenProject = mavenProject;
+        mojo.setLog(new SystemStreamLog());
 
-		mojo.execute();
-	}
+        mojo.execute();
+    }
 }

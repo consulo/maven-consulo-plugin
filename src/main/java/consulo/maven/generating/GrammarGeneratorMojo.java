@@ -48,153 +48,135 @@ import java.util.Map;
  * @since 2018-06-18
  */
 @Mojo(name = "generate-parsers", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class GrammarGeneratorMojo extends AbstractMojo
-{
-	@Parameter(property = "project", defaultValue = "${project}")
-	private MavenProject myMavenProject;
+public class GrammarGeneratorMojo extends AbstractMojo {
+    @Parameter(property = "project", defaultValue = "${project}")
+    private MavenProject myMavenProject;
 
-	public static void main(String[] args) throws Exception
-	{
-		MavenProject mavenProject = new MavenProject();
+    public static void main(String[] args) throws Exception {
+        MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\ConsulorRepos\\consulo-devkit\\grammar-kit-core");
-		Resource resource = new Resource();
-		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
-		Build build = new Build();
-		build.addResource(resource);
-		build.setSourceDirectory(new File(projectDir, "src\\main\\java").getPath());
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
-		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
-		mavenProject.setBuild(build);
+        File projectDir = new File("W:\\ConsulorRepos\\consulo-devkit\\grammar-kit-core");
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setSourceDirectory(new File(projectDir, "src\\main\\java").getPath());
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
 
-		GrammarGeneratorMojo grammarGeneratorMojo = new GrammarGeneratorMojo();
-		grammarGeneratorMojo.myMavenProject = mavenProject;
-		grammarGeneratorMojo.setLog(new SystemStreamLog());
+        GrammarGeneratorMojo grammarGeneratorMojo = new GrammarGeneratorMojo();
+        grammarGeneratorMojo.myMavenProject = mavenProject;
+        grammarGeneratorMojo.setLog(new SystemStreamLog());
 
-		grammarGeneratorMojo.execute();
-	}
+        grammarGeneratorMojo.execute();
+    }
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		try
-		{
-			String sourceDirectory = myMavenProject.getBuild().getSourceDirectory();
-			File sourceDirectoryFile = new File(sourceDirectory);
-			if(!sourceDirectoryFile.exists())
-			{
-				getLog().info(sourceDirectory + " is not exists");
-				return;
-			}
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            String sourceDirectory = myMavenProject.getBuild().getSourceDirectory();
+            File sourceDirectoryFile = new File(sourceDirectory);
+            if (!sourceDirectoryFile.exists()) {
+                getLog().info(sourceDirectory + " is not exists");
+                return;
+            }
 
-			List<File> files = FileUtils.getFiles(sourceDirectoryFile, "**/*.bnf", null);
-			if(files.isEmpty())
-			{
-				return;
-			}
+            List<File> files = FileUtils.getFiles(sourceDirectoryFile, "**/*.bnf", null);
+            if (files.isEmpty()) {
+                return;
+            }
 
-			String outputDirectory = myMavenProject.getBuild().getDirectory();
-			File outputDirectoryFile = new File(outputDirectory, "generated-sources/parsers");
-			if(!outputDirectoryFile.exists())
-			{
-				outputDirectoryFile.mkdirs();
-			}
+            String outputDirectory = myMavenProject.getBuild().getDirectory();
+            File outputDirectoryFile = new File(outputDirectory, "generated-sources/parsers");
+            if (!outputDirectoryFile.exists()) {
+                outputDirectoryFile.mkdirs();
+            }
 
-			for(File file : files)
-			{
-				System.out.println("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+            for (File file : files) {
+                System.out.println("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
-				runGenerator(file.getPath(), outputDirectoryFile.getPath(), sourceDirectory);
-			}
+                runGenerator(file.getPath(), outputDirectoryFile.getPath(), sourceDirectory);
+            }
 
-			myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
-		}
-		catch(Exception e)
-		{
-			getLog().error(e);
-		}
-	}
+            myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+        }
+        catch (Exception e) {
+            getLog().error(e);
+        }
+    }
 
-	@RequiredReadAction
-	private static void runGenerator(String filePath, String directoryToGenerate, @Nonnull String sourceDirectory) throws Exception
-	{
-		try (AutoDisposable rootDisposable = AutoDisposable.newAutoDisposable())
-		{
-			LightApplicationBuilder applicationBuilder = LightApplicationBuilder.create(rootDisposable);
+    @RequiredReadAction
+    private static void runGenerator(String filePath, String directoryToGenerate, @Nonnull String sourceDirectory) throws Exception {
+        try (AutoDisposable rootDisposable = AutoDisposable.newAutoDisposable()) {
+            LightApplicationBuilder applicationBuilder = LightApplicationBuilder.create(rootDisposable);
 
-			Application application = applicationBuilder.build();
+            Application application = applicationBuilder.build();
 
-			LightFileTypeRegistry fileTypeRegistry = (LightFileTypeRegistry) FileTypeRegistry.getInstance();
-			fileTypeRegistry.registerFileType(BnfFileType.INSTANCE, "bnf");
+            LightFileTypeRegistry fileTypeRegistry = (LightFileTypeRegistry) FileTypeRegistry.getInstance();
+            fileTypeRegistry.registerFileType(BnfFileType.INSTANCE, "bnf");
 
-			LightProjectBuilder projectBuilder = LightProjectBuilder.create(application, new LightProjectBuilder.DefaultRegistrator()
-			{
-				@Override
-				public void registerServices(@Nonnull InjectingContainerBuilder builder)
-				{
-					super.registerServices(builder);
+            LightProjectBuilder projectBuilder = LightProjectBuilder.create(application, new LightProjectBuilder.DefaultRegistrator() {
+                @Override
+                public void registerServices(@Nonnull InjectingContainerBuilder builder) {
+                    super.registerServices(builder);
 
-					builder.bind(InjectedLanguageManager.class).forceSingleton().to(InjectedLanguageManagerStub.class);
+                    builder.bind(InjectedLanguageManager.class).forceSingleton().to(InjectedLanguageManagerStub.class);
 
-					builder.bind(JavaHelper.class).forceSingleton().to(new JavaParserJavaHelper(sourceDirectory, directoryToGenerate));
-				}
-			});
+                    builder.bind(JavaHelper.class).forceSingleton().to(new JavaParserJavaHelper(sourceDirectory, directoryToGenerate));
+                }
+            });
 
-			Project project = projectBuilder.build();
-			PsiManager psiManager = PsiManager.getInstance(project);
+            Project project = projectBuilder.build();
+            PsiManager psiManager = PsiManager.getInstance(project);
 
-			File ioFile = new File(filePath);
-			VirtualFile fileByIoFile = StandardFileSystems.local().findFileByPath(ioFile.getPath());
-			if(fileByIoFile == null)
-			{
-				System.out.println("File not exists: " + filePath);
-				System.exit(-1);
-				return;
-			}
+            File ioFile = new File(filePath);
+            VirtualFile fileByIoFile = StandardFileSystems.local().findFileByPath(ioFile.getPath());
+            if (fileByIoFile == null) {
+                System.out.println("File not exists: " + filePath);
+                System.exit(-1);
+                return;
+            }
 
-			BnfFile file = (BnfFile) psiManager.findFile(fileByIoFile);
+            BnfFile file = (BnfFile) psiManager.findFile(fileByIoFile);
 
-			List<BnfRule> rules = file.getRules();
+            List<BnfRule> rules = file.getRules();
 
-			BiMap<String, String> names = HashBiMap.create();
-			Map<String, String> baseClassNames = new HashMap<>();
-			for(BnfRule rule : rules)
-			{
-				ParserGeneratorUtil.NameFormat prefix = ParserGeneratorUtil.getPsiClassFormat(file);
-				ParserGeneratorUtil.NameFormat prefixImpl = ParserGeneratorUtil.getPsiImplClassFormat(file);
+            BiMap<String, String> names = HashBiMap.create();
+            Map<String, String> baseClassNames = new HashMap<>();
+            for (BnfRule rule : rules) {
+                ParserGeneratorUtil.NameFormat prefix = ParserGeneratorUtil.getPsiClassFormat(file);
+                ParserGeneratorUtil.NameFormat prefixImpl = ParserGeneratorUtil.getPsiImplClassFormat(file);
 
-				Couple<String> qualifiedRuleClassNames = ParserGeneratorUtil.getQualifiedRuleClassName(rule);
-				String qualifiedRuleClassName = qualifiedRuleClassNames.getFirst();
-				names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefix, Case.CAMEL), qualifiedRuleClassName);
-				names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefixImpl, Case.CAMEL), qualifiedRuleClassNames.getSecond());
+                Couple<String> qualifiedRuleClassNames = ParserGeneratorUtil.getQualifiedRuleClassName(rule);
+                String qualifiedRuleClassName = qualifiedRuleClassNames.getFirst();
+                names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefix, Case.CAMEL), qualifiedRuleClassName);
+                names.put(ParserGeneratorUtil.toIdentifier(rule.getName(), prefixImpl, Case.CAMEL), qualifiedRuleClassNames.getSecond());
 
-				List<String> ruleClasses = new ArrayList<>(ParserGeneratorUtil.getRuleClasses(rule));
+                List<String> ruleClasses = new ArrayList<>(ParserGeneratorUtil.getRuleClasses(rule));
 
-				String baseClass = ruleClasses.size() >= 4 ? ruleClasses.get(3) : ruleClasses.get(ruleClasses.size() - 1);
+                String baseClass = ruleClasses.size() >= 4 ? ruleClasses.get(3) : ruleClasses.get(ruleClasses.size() - 1);
 
-				baseClassNames.put(qualifiedRuleClassName, getFirstImplClass(baseClass));
-			}
+                baseClassNames.put(qualifiedRuleClassName, getFirstImplClass(baseClass));
+            }
 
-			JavaParserJavaHelper helper = (JavaParserJavaHelper) JavaHelper.getJavaHelper(file);
+            JavaParserJavaHelper helper = (JavaParserJavaHelper) JavaHelper.getJavaHelper(file);
 
-			helper.setRuleClassNames(names);
-			helper.setBaseClassNames(baseClassNames);
+            helper.setRuleClassNames(names);
+            helper.setBaseClassNames(baseClassNames);
 
-			new ParserGenerator(file, ioFile.getParentFile().getPath(), directoryToGenerate, "").generate();
-		}
-		catch(Throwable e)
-		{
-			throw new MojoFailureException(e.getMessage(), e);
-		}
-	}
+            new ParserGenerator(file, ioFile.getParentFile().getPath(), directoryToGenerate, "").generate();
+        }
+        catch (Throwable e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        }
+    }
 
-	private static String getFirstImplClass(String clazz)
-	{
-		if(clazz.contains(","))
-		{
-			List<String> split = StringUtil.split(clazz, ",");
-			return split.get(0).trim();
-		}
-		return clazz;
-	}
+    private static String getFirstImplClass(String clazz) {
+        if (clazz.contains(",")) {
+            List<String> split = StringUtil.split(clazz, ",");
+            return split.get(0).trim();
+        }
+        return clazz;
+    }
 }

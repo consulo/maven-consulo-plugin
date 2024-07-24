@@ -31,133 +31,117 @@ import java.util.Map;
  * @since 2018-06-19
  */
 @Mojo(name = "generate-lexers", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class JFlexGeneratorMojo extends AbstractMojo
-{
-	@Parameter(property = "project", defaultValue = "${project}")
-	private MavenProject myMavenProject;
+public class JFlexGeneratorMojo extends AbstractMojo {
+    @Parameter(property = "project", defaultValue = "${project}")
+    private MavenProject myMavenProject;
 
-	public JFlexGeneratorMojo()
-	{
-		Options.no_constructor = true;
-		Options.no_backup = true;
-		// integrated by default Options.char_at = true;
-	}
+    public JFlexGeneratorMojo() {
+        Options.no_constructor = true;
+        Options.no_backup = true;
+        // integrated by default Options.char_at = true;
+    }
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		try
-		{
-			List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
 
-			for(String srcDir : myMavenProject.getCompileSourceRoots())
-			{
-				File srcDirectory = new File(srcDir);
+            for (String srcDir : myMavenProject.getCompileSourceRoots()) {
+                File srcDirectory = new File(srcDir);
 
-				List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null, true);
-				for(File file : files)
-				{
-					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
-				}
-			}
+                List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null, true);
+                for (File file : files) {
+                    toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
+                }
+            }
 
-			if(toGenerateFiles.isEmpty())
-			{
-				return;
-			}
+            if (toGenerateFiles.isEmpty()) {
+                return;
+            }
 
-			String outputDirectory = myMavenProject.getBuild().getDirectory();
-			File outputDirectoryFile = new File(outputDirectory, "generated-sources/lexers");
+            String outputDirectory = myMavenProject.getBuild().getDirectory();
+            File outputDirectoryFile = new File(outputDirectory, "generated-sources/lexers");
 
-			outputDirectoryFile.mkdirs();
+            outputDirectoryFile.mkdirs();
 
-			CacheIO logic = new CacheIO(myMavenProject, "jflex-generate.cache");
+            CacheIO logic = new CacheIO(myMavenProject, "jflex-generate.cache");
 
-			logic.read();
+            logic.read();
 
-			myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+            myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-			for(Map.Entry<File, File> info : toGenerateFiles)
-			{
-				File file = info.getKey();
-				File sourceDirectory = info.getValue();
+            for (Map.Entry<File, File> info : toGenerateFiles) {
+                File file = info.getKey();
+                File sourceDirectory = info.getValue();
 
-				if(logic.isUpToDate(file))
-				{
-					getLog().info("JFlex: " + file.getPath() + " is up to date");
-					continue;
-				}
+                if (logic.isUpToDate(file)) {
+                    getLog().info("JFlex: " + file.getPath() + " is up to date");
+                    continue;
+                }
 
-				Path sourcePath = sourceDirectory.toPath();
+                Path sourcePath = sourceDirectory.toPath();
 
-				Path parentPath = file.getParentFile().toPath();
+                Path parentPath = file.getParentFile().toPath();
 
-				String relativePath = sourcePath.relativize(parentPath).toString();
+                String relativePath = sourcePath.relativize(parentPath).toString();
 
-				if(relativePath != null)
-				{
-					File outDirWithPackage = new File(outputDirectoryFile, relativePath);
-					outDirWithPackage.mkdirs();
-					Options.setDir(outDirWithPackage);
-				}
+                if (relativePath != null) {
+                    File outDirWithPackage = new File(outputDirectoryFile, relativePath);
+                    outDirWithPackage.mkdirs();
+                    Options.setDir(outDirWithPackage);
+                }
 
-				getLog().info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+                getLog().info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
-				logic.putCacheEntry(file);
+                logic.putCacheEntry(file);
 
-				File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
-				if(skeletonFile.exists())
-				{
-					try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8)))
-					{
-						Skeleton.readSkel(stream);
-					}
-					Options.no_constructor = true;
-				}
-				else
-				{
-					File marker = new File(file.getParentFile(), file.getName() + ".idea");
-					// marker for using old IDEA skeleton or Consulo skeleton
-					boolean ideaMarker = marker.exists();
-					String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
-					try (BufferedReader stream = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)))
-					{
-						Skeleton.readSkel(stream);
-					}
-					Options.no_constructor = !ideaMarker;
-				}
+                File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
+                if (skeletonFile.exists()) {
+                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8))) {
+                        Skeleton.readSkel(stream);
+                    }
+                    Options.no_constructor = true;
+                }
+                else {
+                    File marker = new File(file.getParentFile(), file.getName() + ".idea");
+                    // marker for using old IDEA skeleton or Consulo skeleton
+                    boolean ideaMarker = marker.exists();
+                    String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
+                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8))) {
+                        Skeleton.readSkel(stream);
+                    }
+                    Options.no_constructor = !ideaMarker;
+                }
 
-				Main.generate(file);
-			}
+                Main.generate(file);
+            }
 
-			logic.write();
-		}
-		catch(Exception e)
-		{
-			getLog().error(e);
-		}
-	}
+            logic.write();
+        }
+        catch (Exception e) {
+            getLog().error(e);
+        }
+    }
 
-	public static void main(String[] args) throws Exception
-	{
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo-csharp\\csharp-psi-impl");
+    public static void main(String[] args) throws Exception {
+        File projectDir = new File("W:\\_github.com\\consulo\\consulo-csharp\\csharp-psi-impl");
 
 
-		MavenProject mavenProject = new MavenProject();
+        MavenProject mavenProject = new MavenProject();
 
-		mavenProject.addCompileSourceRoot(new File(projectDir, "src").getAbsolutePath());
-		Resource resource = new Resource();
-		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
-		Build build = new Build();
-		build.addResource(resource);
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
-		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
-		mavenProject.setBuild(build);
+        mavenProject.addCompileSourceRoot(new File(projectDir, "src").getAbsolutePath());
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
 
 
-		JFlexGeneratorMojo mojo = new JFlexGeneratorMojo();
-		mojo.myMavenProject = mavenProject;
+        JFlexGeneratorMojo mojo = new JFlexGeneratorMojo();
+        mojo.myMavenProject = mavenProject;
 
-		mojo.execute();
-	}
+        mojo.execute();
+    }
 }

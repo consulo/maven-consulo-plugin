@@ -17,54 +17,46 @@ import java.util.Map;
  * @since 27/11/2021
  */
 @Mojo(name = "cleanup-png-icon", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class IconPngCleanupMojo extends AbstractIconGeneratorMojo
-{
-	@Override
-	protected void generate(String themeId, String parentPackage, String name, String id, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException
-	{
-		for(IconInfo iconInfo : icons.values())
-		{
-			if(!iconInfo.isSVG)
-			{
-				continue;
-			}
+public class IconPngCleanupMojo extends AbstractIconGeneratorMojo {
+    @Override
+    protected void generate(String themeId, String parentPackage, String name, String id, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException {
+        for (IconInfo iconInfo : icons.values()) {
+            if (!iconInfo.isSVG) {
+                continue;
+            }
 
-			for(File file : iconInfo.files)
-			{
-				if(file.getName().endsWith(".png"))
-				{
-					file.delete();
+            for (File file : iconInfo.files) {
+                if (file.getName().endsWith(".png")) {
+                    file.delete();
 
-					File _2x = new File(file.getParentFile(), file.getName().replace(".png", "@2x.png"));
+                    File _2x = new File(file.getParentFile(), file.getName().replace(".png", "@2x.png"));
 
-					if(_2x.exists())
-					{
-						_2x.delete();
-					}
-				}
-			}
-		}
-	}
+                    if (_2x.exists()) {
+                        _2x.delete();
+                    }
+                }
+            }
+        }
+    }
 
-	public static void main(String[] args) throws Exception
-	{
-		TEST_GENERATE = true;
+    public static void main(String[] args) throws Exception {
+        TEST_GENERATE = true;
 
-		MavenProject mavenProject = new MavenProject();
+        MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
-		Resource resource = new Resource();
-		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
-		Build build = new Build();
-		build.addResource(resource);
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
-		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
-		mavenProject.setBuild(build);
+        File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
 
-		IconPngCleanupMojo mojo = new IconPngCleanupMojo();
-		mojo.myMavenProject = mavenProject;
-		mojo.setLog(new SystemStreamLog());
+        IconPngCleanupMojo mojo = new IconPngCleanupMojo();
+        mojo.myMavenProject = mavenProject;
+        mojo.setLog(new SystemStreamLog());
 
-		mojo.execute();
-	}
+        mojo.execute();
+    }
 }

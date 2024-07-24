@@ -27,25 +27,21 @@ import javax.xml.parsers.SAXParserFactory;
  * @author VISTALL
  * @since 2020-10-02
  */
-public class ThreadLocalSVGUniverse extends SVGUniverse
-{
-	private final ThreadLocal<XMLReader> myXMLReader = ThreadLocal.withInitial(() -> {
-		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-		saxParserFactory.setNamespaceAware(true);
-		try
-		{
-			SAXParser saxParser = saxParserFactory.newSAXParser();
-			return saxParser.getXMLReader();
-		}
-		catch(ParserConfigurationException | SAXException e)
-		{
-			throw new RuntimeException(e);
-		}
-	});
+public class ThreadLocalSVGUniverse extends SVGUniverse {
+    private final ThreadLocal<XMLReader> myXMLReader = ThreadLocal.withInitial(() -> {
+        SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+        saxParserFactory.setNamespaceAware(true);
+        try {
+            SAXParser saxParser = saxParserFactory.newSAXParser();
+            return saxParser.getXMLReader();
+        }
+        catch (ParserConfigurationException | SAXException e) {
+            throw new RuntimeException(e);
+        }
+    });
 
-	@Override
-	public XMLReader getXMLReader()
-	{
-		return myXMLReader.get();
-	}
+    @Override
+    public XMLReader getXMLReader() {
+        return myXMLReader.get();
+    }
 }

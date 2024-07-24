@@ -31,217 +31,192 @@ import java.util.*;
  * @since 2020-05-21
  */
 @Mojo(name = "generate-localize", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
-public class LocalizeGeneratorMojo extends GenerateMojo
-{
-	@Parameter(property = "project", defaultValue = "${project}")
-	private MavenProject myMavenProject;
+public class LocalizeGeneratorMojo extends GenerateMojo {
+    @Parameter(property = "project", defaultValue = "${project}")
+    private MavenProject myMavenProject;
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		generate(getLog(), myMavenProject);
-	}
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        generate(getLog(), myMavenProject);
+    }
 
-	private static void generate(Log log, MavenProject mavenProject) throws MojoExecutionException, MojoFailureException
-	{
-		try
-		{
-			List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
+    private static void generate(Log log, MavenProject mavenProject) throws MojoExecutionException, MojoFailureException {
+        try {
+            List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
 
-			if(log.isDebugEnabled())
-			{
-				log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
-			}
+            if (log.isDebugEnabled()) {
+                log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
+            }
 
-			for(Resource resource : mavenProject.getResources())
-			{
-				File srcDirectory = new File(resource.getDirectory());
+            for (Resource resource : mavenProject.getResources()) {
+                File srcDirectory = new File(resource.getDirectory());
 
-				File localizeDir = new File(srcDirectory, "LOCALIZE-LIB");
+                File localizeDir = new File(srcDirectory, "LOCALIZE-LIB");
 
-				File enUSDir = new File(localizeDir, "en_US");
-				if(!enUSDir.exists())
-				{
-					// skip not en_US localize
-					continue;
-				}
+                File enUSDir = new File(localizeDir, "en_US");
+                if (!enUSDir.exists()) {
+                    // skip not en_US localize
+                    continue;
+                }
 
-				List<File> files = FileUtils.getFiles(enUSDir, "*.yaml", null);
-				for(File file : files)
-				{
-					toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
-				}
+                List<File> files = FileUtils.getFiles(enUSDir, "*.yaml", null);
+                for (File file : files) {
+                    toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
+                }
 
-				if(files.isEmpty())
-				{
-					throw new MojoFailureException("LocalizeLibrary: " + enUSDir + " exists, but no files.");
-				}
-			}
+                if (files.isEmpty()) {
+                    throw new MojoFailureException("LocalizeLibrary: " + enUSDir + " exists, but no files.");
+                }
+            }
 
-			if(log.isDebugEnabled())
-			{
-				log.debug("Files for generate: " + toGenerateFiles);
-			}
+            if (log.isDebugEnabled()) {
+                log.debug("Files for generate: " + toGenerateFiles);
+            }
 
-			if(toGenerateFiles.isEmpty())
-			{
-				return;
-			}
+            if (toGenerateFiles.isEmpty()) {
+                return;
+            }
 
-			String outputDirectory = mavenProject.getBuild().getDirectory();
-			File outputDirectoryFile = new File(outputDirectory, "generated-sources/localize");
+            String outputDirectory = mavenProject.getBuild().getDirectory();
+            File outputDirectoryFile = new File(outputDirectory, "generated-sources/localize");
 
-			outputDirectoryFile.mkdirs();
+            outputDirectoryFile.mkdirs();
 
-			CacheIO logic = new CacheIO(mavenProject, "localize.cache");
-			if(TEST_GENERATE)
-			{
-				logic.delete();
-			}
-			logic.read();
+            CacheIO logic = new CacheIO(mavenProject, "localize.cache");
+            if (TEST_GENERATE) {
+                logic.delete();
+            }
+            logic.read();
 
-			mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+            mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-			for(Map.Entry<File, File> info : toGenerateFiles)
-			{
-				File file = info.getKey();
-				File sourceDirectory = info.getValue();
+            for (Map.Entry<File, File> info : toGenerateFiles) {
+                File file = info.getKey();
+                File sourceDirectory = info.getValue();
 
-				if(logic.isUpToDate(file))
-				{
-					log.info("Localize: " + file.getPath() + " is up to date");
-					continue;
-				}
+                if (logic.isUpToDate(file)) {
+                    log.info("Localize: " + file.getPath() + " is up to date");
+                    continue;
+                }
 
-				// consulo.platform.base.ApplicationLocalize
-				String localizeFullPath = FileUtil.getNameWithoutExtension(file.getName());
+                // consulo.platform.base.ApplicationLocalize
+                String localizeFullPath = FileUtil.getNameWithoutExtension(file.getName());
 
-				String pluginId = StringUtil.getPackageName(localizeFullPath);
-				String localizeId = StringUtil.getShortName(localizeFullPath);
+                String pluginId = StringUtil.getPackageName(localizeFullPath);
+                String localizeId = StringUtil.getShortName(localizeFullPath);
 
-				String packageName = pluginId + ".localize";
+                String packageName = pluginId + ".localize";
 
-				log.info("Localize: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+                log.info("Localize: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
-				logic.putCacheEntry(file);
+                logic.putCacheEntry(file);
 
-				ClassName localizeKey = ClassName.get("consulo.localize", "LocalizeKey");
-				ClassName localizeValue = ClassName.get("consulo.localize", "LocalizeValue");
+                ClassName localizeKey = ClassName.get("consulo.localize", "LocalizeKey");
+                ClassName localizeValue = ClassName.get("consulo.localize", "LocalizeValue");
 
-				List<FieldSpec> fieldSpecs = new ArrayList<>();
-				List<MethodSpec> methodSpecs = new ArrayList<>();
+                List<FieldSpec> fieldSpecs = new ArrayList<>();
+                List<MethodSpec> methodSpecs = new ArrayList<>();
 
-				FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
-				idField.initializer(CodeBlock.of("$S", localizeFullPath));
-				fieldSpecs.add(idField.build());
+                FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+                idField.initializer(CodeBlock.of("$S", localizeFullPath));
+                fieldSpecs.add(idField.build());
 
-				Yaml yaml = new Yaml();
-				try (InputStream stream = new FileInputStream(file))
-				{
-					Map<String, Map<String, String>> o = yaml.load(stream);
+                Yaml yaml = new Yaml();
+                try (InputStream stream = new FileInputStream(file)) {
+                    Map<String, Map<String, String>> o = yaml.load(stream);
 
-					for(Map.Entry<String, Map<String, String>> entry : o.entrySet())
-					{
-						String key = entry.getKey().toLowerCase(Locale.ROOT);
+                    for (Map.Entry<String, Map<String, String>> entry : o.entrySet()) {
+                        String key = entry.getKey().toLowerCase(Locale.ROOT);
 
-						Map<String, String> value = entry.getValue();
+                        Map<String, String> value = entry.getValue();
 
-						String t = value.get("text");
-						String text = t == null ? "" : t;
+                        String t = value.get("text");
+                        String text = t == null ? "" : t;
 
-						String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
+                        String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
 
-						FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-						fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S)", localizeKey, "ID", key).build());
-						fieldSpecs.add(fieldSpec.build());
+                        FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+                        fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S)", localizeKey, "ID", key).build());
+                        fieldSpecs.add(fieldSpec.build());
 
-						String methodName = normalizeName(captilizeByDot(key));
+                        String methodName = normalizeName(captilizeByDot(key));
 
-						MessageFormat format = null;
-						try
-						{
-							format = new MessageFormat(text);
-						}
-						catch(Exception e)
-						{
-							throw new MojoFailureException("Failed to parse text: " + text, e);
-						}
+                        MessageFormat format = null;
+                        try {
+                            format = new MessageFormat(text);
+                        }
+                        catch (Exception e) {
+                            throw new MojoFailureException("Failed to parse text: " + text, e);
+                        }
 
-						Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
+                        Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
 
-						MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(methodName);
-						methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-						methodSpec.returns(localizeValue);
-						if(formatsByArgumentIndex.length > 0)
-						{
-							StringBuilder argCall = new StringBuilder("return " + fieldName + ".getValue(");
+                        MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(methodName);
+                        methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
+                        methodSpec.returns(localizeValue);
+                        if (formatsByArgumentIndex.length > 0) {
+                            StringBuilder argCall = new StringBuilder("return " + fieldName + ".getValue(");
 
-							for(int i = 0; i < formatsByArgumentIndex.length; i++)
-							{
-								String parameterName = "arg" + i;
+                            for (int i = 0; i < formatsByArgumentIndex.length; i++) {
+                                String parameterName = "arg" + i;
 
-								methodSpec.addParameter(Object.class, parameterName);
+                                methodSpec.addParameter(Object.class, parameterName);
 
-								if(i != 0)
-								{
-									argCall.append(", ");
-								}
+                                if (i != 0) {
+                                    argCall.append(", ");
+                                }
 
-								argCall.append(parameterName);
-							}
+                                argCall.append(parameterName);
+                            }
 
-							argCall.append(")");
-							methodSpec.addStatement("$L", argCall.toString());
-						}
-						else
-						{
-							methodSpec.addStatement("$L", "return " + fieldName + ".getValue()");
-						}
-						methodSpecs.add(methodSpec.build());
-					}
-				}
-				catch(Exception e)
-				{
-					throw new MojoFailureException(e.getMessage(), e);
-				}
+                            argCall.append(")");
+                            methodSpec.addStatement("$L", argCall.toString());
+                        }
+                        else {
+                            methodSpec.addStatement("$L", "return " + fieldName + ".getValue()");
+                        }
+                        methodSpecs.add(methodSpec.build());
+                    }
+                }
+                catch (Exception e) {
+                    throw new MojoFailureException(e.getMessage(), e);
+                }
 
-				TypeSpec typeSpec = TypeSpec.classBuilder(localizeId)
-						.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "ALL").build())
-						.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-						.addFields(fieldSpecs)
-						.addMethods(methodSpecs)
-						.addJavadoc("Generated code. Don't edit this class")
-						.build();
+                TypeSpec typeSpec = TypeSpec.classBuilder(localizeId)
+                    .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "ALL").build())
+                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                    .addFields(fieldSpecs)
+                    .addMethods(methodSpecs)
+                    .addJavadoc("Generated code. Don't edit this class")
+                    .build();
 
-				JavaFile javaFile = JavaFile.builder(packageName, typeSpec)
-						.build();
+                JavaFile javaFile = JavaFile.builder(packageName, typeSpec)
+                    .build();
 
-				javaFile.writeTo(outputDirectoryFile);
-			}
+                javaFile.writeTo(outputDirectoryFile);
+            }
 
-			logic.write();
-		}
-		catch(IOException e)
-		{
-			log.error(e);
-		}
-	}
+            logic.write();
+        }
+        catch (IOException e) {
+            log.error(e);
+        }
+    }
 
-	public static void main(String[] args) throws Exception
-	{
-		TEST_GENERATE = true;
+    public static void main(String[] args) throws Exception {
+        TEST_GENERATE = true;
 
-		MavenProject mavenProject = new MavenProject();
+        MavenProject mavenProject = new MavenProject();
 
-		File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");
-		Resource resource = new Resource();
-		resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
-		Build build = new Build();
-		build.addResource(resource);
-		build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
-		build.setDirectory(new File(projectDir, "target").getAbsolutePath());
-		mavenProject.setBuild(build);
+        File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
 
-		generate(new SystemStreamLog(), mavenProject);
-	}
+        generate(new SystemStreamLog(), mavenProject);
+    }
 }

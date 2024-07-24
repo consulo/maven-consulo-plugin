@@ -10,23 +10,19 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * @since 02-Dec-17
  */
 @Mojo(name = "packageWithCheck", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
-public class PackageWithCheckMojo extends PackageMojo
-{
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		if(packaging.skip)
-		{
-			getLog().info("Packaging - disabled");
-			return;
-		}
+public class PackageWithCheckMojo extends PackageMojo {
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        if (packaging.skip) {
+            getLog().info("Packaging - disabled");
+            return;
+        }
 
-		super.execute();
-	}
+        super.execute();
+    }
 
-	@Override
-	protected void patchPluginXml() throws MojoExecutionException, MojoFailureException
-	{
-		// nothing
-	}
+    @Override
+    protected void patchPluginXml() throws MojoExecutionException, MojoFailureException {
+        // nothing
+    }
 }

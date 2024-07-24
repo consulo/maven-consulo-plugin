@@ -25,147 +25,125 @@ import java.util.function.Function;
  * @since 24-Nov-17
  */
 @Mojo(name = "package", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.PACKAGE)
-public class PackageMojo extends AbstractPackagingMojo
-{
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException
-	{
-		patchPluginXml();
+public class PackageMojo extends AbstractPackagingMojo {
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        patchPluginXml();
 
-		String directory = myProject.getBuild().getDirectory();
+        String directory = myProject.getBuild().getDirectory();
 
-		File targetFile = new File(directory, myId + ".consulo-plugin");
+        File targetFile = new File(directory, myId + ".consulo-plugin");
 
-		FileUtils.mkdir(directory);
+        FileUtils.mkdir(directory);
 
-		try (ZipArchiveOutputStream zipStream = new ZipArchiveOutputStream(targetFile))
-		{
-			Artifact artifact = myProject.getArtifact();
-			if(artifact == null)
-			{
-				throw new MojoFailureException("No project artifact");
-			}
+        try (ZipArchiveOutputStream zipStream = new ZipArchiveOutputStream(targetFile)) {
+            Artifact artifact = myProject.getArtifact();
+            if (artifact == null) {
+                throw new MojoFailureException("No project artifact");
+            }
 
-			File file = artifact.getFile();
-			if(file == null || !file.exists())
-			{
-				throw new MojoFailureException("Project artifact is not build");
-			}
+            File file = artifact.getFile();
+            if (file == null || !file.exists()) {
+                throw new MojoFailureException("Project artifact is not build");
+            }
 
-			writeRuntimeFile(zipStream, file);
+            writeRuntimeFile(zipStream, file);
 
-			MetaFiles metaFiles = new MetaFiles();
-			metaFiles.readFromJar(file);
+            MetaFiles metaFiles = new MetaFiles();
+            metaFiles.readFromJar(file);
 
-			Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
-			for(Artifact dependencyArtifact : dependencyArtifacts)
-			{
-				if(isValidArtifactForPackaging(dependencyArtifact))
-				{
-					File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
+            Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
+            for (Artifact dependencyArtifact : dependencyArtifacts) {
+                if (isValidArtifactForPackaging(dependencyArtifact)) {
+                    File artifactFile = getAndCheckArtifactFile(dependencyArtifact);
 
-					writeRuntimeFile(zipStream, artifactFile);
+                    writeRuntimeFile(zipStream, artifactFile);
 
-					metaFiles.readFromJar(artifactFile);
+                    metaFiles.readFromJar(artifactFile);
 
-					String pluginRequiresXml = readPluginRequires(artifactFile);
-					if(pluginRequiresXml != null)
-					{
-						writeText(zipStream, "lib/" + artifactFile.getName() + REQUIRES_EXTENSION, pluginRequiresXml);
-					}
-				}
-			}
+                    String pluginRequiresXml = readPluginRequires(artifactFile);
+                    if (pluginRequiresXml != null) {
+                        writeText(zipStream, "lib/" + artifactFile.getName() + REQUIRES_EXTENSION, pluginRequiresXml);
+                    }
+                }
+            }
 
-			metaFiles.forEachData((filePath, data) ->
-			{
-				try
-				{
-					writeText(zipStream, filePath, data);
-				}
-				catch(IOException e)
-				{
-					throw new IllegalArgumentException(e);
-				}
-			});
+            metaFiles.forEachData((filePath, data) ->
+            {
+                try {
+                    writeText(zipStream, filePath, data);
+                }
+                catch (IOException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            });
 
-			File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
-			if(distDirectory.exists())
-			{
-				archiveFileOrDirectory(zipStream, distDirectory, child ->
-				{
-					String path = distDirectory.getPath();
-					String childPath = child.getPath();
-					// + 1 - eat path separator
-					return childPath.substring(path.length() + 1, childPath.length());
-				});
-			}
+            File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
+            if (distDirectory.exists()) {
+                archiveFileOrDirectory(zipStream, distDirectory, child ->
+                {
+                    String path = distDirectory.getPath();
+                    String childPath = child.getPath();
+                    // + 1 - eat path separator
+                    return childPath.substring(path.length() + 1, childPath.length());
+                });
+            }
 
-			for(Copy copy : packaging.copies)
-			{
-				Artifact copyArtifact = resolveArtifact(copy.artifact);
+            for (Copy copy : packaging.copies) {
+                Artifact copyArtifact = resolveArtifact(copy.artifact);
 
-				File artifactFile = getAndCheckArtifactFile(copyArtifact);
+                File artifactFile = getAndCheckArtifactFile(copyArtifact);
 
-				archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile.getName()));
-			}
-		}
-		catch(IOException e)
-		{
-			throw new MojoFailureException(e.getMessage(), e);
-		}
-	}
+                archiveFileOrDirectory(zipStream, artifactFile, it -> getRelativePathForCopy(copy, artifactFile.getName()));
+            }
+        }
+        catch (IOException e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        }
+    }
 
-	private void archiveFileOrDirectory(ZipArchiveOutputStream zipStream, File file, Function<File, String> relativePathFunc) throws IOException
-	{
-		if(file.isFile())
-		{
-			ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/" + relativePathFunc.apply(file));
+    private void archiveFileOrDirectory(ZipArchiveOutputStream zipStream, File file, Function<File, String> relativePathFunc) throws IOException {
+        if (file.isFile()) {
+            ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/" + relativePathFunc.apply(file));
 
-			zipStream.putArchiveEntry(entry);
+            zipStream.putArchiveEntry(entry);
 
-			try (FileInputStream fileInputStream = new FileInputStream(file))
-			{
-				IOUtils.copy(fileInputStream, zipStream);
-			}
+            try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                IOUtils.copy(fileInputStream, zipStream);
+            }
 
-			zipStream.closeArchiveEntry();
-		}
-		else if(file.isDirectory())
-		{
-			File[] files = file.listFiles();
-			assert files != null;
-			for(File child : files)
-			{
-				archiveFileOrDirectory(zipStream, child, relativePathFunc);
-			}
-		}
-	}
+            zipStream.closeArchiveEntry();
+        }
+        else if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            assert files != null;
+            for (File child : files) {
+                archiveFileOrDirectory(zipStream, child, relativePathFunc);
+            }
+        }
+    }
 
-	protected void patchPluginXml() throws MojoExecutionException, MojoFailureException
-	{
-		PatchPluginXmlMojo.patchPluginXml(this);
-	}
+    protected void patchPluginXml() throws MojoExecutionException, MojoFailureException {
+        PatchPluginXmlMojo.patchPluginXml(this);
+    }
 
-	private void writeRuntimeFile(ZipArchiveOutputStream zipStream, File file) throws IOException
-	{
-		ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/lib/" + file.getName());
+    private void writeRuntimeFile(ZipArchiveOutputStream zipStream, File file) throws IOException {
+        ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/lib/" + file.getName());
 
-		zipStream.putArchiveEntry(entry);
+        zipStream.putArchiveEntry(entry);
 
-		try (FileInputStream fileInputStream = new FileInputStream(file))
-		{
-			IOUtils.copy(fileInputStream, zipStream);
-		}
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            IOUtils.copy(fileInputStream, zipStream);
+        }
 
-		zipStream.closeArchiveEntry();
-	}
+        zipStream.closeArchiveEntry();
+    }
 
-	private void writeText(ZipArchiveOutputStream zipStream, String fileName, String text) throws IOException
-	{
-		ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/" + fileName);
-		zipStream.putArchiveEntry(entry);
+    private void writeText(ZipArchiveOutputStream zipStream, String fileName, String text) throws IOException {
+        ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/" + fileName);
+        zipStream.putArchiveEntry(entry);
 
-		IOUtils.copy(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), zipStream);
-		zipStream.closeArchiveEntry();
-	}
+        IOUtils.copy(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), zipStream);
+        zipStream.closeArchiveEntry();
+    }
 }
