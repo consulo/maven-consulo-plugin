@@ -135,13 +135,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
                         String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
 
-                        FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-                        fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S)", localizeKey, "ID", key).build());
-                        fieldSpecs.add(fieldSpec.build());
-
-                        String methodName = normalizeName(captilizeByDot(key));
-
-                        MessageFormat format = null;
+                        MessageFormat format;
                         try {
                             format = new MessageFormat(text);
                         }
@@ -150,6 +144,12 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
                         }
 
                         Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
+
+                        FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+                        fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S, $L)", localizeKey, "ID", key, formatsByArgumentIndex.length).build());
+                        fieldSpecs.add(fieldSpec.build());
+
+                        String methodName = normalizeName(captilizeByDot(key));
 
                         MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(methodName);
                         methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
