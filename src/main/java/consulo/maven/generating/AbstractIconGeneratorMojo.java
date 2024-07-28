@@ -1,8 +1,8 @@
 package consulo.maven.generating;
 
 import ar.com.hjg.pngj.PngReader;
-import com.kitfox.svg.SVGDiagram;
-import com.kitfox.svg.SVGRoot;
+import com.github.weisj.jsvg.SVGDocument;
+import com.github.weisj.jsvg.parser.SVGLoader;
 import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -148,8 +148,6 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo {
                 return;
             }
 
-            ThreadLocalSVGUniverse svgUniverse = new ThreadLocalSVGUniverse();
-
             validateGeneration(toGenerateFiles);
 
             for (Map.Entry<String, List<GenerateInfo>> entry : toGenerateFiles.entrySet()) {
@@ -192,12 +190,12 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo {
 
                             isSVG = true;
 
-                            SVGDiagram diagram = svgUniverse.getDiagram(iconFile.toURI());
+                            SVGLoader loader = new SVGLoader();
 
-                            SVGRoot root = diagram.getRoot();
+                            SVGDocument document = loader.load(iconFile.toURI().toURL());
 
-                            height = (int) root.getDeviceHeight();
-                            width = (int) root.getDeviceWidth();
+                            height = (int) document.size().getHeight();
+                            width = (int) document.size().getWidth();
                         }
                         else if (relativePath.endsWith(".png")) {
                             relativePath = relativePath.replace(".png", "");

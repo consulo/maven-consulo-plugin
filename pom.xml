@@ -133,9 +133,9 @@
         </dependency>
 
         <dependency>
-            <groupId>consulo.internal</groupId>
-            <artifactId>svg-salamander</artifactId>
-            <version>2.2-SNAPSHOT</version>
+            <groupId>com.github.weisj</groupId>
+            <artifactId>jsvg</artifactId>
+            <version>1.6.0</version>
         </dependency>
 
         <dependency>
