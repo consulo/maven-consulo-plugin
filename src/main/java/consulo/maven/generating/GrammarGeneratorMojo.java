@@ -22,6 +22,7 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -96,7 +97,7 @@ public class GrammarGeneratorMojo extends AbstractMojo {
             for (File file : files) {
                 System.out.println("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
-                runGenerator(file.getPath(), outputDirectoryFile.getPath(), sourceDirectory);
+                runGenerator(file.getPath(), outputDirectoryFile.getPath(), sourceDirectory, getLog());
             }
 
             myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
@@ -107,7 +108,7 @@ public class GrammarGeneratorMojo extends AbstractMojo {
     }
 
     @RequiredReadAction
-    private static void runGenerator(String filePath, String directoryToGenerate, @Nonnull String sourceDirectory) throws Exception {
+    private static void runGenerator(String filePath, String directoryToGenerate, @Nonnull String sourceDirectory, Log log) throws Exception {
         try (AutoDisposable rootDisposable = AutoDisposable.newAutoDisposable()) {
             LightApplicationBuilder applicationBuilder = LightApplicationBuilder.create(rootDisposable);
 
@@ -123,7 +124,7 @@ public class GrammarGeneratorMojo extends AbstractMojo {
 
                     builder.bind(InjectedLanguageManager.class).forceSingleton().to(InjectedLanguageManagerStub.class);
 
-                    builder.bind(JavaHelper.class).forceSingleton().to(new JavaParserJavaHelper(sourceDirectory, directoryToGenerate));
+                    builder.bind(JavaHelper.class).forceSingleton().to(new JavaParserJavaHelper(sourceDirectory, directoryToGenerate, log));
                 }
             });
 
