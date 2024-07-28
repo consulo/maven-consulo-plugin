@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.2-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -15,6 +15,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <java.version>17</java.version>
+
+        <javaparser.version>3.26.1</javaparser.version>
     </properties>
 
     <prerequisites>
@@ -91,13 +93,13 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.22.1</version>
+            <version>${javaparser.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-symbol-solver-core</artifactId>
-            <version>3.22.1</version>
+            <version>${javaparser.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.javassist</groupId>

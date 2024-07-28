@@ -18,6 +18,7 @@ import com.github.javaparser.utils.SourceRoot;
 import com.google.common.collect.BiMap;
 import consulo.annotation.access.RequiredReadAction;
 import consulo.language.psi.NavigatablePsiElement;
+import org.apache.maven.plugin.logging.Log;
 import org.intellij.grammar.java.JavaHelper;
 
 import javax.annotation.Nonnull;
@@ -58,9 +59,12 @@ class JavaParserJavaHelper extends JavaHelper {
     private Map<String, TypeDeclaration> myUnits = new HashMap<>();
     private BiMap<String, String> myRuleClassNames;
     private Map<String, String> myBaseClassNames;
+    private final Log myLog;
 
-    public JavaParserJavaHelper(String sourceDirectory, String directoryToGenerate) {
+    public JavaParserJavaHelper(String sourceDirectory, String directoryToGenerate, Log log) {
+        myLog = log;
         ParserConfiguration configuration = new ParserConfiguration();
+        configuration.setLanguageLevel(ParserConfiguration.LanguageLevel.BLEEDING_EDGE);
         configuration.setSymbolResolver(new JavaSymbolSolver(new JavaParserTypeSolver(sourceDirectory)));
 
         mySourceRoot = new SourceRoot(Paths.get(sourceDirectory), configuration);
@@ -100,6 +104,9 @@ class JavaParserJavaHelper extends JavaHelper {
             }
         }
         catch (Exception e) {
+            if (myLog.isDebugEnabled()) {
+                myLog.debug(e);
+            }
         }
 
         if (typeDeclaration == null) {
