@@ -2,9 +2,9 @@ package consulo.maven.generating;
 
 import consulo.annotation.access.RequiredReadAction;
 import consulo.document.Document;
+import consulo.document.DocumentWindow;
 import consulo.document.util.TextRange;
 import consulo.language.file.FileViewProvider;
-import consulo.language.file.inject.DocumentWindow;
 import consulo.language.inject.InjectedLanguageManager;
 import consulo.language.inject.MultiHostRegistrar;
 import consulo.language.psi.PsiElement;
