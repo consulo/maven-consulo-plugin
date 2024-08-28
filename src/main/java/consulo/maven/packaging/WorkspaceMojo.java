@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -98,8 +96,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
                 }
             }
 
-            metaFiles.forEachData((filePath, data) ->
-            {
+            metaFiles.forEachData((filePath, data) -> {
                 try {
                     File outFile = new File(pluginDirectory, filePath);
                     outFile.getParentFile().mkdirs();
@@ -121,11 +118,6 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
                 MavenArtifactWrapper wrapper = getAndCheckArtifact(copyArtifact);
 
                 wrapper.copyTo(pluginDirectory, getRelativePathForCopy(copy, wrapper.getArtifactName()));
-            }
-
-            List<String> indexData = IndexFileBuilder.buildIndex(pluginDirectory.toPath());
-            if (!indexData.isEmpty()) {
-                Files.write(libDirectory.toPath().resolve("index.txt"), indexData, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
             }
         }
         catch (IOException e) {

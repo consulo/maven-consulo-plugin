@@ -68,8 +68,7 @@ public class PackageMojo extends AbstractPackagingMojo {
                 }
             }
 
-            metaFiles.forEachData((filePath, data) ->
-            {
+            metaFiles.forEachData((filePath, data) -> {
                 try {
                     writeText(zipStream, filePath, data);
                 }
