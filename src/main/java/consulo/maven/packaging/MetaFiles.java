@@ -42,7 +42,9 @@ public class MetaFiles {
                     }
                 }
 
-                myIndexData.add(jarName);
+                if (!jarEntry.isDirectory()) {
+                    myIndexData.add(jarName);
+                }
             }
         }
     }
