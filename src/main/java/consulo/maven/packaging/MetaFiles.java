@@ -49,10 +49,14 @@ public class MetaFiles {
         }
     }
 
-    public void forEachData(BiConsumer<String, String> consumer) {
-        if (!myIndexData.isEmpty())  {
+    public void writeIndex(BiConsumer<String, String> consumer) {
+        if (!myIndexData.isEmpty()) {
             consumer.accept("lib/index.txt", String.join("\n", myIndexData));
         }
+    }
+
+    public void forEachData(BiConsumer<String, String> consumer) {
+        writeIndex(consumer);
 
         for (Map.Entry<String, String> entry : myMetaData.entrySet()) {
             consumer.accept(entry.getKey(), entry.getValue());

@@ -15,10 +15,6 @@ import java.util.List;
 public abstract class AbstractConsuloMojo extends AbstractMojo {
     public static final String SNAPSHOT = "SNAPSHOT";
 
-    @Deprecated
-    // obsolete branch
-    public static final String VALHALLA_BRANCH = "valhalla";
-
     @Parameter(property = "project", defaultValue = "${project}", readonly = true)
     public MavenProject myProject;
 
