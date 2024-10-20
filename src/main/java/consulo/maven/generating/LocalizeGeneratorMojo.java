@@ -137,7 +137,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
                         MessageFormat format;
                         try {
-                            format = new MessageFormat(text);
+                            format = new MessageFormat(text, Locale.ENGLISH);
                         }
                         catch (Exception e) {
                             throw new MojoFailureException("Failed to parse text: " + text, e);
