@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.Format;
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -135,9 +134,9 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
                         String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
 
-                        MessageFormat format;
+                        com.ibm.icu.text.MessageFormat format;
                         try {
-                            format = new MessageFormat(text, Locale.ENGLISH);
+                            format = new com.ibm.icu.text.MessageFormat(text, Locale.ENGLISH);
                         }
                         catch (Exception e) {
                             throw new MojoFailureException("Failed to parse text: " + text, e);

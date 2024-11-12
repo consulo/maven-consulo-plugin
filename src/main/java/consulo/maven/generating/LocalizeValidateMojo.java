@@ -16,8 +16,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author VISTALL
@@ -93,7 +95,7 @@ public class LocalizeValidateMojo extends GenerateMojo {
                         String text = t == null ? "" : t;
 
                         try {
-                            new MessageFormat(text, Locale.ENGLISH);
+                            new com.ibm.icu.text.MessageFormat(text, Locale.ENGLISH);
 
                             cache.putCacheEntry(file);
                         }
