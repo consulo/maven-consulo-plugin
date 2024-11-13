@@ -1,5 +1,6 @@
 package consulo.maven.generating;
 
+import com.ibm.icu.text.MessageFormat;
 import consulo.maven.base.util.cache.CacheIO;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -86,21 +87,24 @@ public class LocalizeValidateMojo extends GenerateMojo {
 
                 Yaml yaml = new Yaml();
                 try (InputStream stream = new FileInputStream(file)) {
-                    Map<String, Map<String, String>> o = yaml.load(stream);
+                    Map<String, Map<String, Object>> o = yaml.load(stream);
 
-                    for (Map.Entry<String, Map<String, String>> entry : o.entrySet()) {
-                        Map<String, String> value = entry.getValue();
+                    for (Map.Entry<String, Map<String, Object>> entry : o.entrySet()) {
+                        String key = entry.getKey();
+                        Map<String, Object> value = entry.getValue();
 
-                        String t = value.get("text");
-                        String text = t == null ? "" : t;
+                        Object t = value.get("text");
+                        if (!(t instanceof String textStr)) {
+                            throw new MojoFailureException("Invalid type of " + key + " text entry. Current: " + t);
+                        }
 
                         try {
-                            new com.ibm.icu.text.MessageFormat(text, Locale.ENGLISH);
+                            new MessageFormat(textStr, Locale.ENGLISH);
 
                             cache.putCacheEntry(file);
                         }
                         catch (Exception e) {
-                            throw new MojoFailureException("Failed to parse text: " + text, e);
+                            throw new MojoFailureException("Failed to parse text: " + textStr, e);
                         }
                     }
                 }
