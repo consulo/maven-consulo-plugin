@@ -94,9 +94,11 @@ public class LocalizeValidateMojo extends GenerateMojo {
                         Map<String, Object> value = entry.getValue();
 
                         Object t = value.get("text");
-                        if (!(t instanceof String textStr)) {
+                        if (!(t instanceof String)) {
                             throw new MojoFailureException("Invalid type of " + key + " text entry. Current: " + t);
                         }
+
+                        String textStr = (String) t;
 
                         try {
                             new MessageFormat(textStr, Locale.ENGLISH);
