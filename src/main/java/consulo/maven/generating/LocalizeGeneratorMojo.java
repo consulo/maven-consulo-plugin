@@ -1,9 +1,10 @@
 package consulo.maven.generating;
 
-import com.squareup.javapoet.*;
+import consulo.compiler.apt.shared.generation.GeneratedClass;
+import consulo.compiler.apt.shared.generation.GeneratedElementFactory;
+import consulo.compiler.apt.shared.generator.LocalizeGenerator;
 import consulo.maven.base.util.cache.CacheIO;
 import consulo.util.io.FileUtil;
-import consulo.util.lang.StringUtil;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -15,15 +16,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.io.FileUtils;
-import org.yaml.snakeyaml.Yaml;
 
-import javax.lang.model.element.Modifier;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.Format;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author VISTALL
@@ -89,6 +87,8 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
             mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
+            LocalizeGenerator generator = new LocalizeGenerator(GeneratedElementFactory.first());
+
             for (Map.Entry<File, File> info : toGenerateFiles) {
                 File file = info.getKey();
                 File sourceDirectory = info.getValue();
@@ -98,107 +98,17 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
                     continue;
                 }
 
-                // consulo.platform.base.ApplicationLocalize
                 String localizeFullPath = FileUtil.getNameWithoutExtension(file.getName());
 
-                String pluginId = StringUtil.getPackageName(localizeFullPath);
-                String localizeId = StringUtil.getShortName(localizeFullPath);
+                GeneratedClass generatedClass = generator.parse(localizeFullPath, file.toPath());
 
-                String packageName = pluginId + ".localize";
-
-                log.info("Localize: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
-
-                logic.putCacheEntry(file);
-
-                ClassName localizeKey = ClassName.get("consulo.localize", "LocalizeKey");
-                ClassName localizeValue = ClassName.get("consulo.localize", "LocalizeValue");
-
-                List<FieldSpec> fieldSpecs = new ArrayList<>();
-                List<MethodSpec> methodSpecs = new ArrayList<>();
-
-                FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
-                idField.initializer(CodeBlock.of("$S", localizeFullPath));
-                fieldSpecs.add(idField.build());
-
-                Yaml yaml = new Yaml();
-                try (InputStream stream = new FileInputStream(file)) {
-                    Map<String, Map<String, String>> o = yaml.load(stream);
-
-                    for (Map.Entry<String, Map<String, String>> entry : o.entrySet()) {
-                        String key = entry.getKey().toLowerCase(Locale.ROOT);
-
-                        Map<String, String> value = entry.getValue();
-
-                        String t = value.get("text");
-                        String text = t == null ? "" : t;
-
-                        String fieldName = normalizeName(key.replace(".", "_").replace(" ", "_"));
-
-                        com.ibm.icu.text.MessageFormat format;
-                        try {
-                            format = new com.ibm.icu.text.MessageFormat(text, Locale.ENGLISH);
-                        }
-                        catch (Exception e) {
-                            throw new MojoFailureException("Failed to parse text: " + text, e);
-                        }
-
-                        Format[] formatsByArgumentIndex = format.getFormatsByArgumentIndex();
-
-                        FieldSpec.Builder fieldSpec = FieldSpec.builder(localizeKey, fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-                        fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S, $L)", localizeKey, "ID", key, formatsByArgumentIndex.length).build());
-                        fieldSpecs.add(fieldSpec.build());
-
-                        String methodName = normalizeName(captilizeByDot(key));
-
-                        MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(methodName);
-                        methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-                        methodSpec.returns(localizeValue);
-                        if (formatsByArgumentIndex.length > 0) {
-                            StringBuilder argCall = new StringBuilder("return " + fieldName + ".getValue(");
-
-                            for (int i = 0; i < formatsByArgumentIndex.length; i++) {
-                                String parameterName = "arg" + i;
-
-                                methodSpec.addParameter(Object.class, parameterName);
-
-                                if (i != 0) {
-                                    argCall.append(", ");
-                                }
-
-                                argCall.append(parameterName);
-                            }
-
-                            argCall.append(")");
-                            methodSpec.addStatement("$L", argCall.toString());
-                        }
-                        else {
-                            methodSpec.addStatement("$L", "return " + fieldName + ".getValue()");
-                        }
-                        methodSpecs.add(methodSpec.build());
-                    }
-                }
-                catch (Exception e) {
-                    throw new MojoFailureException(e.getMessage(), e);
-                }
-
-                TypeSpec typeSpec = TypeSpec.classBuilder(localizeId)
-                    .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "ALL").build())
-                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    .addFields(fieldSpecs)
-                    .addMethods(methodSpecs)
-                    .addJavadoc("Generated code. Don't edit this class")
-                    .build();
-
-                JavaFile javaFile = JavaFile.builder(packageName, typeSpec)
-                    .build();
-
-                javaFile.writeTo(outputDirectoryFile);
+                generatedClass.write(outputDirectoryFile.toPath());
             }
 
             logic.write();
         }
-        catch (IOException e) {
-            log.error(e);
+        catch (Exception e) {
+            throw new MojoFailureException(null, e);
         }
     }
 
@@ -207,7 +117,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
         MavenProject mavenProject = new MavenProject();
 
-        File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-localize-library");
+        File projectDir = new File("W:\\ConsulorRepos\\consulo-handlebars");
         Resource resource = new Resource();
         resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
         Build build = new Build();

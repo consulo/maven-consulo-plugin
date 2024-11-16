@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.5-SNAPSHOT</version>
+    <version>3.6-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -136,6 +136,12 @@
             <groupId>com.github.weisj</groupId>
             <artifactId>jsvg</artifactId>
             <version>1.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>consulo.internal</groupId>
+            <artifactId>compiler.apt.shared</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

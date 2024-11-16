@@ -3,15 +3,21 @@ package consulo.maven.generating;
 import ar.com.hjg.pngj.PngReader;
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
+import com.squareup.javapoet.*;
 import consulo.maven.base.util.cache.CacheIO;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.io.FileUtils;
 
+import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,7 +29,8 @@ import java.util.*;
  * @author VISTALL
  * @since 27/11/2021
  */
-public abstract class AbstractIconGeneratorMojo extends GenerateMojo {
+@Mojo(name = "generate-icon", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
+public class IconGeneratorMojo extends GenerateMojo {
     protected static class GenerateInfo {
         public List<File> files;
 
@@ -59,11 +66,6 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo {
 
     @Parameter(property = "project", defaultValue = "${project}")
     protected MavenProject myMavenProject;
-
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        execute(getLog(), myMavenProject);
-    }
 
     protected void execute(Log log, MavenProject mavenProject) throws MojoFailureException {
         try {
@@ -265,8 +267,74 @@ public abstract class AbstractIconGeneratorMojo extends GenerateMojo {
         }
     }
 
-    protected void validateGeneration(Map<String, List<GenerateInfo>> toGenerateFiles) throws MojoFailureException {
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        execute(getLog(), myMavenProject);
     }
 
-    protected abstract void generate(String themeId, String parentPackage, String name, String id, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException;
+    protected void validateGeneration(Map<String, List<GenerateInfo>> toGenerateFiles) throws MojoFailureException {
+        if (!toGenerateFiles.containsKey("light")) {
+            throw new MojoFailureException("IconLibrary: no 'light' theme icons");
+        }
+    }
+
+    protected void generate(String themeId, String parentPackage, String name, String id, Log log, Map<String, IconInfo> icons, File outputDirectoryFile) throws IOException {
+        if (!themeId.equals("light")) {
+            return;
+        }
+
+        ClassName imageKeyClass = ClassName.get("consulo.ui.image", "ImageKey");
+
+        List<FieldSpec> fieldSpecs = new ArrayList<>();
+        List<MethodSpec> methodSpecs = new ArrayList<>();
+
+        FieldSpec.Builder idField = FieldSpec.builder(String.class, "ID", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+        idField.initializer(CodeBlock.of("$S", id));
+        fieldSpecs.add(idField.build());
+
+        for (IconInfo iconInfo : icons.values()) {
+            FieldSpec.Builder fieldSpec = FieldSpec.builder(imageKeyClass, iconInfo.fieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+            fieldSpec.initializer(CodeBlock.builder().add("$T.of($L, $S, $L, $L)", imageKeyClass, "ID", iconInfo.id.toLowerCase(Locale.ROOT), iconInfo.width, iconInfo.height).build());
+            fieldSpecs.add(fieldSpec.build());
+        }
+
+        for (IconInfo iconInfo : icons.values()) {
+            MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(captilizeByDot(iconInfo.id));
+            methodSpec.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
+            methodSpec.returns(imageKeyClass);
+            methodSpec.addStatement("$L", "return " + iconInfo.fieldName);
+
+            methodSpecs.add(methodSpec.build());
+        }
+
+        TypeSpec typeSpec = TypeSpec.classBuilder(name)
+            .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "ALL").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addFields(fieldSpecs)
+            .addMethods(methodSpecs)
+            .addJavadoc("Generated code. Don't edit this class")
+            .build();
+
+        JavaFile javaFile = JavaFile.builder(parentPackage + ".icon", typeSpec)
+            .build();
+
+        javaFile.writeTo(outputDirectoryFile);
+    }
+
+    public static void main(String[] args) throws Exception {
+        TEST_GENERATE = true;
+
+        MavenProject mavenProject = new MavenProject();
+
+        File projectDir = new File("W:\\_github.com\\consulo\\consulo\\modules\\base\\base-icon-library");
+        Resource resource = new Resource();
+        resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
+        Build build = new Build();
+        build.addResource(resource);
+        build.setOutputDirectory(new File(projectDir, "target").getAbsolutePath());
+        build.setDirectory(new File(projectDir, "target").getAbsolutePath());
+        mavenProject.setBuild(build);
+
+        new IconGeneratorMojo().execute(new SystemStreamLog(), mavenProject);
+    }
 }
