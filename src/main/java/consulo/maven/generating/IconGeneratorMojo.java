@@ -194,7 +194,13 @@ public class IconGeneratorMojo extends GenerateMojo {
 
                             SVGLoader loader = new SVGLoader();
 
-                            SVGDocument document = loader.load(iconFile.toURI().toURL());
+                            SVGDocument document = null;
+                            try {
+                                document = loader.load(iconFile.toURI().toURL());
+                            }
+                            catch (Exception e) {
+                                throw new MojoFailureException("Failed to parse: " + iconFile, e);
+                            }
 
                             height = (int) document.size().getHeight();
                             width = (int) document.size().getWidth();
@@ -206,6 +212,9 @@ public class IconGeneratorMojo extends GenerateMojo {
                                 reader = new PngReader(stream);
                                 width = reader.imgInfo.cols;
                                 height = reader.imgInfo.rows;
+                            }
+                            catch (Exception e) {
+                                throw new MojoFailureException("Failed to parse: " + iconFile, e);
                             }
                             finally {
                                 if (reader != null) {
@@ -262,8 +271,11 @@ public class IconGeneratorMojo extends GenerateMojo {
 
             logic.write();
         }
+        catch (MojoFailureException e) {
+            throw e;
+        }
         catch (Exception e) {
-            log.error(e);
+            throw new MojoFailureException(e.getMessage(), e);
         }
     }
 
