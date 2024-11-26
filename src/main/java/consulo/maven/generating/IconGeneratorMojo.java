@@ -83,7 +83,8 @@ public class IconGeneratorMojo extends GenerateMojo {
                 File iconDir = new File(resourceDirectory, "ICON-LIB");
 
                 if (!iconDir.exists()) {
-                    throw new MojoFailureException("IconLibrary: 'ICON-LIB' directory not exists. Path: " + iconDir);
+                    log.warn("IconLibrary: 'ICON-LIB' directory not exists. Path: " + iconDir);
+                    return;
                 }
 
                 for (File themeId : iconDir.listFiles()) {
@@ -120,7 +121,8 @@ public class IconGeneratorMojo extends GenerateMojo {
             }
 
             if (toGenerateFiles.isEmpty()) {
-                throw new MojoFailureException("IconLibrary: No file for generate");
+                log.warn("IconLibrary: No file for generate");
+                return;
             }
 
             String outputDirectory = mavenProject.getBuild().getDirectory();
