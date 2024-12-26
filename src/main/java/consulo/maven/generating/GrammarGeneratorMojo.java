@@ -96,7 +96,7 @@ public class GrammarGeneratorMojo extends AbstractMojo {
             }
 
 
-            CacheIO logic = new CacheIO(myMavenProject, "localize.cache");
+            CacheIO logic = new CacheIO(myMavenProject, "grammar.cache");
             logic.read();
 
             for (File file : files) {
