@@ -8,6 +8,7 @@ import consulo.component.internal.inject.InjectingContainerBuilder;
 import consulo.disposer.AutoDisposable;
 import consulo.language.inject.InjectedLanguageManager;
 import consulo.language.psi.PsiManager;
+import consulo.maven.base.util.cache.CacheIO;
 import consulo.project.Project;
 import consulo.test.light.LightApplicationBuilder;
 import consulo.test.light.LightProjectBuilder;
@@ -94,13 +95,26 @@ public class GrammarGeneratorMojo extends AbstractMojo {
                 outputDirectoryFile.mkdirs();
             }
 
+
+            CacheIO logic = new CacheIO(myMavenProject, "localize.cache");
+            logic.read();
+
             for (File file : files) {
-                System.out.println("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+                if (logic.isUpToDate(file)) {
+                    getLog().info("Grammar: " + file.getPath() + " is up to date");
+                    continue;
+                }
+
+                getLog().info("Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
                 runGenerator(file.getPath(), outputDirectoryFile.getPath(), sourceDirectory, getLog());
+
+                logic.putCacheEntry(file);
             }
 
             myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+            
+            logic.write();
         }
         catch (Exception e) {
             getLog().error(e);
