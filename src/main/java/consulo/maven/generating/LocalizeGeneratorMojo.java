@@ -15,13 +15,12 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.PathTool;
+import org.apache.maven.shared.utils.StringUtils;
 import org.apache.maven.shared.utils.io.FileUtils;
 
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author VISTALL
@@ -39,7 +38,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
     private static void generate(Log log, MavenProject mavenProject) throws MojoExecutionException, MojoFailureException {
         try {
-            List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
+            List<Map.Entry<File, List<LocalizeGenerator.SubFile>>> toGenerateFiles = new ArrayList<>();
 
             if (log.isDebugEnabled()) {
                 log.debug("Analyzing: " + mavenProject.getCompileSourceRoots());
@@ -58,7 +57,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
                 List<File> files = FileUtils.getFiles(enUSDir, "*.yaml", null);
                 for (File file : files) {
-                    toGenerateFiles.add(new AbstractMap.SimpleImmutableEntry<>(file, srcDirectory));
+                    toGenerateFiles.add(new AbstractMap.SimpleEntry<>(file, new ArrayList<>()));
                 }
 
                 if (files.isEmpty()) {
@@ -72,6 +71,43 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
             if (toGenerateFiles.isEmpty()) {
                 return;
+            }
+
+            for (Map.Entry<File, List<LocalizeGenerator.SubFile>> entry : toGenerateFiles) {
+                File file = entry.getKey();
+                String name = file.getName();
+
+                String fileNameNoExtension = name.substring(0, name.length() - 5);
+
+                List<LocalizeGenerator.SubFile> result = new ArrayList<>();
+
+                File subDir = new File(file.getParent(), fileNameNoExtension);
+                if (subDir.exists()) {
+                    List<File> subFiles = FileUtils.getFiles(subDir, null, null);
+                    for (File subFile : subFiles) {
+                        String relativePath = PathTool.getRelativeFilePath(subDir.getPath(), subFile.getPath());
+                        if (relativePath == null) {
+                            continue;
+                        }
+                        
+                        relativePath = relativePath.replace("\\", "/");
+
+                        int extension = relativePath.lastIndexOf('.');
+                        if (extension != -1) {
+                            relativePath = relativePath.substring(0, extension);
+                        }
+
+                        relativePath = relativePath.toLowerCase(Locale.ROOT);
+
+                        String[] parts = StringUtils.split(relativePath, "/");
+
+                        result.add(new LocalizeGenerator.SubFile(List.of(parts), subFile.toPath()));
+                    }
+                }
+
+                if (!result.isEmpty()) {
+                    entry.setValue(result);
+                }
             }
 
             String outputDirectory = mavenProject.getBuild().getDirectory();
@@ -89,20 +125,26 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
             LocalizeGenerator generator = new LocalizeGenerator(GeneratedElementFactory.first());
 
-            for (Map.Entry<File, File> info : toGenerateFiles) {
+            for (Map.Entry<File, List<LocalizeGenerator.SubFile>> info : toGenerateFiles) {
                 File file = info.getKey();
-                File sourceDirectory = info.getValue();
+                List<LocalizeGenerator.SubFile> subFiles = info.getValue();
 
-                if (logic.isUpToDate(file)) {
+                if (isUpToDate(logic, file, subFiles)) {
                     log.info("Localize: " + file.getPath() + " is up to date");
                     continue;
                 }
 
                 String localizeFullPath = FileUtil.getNameWithoutExtension(file.getName());
 
-                GeneratedClass generatedClass = generator.parse(localizeFullPath, file.toPath());
+                GeneratedClass generatedClass = generator.parse(localizeFullPath, file.toPath(), new LinkedHashSet<>(subFiles));
 
                 generatedClass.write(outputDirectoryFile.toPath());
+
+                logic.putCacheEntry(file);
+                
+                for (LocalizeGenerator.SubFile subFile : subFiles) {
+                    logic.putCacheEntry(subFile.filePath().toFile());
+                }
             }
 
             logic.write();
@@ -112,12 +154,26 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
         }
     }
 
+    private static boolean isUpToDate(CacheIO cache, File file, List<LocalizeGenerator.SubFile> subFiles) {
+        if (!cache.isUpToDate(file)) {
+            return false;
+        }
+
+        for (LocalizeGenerator.SubFile subFile : subFiles) {
+            if (!cache.isUpToDate(subFile.filePath().toFile())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static void main(String[] args) throws Exception {
         TEST_GENERATE = true;
 
         MavenProject mavenProject = new MavenProject();
 
-        File projectDir = new File("W:\\ConsulorRepos\\consulo-handlebars");
+        File projectDir = new File("W:\\ConsulorRepos\\consulo-apache-velocity");
         Resource resource = new Resource();
         resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
         Build build = new Build();
