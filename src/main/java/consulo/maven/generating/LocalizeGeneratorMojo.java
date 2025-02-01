@@ -3,7 +3,6 @@ package consulo.maven.generating;
 import consulo.compiler.apt.shared.generation.GeneratedClass;
 import consulo.compiler.apt.shared.generation.GeneratedElementFactory;
 import consulo.compiler.apt.shared.generator.LocalizeGenerator;
-import consulo.maven.base.util.cache.CacheIO;
 import consulo.util.io.FileUtil;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
@@ -20,6 +19,9 @@ import org.apache.maven.shared.utils.StringUtils;
 import org.apache.maven.shared.utils.io.FileUtils;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -115,21 +117,31 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
             outputDirectoryFile.mkdirs();
 
-            CacheIO logic = new CacheIO(mavenProject, "localize.cache");
-            if (TEST_GENERATE) {
-                logic.delete();
+            Set<String> oldCache = new TreeSet<>();
+
+            Path cachePath = Paths.get(mavenProject.getBuild().getDirectory(), "maven-status", "maven-consulo-plugin", "localize-cache.lst");
+            if (Files.exists(cachePath)) {
+                oldCache.addAll(Files.readAllLines(cachePath));
             }
-            logic.read();
+
+            if (TEST_GENERATE) {
+                oldCache.clear();
+            }
 
             mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
             LocalizeGenerator generator = new LocalizeGenerator(GeneratedElementFactory.first());
 
+            Set<String> newCache = new TreeSet<>();
+
             for (Map.Entry<File, List<LocalizeGenerator.SubFile>> info : toGenerateFiles) {
                 File file = info.getKey();
                 List<LocalizeGenerator.SubFile> subFiles = info.getValue();
 
-                if (isUpToDate(logic, file, subFiles)) {
+                LocalizeNewCacheEntry entry = new LocalizeNewCacheEntry(file, subFiles);
+                if (oldCache.contains(entry.toString())) {
+                    newCache.add(entry.toString());
+
                     log.info("Localize: " + file.getPath() + " is up to date");
                     continue;
                 }
@@ -140,32 +152,20 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
                 generatedClass.write(outputDirectoryFile.toPath());
 
-                logic.putCacheEntry(file);
-                
-                for (LocalizeGenerator.SubFile subFile : subFiles) {
-                    logic.putCacheEntry(subFile.filePath().toFile());
-                }
+                newCache.add(entry.toString());
             }
 
-            logic.write();
+            Files.deleteIfExists(cachePath);
+
+            Files.createDirectories(cachePath.getParent());
+            
+            Files.createFile(cachePath);
+
+            Files.write(cachePath, newCache);
         }
         catch (Exception e) {
             throw new MojoFailureException(null, e);
         }
-    }
-
-    private static boolean isUpToDate(CacheIO cache, File file, List<LocalizeGenerator.SubFile> subFiles) {
-        if (!cache.isUpToDate(file)) {
-            return false;
-        }
-
-        for (LocalizeGenerator.SubFile subFile : subFiles) {
-            if (!cache.isUpToDate(subFile.filePath().toFile())) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public static void main(String[] args) throws Exception {
@@ -173,7 +173,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
 
         MavenProject mavenProject = new MavenProject();
 
-        File projectDir = new File("W:\\ConsulorRepos\\consulo-apache-velocity");
+        File projectDir = new File("W:\\ConsulorRepos\\consulo\\modules\\base\\ide-api");
         Resource resource = new Resource();
         resource.setDirectory(new File(projectDir, "src\\main\\resources").getPath());
         Build build = new Build();
