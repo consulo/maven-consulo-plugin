@@ -1,8 +1,10 @@
 package consulo.maven.generating;
 
 import consulo.compiler.apt.shared.generator.LocalizeGenerator;
+import consulo.maven.base.util.cache.PathWithMod;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,26 +19,26 @@ import java.util.TreeMap;
 public class LocalizeNewCacheEntry implements Serializable {
     private static final long serialVersionUID = 1189682983719954569L;
 
-    private Path myLocalizeFile;
-    private TreeMap<Path, ArrayList<String>> mySubFiles;
+    private PathWithMod myLocalizeFile;
+    private TreeMap<PathWithMod, ArrayList<String>> mySubFiles;
 
     public LocalizeNewCacheEntry() {
     }
 
-    public LocalizeNewCacheEntry(File file, List<LocalizeGenerator.SubFile> subFiles) {
-        myLocalizeFile = file.toPath();
+    public LocalizeNewCacheEntry(File file, List<LocalizeGenerator.SubFile> subFiles) throws IOException {
+        myLocalizeFile = new PathWithMod(file);
         mySubFiles = new TreeMap<>();
 
         for (LocalizeGenerator.SubFile subFile : subFiles) {
-            mySubFiles.put(subFile.filePath(), new ArrayList<>(subFile.parts()));
+            mySubFiles.put(new PathWithMod(subFile.filePath()), new ArrayList<>(subFile.parts()));
         }
     }
 
-    public TreeMap<Path, ArrayList<String>> getSubFiles() {
+    public TreeMap<PathWithMod, ArrayList<String>> getSubFiles() {
         return mySubFiles;
     }
 
-    public Path getLocalizeFile() {
+    public PathWithMod getLocalizeFile() {
         return myLocalizeFile;
     }
 

@@ -169,7 +169,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
     }
 
     public static void main(String[] args) throws Exception {
-        TEST_GENERATE = true;
+        //TEST_GENERATE = true;
 
         MavenProject mavenProject = new MavenProject();
 
