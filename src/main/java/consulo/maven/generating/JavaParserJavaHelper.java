@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author VISTALL
@@ -329,6 +330,8 @@ class JavaParserJavaHelper extends JavaHelper {
         }
 
         switch (typeString) {
+            case "Predicate":
+                return Predicate.class.getName();
             case "String":
                 return String.class.getName();
             case "ResolveState":
