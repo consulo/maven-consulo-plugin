@@ -17,6 +17,8 @@
         <java.version>17</java.version>
 
         <javaparser.version>3.26.1</javaparser.version>
+
+        <consulo.version>3-20250410.152338-910</consulo.version>
     </properties>
 
     <prerequisites>
@@ -153,37 +155,37 @@
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-application-api</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-component-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-language-api</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-language-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-disposer-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-document-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
