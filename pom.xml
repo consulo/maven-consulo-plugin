@@ -18,7 +18,7 @@
 
         <javaparser.version>3.26.1</javaparser.version>
 
-        <consulo.version>3-20250410.152338-910</consulo.version>
+        <consulo.version>3-20250409.145759-907</consulo.version>
     </properties>
 
     <prerequisites>
@@ -191,7 +191,7 @@
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-platform-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>net.java.dev.jna</groupId>
@@ -207,26 +207,26 @@
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-test-impl</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-nodep</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-lang</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
 
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-collection-via-trove</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>${consulo.version}</version>
         </dependency>
 
         <dependency>
