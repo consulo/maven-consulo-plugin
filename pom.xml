@@ -17,8 +17,6 @@
         <java.version>17</java.version>
 
         <javaparser.version>3.26.1</javaparser.version>
-
-        <consulo.version>3-20250409.145759-907</consulo.version>
     </properties>
 
     <prerequisites>
@@ -155,43 +153,43 @@
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-application-api</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152338-910</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-component-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152455-697</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-language-api</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152728-908</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-language-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152752-697</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-disposer-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152556-908</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-document-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152600-908</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-platform-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152855-908</version>
             <exclusions>
                 <exclusion>
                     <groupId>net.java.dev.jna</groupId>
@@ -207,26 +205,26 @@
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-test-impl</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.152943-908</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-nodep</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.153031-908</version>
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-lang</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.153027-908</version>
 
         </dependency>
 
         <dependency>
             <groupId>consulo</groupId>
             <artifactId>consulo-util-collection-via-trove</artifactId>
-            <version>${consulo.version}</version>
+            <version>3-20250410.153010-908</version>
         </dependency>
 
         <dependency>
