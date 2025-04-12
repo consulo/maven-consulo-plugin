@@ -230,7 +230,7 @@
         <dependency>
             <groupId>consulo.plugin</groupId>
             <artifactId>consulo.devkit-grammar.kit.core</artifactId>
-            <version>3-SNAPSHOT</version>
+            <version>3-20250410.174349-3405</version>
         </dependency>
 
         <dependency>
