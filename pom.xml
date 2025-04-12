@@ -212,6 +212,16 @@
             <groupId>consulo</groupId>
             <artifactId>consulo-test-impl</artifactId>
             <version>3-20250410.152943-908</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>consulo</groupId>
+                    <artifactId>consulo-language-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>consulo</groupId>
+                    <artifactId>consulo-language-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
