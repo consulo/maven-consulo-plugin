@@ -231,6 +231,12 @@
             <groupId>consulo.plugin</groupId>
             <artifactId>consulo.devkit-grammar.kit.core</artifactId>
             <version>3-20250410.174349-3405</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>consulo</groupId>
+                    <artifactId>consulo-language-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
