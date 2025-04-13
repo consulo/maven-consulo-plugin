@@ -1,19 +1,18 @@
 package consulo.maven.generating;
 
-import consulo.annotation.access.RequiredReadAction;
-import consulo.document.Document;
-import consulo.document.DocumentWindow;
-import consulo.document.util.TextRange;
-import consulo.language.file.FileViewProvider;
-import consulo.language.inject.InjectedLanguageManager;
-import consulo.language.inject.MultiHostRegistrar;
-import consulo.language.psi.PsiElement;
-import consulo.language.psi.PsiFile;
-import consulo.language.psi.PsiLanguageInjectionHost;
-import consulo.util.lang.Pair;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
+import maven.bnf.consulo.annotation.access.RequiredReadAction;
+import maven.bnf.consulo.document.Document;
+import maven.bnf.consulo.document.DocumentWindow;
+import maven.bnf.consulo.document.util.TextRange;
+import maven.bnf.consulo.language.file.FileViewProvider;
+import maven.bnf.consulo.language.inject.InjectedLanguageManager;
+import maven.bnf.consulo.language.inject.MultiHostRegistrar;
+import maven.bnf.consulo.language.psi.PsiElement;
+import maven.bnf.consulo.language.psi.PsiFile;
+import maven.bnf.consulo.language.psi.PsiLanguageInjectionHost;
+import maven.bnf.consulo.util.lang.Pair;
 
 import java.util.List;
 import java.util.function.Function;
@@ -22,7 +21,6 @@ import java.util.function.Function;
  * @author VISTALL
  * @since 2023-11-10
  */
-@Singleton
 public class InjectedLanguageManagerStub extends InjectedLanguageManager {
     @Override
     public PsiLanguageInjectionHost getInjectionHost(@Nonnull FileViewProvider injectedProvider) {

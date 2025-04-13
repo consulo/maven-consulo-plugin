@@ -3,7 +3,7 @@ package consulo.maven.generating;
 import consulo.compiler.apt.shared.generation.GeneratedClass;
 import consulo.compiler.apt.shared.generation.GeneratedElementFactory;
 import consulo.compiler.apt.shared.generator.LocalizeGenerator;
-import consulo.util.io.FileUtil;
+import maven.bnf.consulo.util.io.FileUtil;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;

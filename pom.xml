@@ -151,112 +151,27 @@
         </dependency>
 
         <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-application-api</artifactId>
-            <version>3-20250410.152338-910</version>
+            <groupId>consulo.maven</groupId>
+            <artifactId>bnf-artifact</artifactId>
+            <version>3.7</version>
         </dependency>
 
         <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-component-impl</artifactId>
-            <version>3-20250410.152455-697</version>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
 
         <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-language-api</artifactId>
-            <version>3-20250410.152728-908</version>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+            <version>2.0.1</version>
         </dependency>
 
         <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-language-impl</artifactId>
-            <version>3-20250410.152752-697</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>consulo</groupId>
-                    <artifactId>consulo-language-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-disposer-impl</artifactId>
-            <version>3-20250410.152556-908</version>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-document-impl</artifactId>
-            <version>3-20250410.152600-908</version>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-platform-impl</artifactId>
-            <version>3-20250410.152855-908</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.java.dev.jna</groupId>
-                    <artifactId>jna-jpms</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.java.dev.jna</groupId>
-                    <artifactId>jna-platform-jpms</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-test-impl</artifactId>
-            <version>3-20250410.152943-908</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>consulo</groupId>
-                    <artifactId>consulo-language-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>consulo</groupId>
-                    <artifactId>consulo-language-impl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-util-nodep</artifactId>
-            <version>3-20250410.153031-908</version>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-util-lang</artifactId>
-            <version>3-20250410.153027-908</version>
-
-        </dependency>
-
-        <dependency>
-            <groupId>consulo</groupId>
-            <artifactId>consulo-util-collection-via-trove</artifactId>
-            <version>3-20250410.153010-908</version>
-        </dependency>
-
-        <dependency>
-            <groupId>consulo.plugin</groupId>
-            <artifactId>consulo.devkit-grammar.kit.core</artifactId>
-            <version>3-20250410.174349-3405</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>consulo</groupId>
-                    <artifactId>consulo-language-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>consulo</groupId>
-                    <artifactId>consulo-language-impl</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom-core</artifactId>
+            <version>3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
