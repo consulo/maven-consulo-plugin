@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.6-SNAPSHOT</version>
+    <version>3.7.6-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -117,7 +117,7 @@
         <dependency>
             <groupId>consulo.internal</groupId>
             <artifactId>jflex</artifactId>
-            <version>1.7.0-2</version>
+            <version>1.10.14</version>
         </dependency>
 
         <dependency>

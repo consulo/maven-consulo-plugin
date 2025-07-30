@@ -1,9 +1,11 @@
 package consulo.maven.generating;
 
 import consulo.maven.base.util.cache.CacheIO;
-import jflex.Main;
-import jflex.Options;
-import jflex.Skeleton;
+import jflex.core.OptionUtils;
+import jflex.generator.LexGenerator;
+import jflex.option.Options;
+import jflex.option.OutputMode;
+import jflex.skeleton.Skeleton;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
@@ -70,6 +72,8 @@ public class JFlexGeneratorMojo extends AbstractMojo {
 
             myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
+            Options.encoding = StandardCharsets.UTF_8;
+
             for (Map.Entry<File, File> info : toGenerateFiles) {
                 File file = info.getKey();
                 File sourceDirectory = info.getValue();
@@ -88,7 +92,7 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                 if (relativePath != null) {
                     File outDirWithPackage = new File(outputDirectoryFile, relativePath);
                     outDirWithPackage.mkdirs();
-                    Options.setDir(outDirWithPackage);
+                    OptionUtils.setDir(outDirWithPackage);
                 }
 
                 getLog().info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
@@ -113,7 +117,11 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                     Options.no_constructor = !ideaMarker;
                 }
 
-                Main.generate(file);
+                Options.setRootDirectory(sourceDirectory);
+
+                Options.output_mode = OutputMode.JAVA;
+
+                new LexGenerator(file).generate();
             }
 
             logic.write();
