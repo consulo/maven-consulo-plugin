@@ -30,6 +30,8 @@ import java.util.*;
  */
 @Mojo(name = "generate-localize", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
 public class LocalizeGeneratorMojo extends GenerateMojo {
+    public static final String LOCALIZE_LIB = "LOCALIZE-LIB";
+
     @Parameter(property = "project", defaultValue = "${project}")
     private MavenProject myMavenProject;
 
@@ -49,7 +51,7 @@ public class LocalizeGeneratorMojo extends GenerateMojo {
             for (Resource resource : mavenProject.getResources()) {
                 File srcDirectory = new File(resource.getDirectory());
 
-                File localizeDir = new File(srcDirectory, "LOCALIZE-LIB");
+                File localizeDir = new File(srcDirectory, LOCALIZE_LIB);
 
                 File enUSDir = new File(localizeDir, "en_US");
                 if (!enUSDir.exists()) {

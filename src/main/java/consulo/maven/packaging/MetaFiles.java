@@ -1,10 +1,12 @@
 package consulo.maven.packaging;
 
+import consulo.maven.generating.LocalizeGeneratorMojo;
 import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.jar.JarEntry;
