@@ -70,7 +70,7 @@ public class PackageMojo extends AbstractPackagingMojo {
 
             metaFiles.forEachData((filePath, data) -> {
                 try {
-                    writeText(zipStream, filePath, data);
+                    writeBytes(zipStream, filePath, data);
                 }
                 catch (IOException e) {
                     throw new IllegalArgumentException(e);
@@ -139,10 +139,14 @@ public class PackageMojo extends AbstractPackagingMojo {
     }
 
     private void writeText(ZipArchiveOutputStream zipStream, String fileName, String text) throws IOException {
+        writeBytes(zipStream, fileName, text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void writeBytes(ZipArchiveOutputStream zipStream, String fileName, byte[] bytes) throws IOException {
         ZipArchiveEntry entry = new ZipArchiveEntry(myId + "/" + fileName);
         zipStream.putArchiveEntry(entry);
 
-        IOUtils.copy(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)), zipStream);
+        IOUtils.copy(new ByteArrayInputStream(bytes), zipStream);
         zipStream.closeArchiveEntry();
     }
 }

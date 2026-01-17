@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package consulo.maven.protobuf;
+
+message JarInfo {
+    string jarName = 1;
+
+    repeated string paths = 2;
+}
+
+message JarIndex {
+    repeated JarInfo jars = 1;
+}
