@@ -1,10 +1,11 @@
-package consulo.maven.packaging;
+package consulo.maven.packaging.processing;
 
 import consulo.maven.protobuf.JarIndexOuterClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +15,29 @@ import java.util.function.BiConsumer;
  * @author VISTALL
  * @since 2026-01-17
  */
-public class JarIndexSession {
-    private Map<String, List<String>> myPaths = new LinkedHashMap<>();
+public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session> {
+    public record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession{
+        @Override
+        public void visit(String jarEntryPath) {
+            paths().add(jarEntryPath);
+        }
 
-    public void add(String jarName, List<String> paths) {
-        myPaths.put(jarName, paths);
+        @Override
+        public void close() {
+            if (!paths().isEmpty()) {
+                map().put(jarName(), paths());
+            }
+        }
     }
 
+    private Map<String, List<String>> myPaths = new LinkedHashMap<>();
+
+    @Override
+    public Session newSession(String jarName) {
+        return new Session(jarName, new ArrayList<>(), myPaths);
+    }
+
+    @Override
     public void write(BiConsumer<String, byte[]> consumer) throws IOException {
         if (myPaths.isEmpty()) {
             return;
@@ -29,6 +46,8 @@ public class JarIndexSession {
         writeTextFile(consumer);
 
         JarIndexOuterClass.JarIndex.Builder builder = JarIndexOuterClass.JarIndex.newBuilder();
+        builder.setVersion(1);
+
         for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
             JarIndexOuterClass.JarInfo.Builder jarInfoBuilder = JarIndexOuterClass.JarInfo.newBuilder();
             jarInfoBuilder.setJarName(entry.getKey());

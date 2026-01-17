@@ -1,5 +1,8 @@
 package consulo.maven.packaging;
 
+import consulo.maven.packaging.processing.JarIndexProcessor;
+import consulo.maven.packaging.processing.JarProcessor;
+import consulo.maven.packaging.processing.JarProcessorSession;
 import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
@@ -24,14 +27,17 @@ public class MetaFiles {
 
     private Map<String, String> myMetaData = new LinkedHashMap<>();
 
-    private JarIndexSession myJarIndexSession = new JarIndexSession();
+    private List<JarProcessor> myJarProcessors = new ArrayList<>();
 
     public MetaFiles() {
+        myJarProcessors.add(new JarIndexProcessor());
     }
 
     public void readFromJar(File jarFile) throws IOException {
-        String jarFileName = jarFile.getName();
-        List<String> paths = new ArrayList<>();
+        List<JarProcessorSession> sessions = new ArrayList<>();
+        for (JarProcessor jarProcessor : myJarProcessors) {
+            sessions.add(jarProcessor.newSession(jarFile.getName()));
+        }
 
         try (JarFile jar = new JarFile(jarFile)) {
             Enumeration<JarEntry> entries = jar.entries();
@@ -46,18 +52,22 @@ public class MetaFiles {
                 }
 
                 if (!jarEntry.isDirectory()) {
-                    paths.add(jarEntryPath);
+                    for (JarProcessorSession session : sessions) {
+                        session.visit(jarEntryPath);
+                    }
                 }
             }
         }
 
-        if (!paths.isEmpty()) {
-            myJarIndexSession.add(jarFileName, paths);
+        for (JarProcessorSession session : sessions) {
+            session.close();
         }
     }
 
     public void writeIndexFiles(BiConsumer<String, byte[]> consumer) throws IOException {
-        myJarIndexSession.write(consumer);
+        for (JarProcessor jarProcessor : myJarProcessors) {
+            jarProcessor.write(consumer);
+        }
     }
 
     public void forEachData(BiConsumer<String, byte[]> consumer) throws IOException {

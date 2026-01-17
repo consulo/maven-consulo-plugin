@@ -9,5 +9,7 @@ message JarInfo {
 }
 
 message JarIndex {
-    repeated JarInfo jars = 1;
+    int32 version = 1;
+
+    repeated JarInfo jars = 2;
 }
