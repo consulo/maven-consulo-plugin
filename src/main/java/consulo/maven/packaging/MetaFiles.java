@@ -1,5 +1,6 @@
 package consulo.maven.packaging;
 
+import consulo.maven.packaging.processing.IconJarProcessor;
 import consulo.maven.packaging.processing.JarIndexProcessor;
 import consulo.maven.packaging.processing.JarProcessor;
 import consulo.maven.packaging.processing.JarProcessorSession;
@@ -11,6 +12,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -31,6 +33,7 @@ public class MetaFiles {
 
     public MetaFiles() {
         myJarProcessors.add(new JarIndexProcessor());
+        myJarProcessors.add(new IconJarProcessor());
     }
 
     public void readFromJar(File jarFile) throws IOException {
@@ -45,15 +48,22 @@ public class MetaFiles {
                 JarEntry jarEntry = entries.nextElement();
                 String jarEntryPath = jarEntry.getName();
 
-                if (META_FILES.contains(jarEntryPath)) {
+                Supplier<byte[]> dataRequestor = () -> {
                     try (InputStream stream = jar.getInputStream(jarEntry)) {
-                        myMetaData.put(jarEntryPath, IOUtil.toString(stream));
+                        return IOUtil.toByteArray(stream);
                     }
+                    catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                };
+
+                if (META_FILES.contains(jarEntryPath)) {
+                    myMetaData.put(jarEntryPath, new String(dataRequestor.get(), StandardCharsets.UTF_8));
                 }
 
                 if (!jarEntry.isDirectory()) {
                     for (JarProcessorSession session : sessions) {
-                        session.visit(jarEntryPath);
+                        session.visit(jarEntryPath, dataRequestor);
                     }
                 }
             }

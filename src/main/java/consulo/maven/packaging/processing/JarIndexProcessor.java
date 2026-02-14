@@ -2,7 +2,6 @@ package consulo.maven.packaging.processing;
 
 import consulo.maven.protobuf.JarIndexOuterClass;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -10,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * @author VISTALL
@@ -18,7 +18,7 @@ import java.util.function.BiConsumer;
 public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session> {
     public record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession{
         @Override
-        public void visit(String jarEntryPath) {
+        public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
             paths().add(jarEntryPath);
         }
 
@@ -58,16 +58,13 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
 
         JarIndexOuterClass.JarIndex jarIndex = builder.build();
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        jarIndex.writeTo(stream);
-
-        consumer.accept("jar-index.bin", stream.toByteArray());
+        consumer.accept("jar-index.bin", jarIndex.toByteArray());
     }
 
     private void writeTextFile(BiConsumer<String, byte[]> consumer) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
-            builder.append(entry.getKey()).append("\n");
+            builder.append("#").append(entry.getKey()).append("\n");
             for (String path : entry.getValue()) {
                 builder.append(path).append("\n");
             }
