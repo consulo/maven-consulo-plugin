@@ -100,7 +100,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
                 try {
                     File outFile = new File(pluginDirectory, filePath);
                     outFile.getParentFile().mkdirs();
-                    Files.writeString(outFile.toPath(), data, StandardCharsets.UTF_8);
+                    Files.write(outFile.toPath(), data);
                 }
                 catch (IOException e) {
                     throw new IllegalArgumentException(e);
