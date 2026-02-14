@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.11</version>
+    <version>3.12</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -159,7 +159,7 @@
         <dependency>
             <groupId>consulo.maven</groupId>
             <artifactId>bnf-artifact</artifactId>
-            <version>3.16</version>
+            <version>3.17</version>
         </dependency>
 
         <dependency>
