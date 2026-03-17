@@ -11,6 +11,8 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -45,10 +47,16 @@ public class JFlexGeneratorMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        executeImpl(getLog(), myMavenProject);
+    }
+
+    private static void executeImpl(Log log, MavenProject mavenProject) throws MojoFailureException {
+        String lexerFile = "?";
+
         try {
             List<Map.Entry<File, File>> toGenerateFiles = new ArrayList<>();
 
-            for (String srcDir : myMavenProject.getCompileSourceRoots()) {
+            for (String srcDir : mavenProject.getCompileSourceRoots()) {
                 File srcDirectory = new File(srcDir);
 
                 List<File> files = FileUtils.getFiles(srcDirectory, "**/*.flex", null, true);
@@ -61,16 +69,16 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                 return;
             }
 
-            String outputDirectory = myMavenProject.getBuild().getDirectory();
+            String outputDirectory = mavenProject.getBuild().getDirectory();
             File outputDirectoryFile = new File(outputDirectory, "generated-sources/lexers");
 
             outputDirectoryFile.mkdirs();
 
-            CacheIO logic = new CacheIO(myMavenProject, "jflex-generate.cache");
+            CacheIO logic = new CacheIO(mavenProject, "jflex-generate.cache");
 
             logic.read();
 
-            myMavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
+            mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
             Options.encoding = StandardCharsets.UTF_8;
 
@@ -78,8 +86,10 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                 File file = info.getKey();
                 File sourceDirectory = info.getValue();
 
+                lexerFile = file.getAbsolutePath();
+
                 if (logic.isUpToDate(file)) {
-                    getLog().info("JFlex: " + file.getPath() + " is up to date");
+                    log.info("JFlex: " + file.getPath() + " is up to date");
                     continue;
                 }
 
@@ -95,7 +105,7 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                     OptionUtils.setDir(outDirWithPackage);
                 }
 
-                getLog().info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
+                log.info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
                 logic.putCacheEntry(file);
 
@@ -111,7 +121,7 @@ public class JFlexGeneratorMojo extends AbstractMojo {
                     // marker for using old IDEA skeleton or Consulo skeleton
                     boolean ideaMarker = marker.exists();
                     String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
-                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8))) {
+                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(JFlexGeneratorMojo.class.getResourceAsStream(name), StandardCharsets.UTF_8))) {
                         Skeleton.readSkel(stream);
                     }
                     Options.no_constructor = !ideaMarker;
@@ -127,7 +137,7 @@ public class JFlexGeneratorMojo extends AbstractMojo {
             logic.write();
         }
         catch (Exception e) {
-            getLog().error(e);
+            throw new MojoFailureException("Failed to generate lexer: " + lexerFile, e);
         }
     }
 
@@ -146,10 +156,6 @@ public class JFlexGeneratorMojo extends AbstractMojo {
         build.setDirectory(new File(projectDir, "target").getAbsolutePath());
         mavenProject.setBuild(build);
 
-
-        JFlexGeneratorMojo mojo = new JFlexGeneratorMojo();
-        mojo.myMavenProject = mavenProject;
-
-        mojo.execute();
+        JFlexGeneratorMojo.executeImpl(mavenProject, new SystemStreamLog());
     }
 }
