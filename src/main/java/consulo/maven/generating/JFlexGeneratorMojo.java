@@ -156,6 +156,6 @@ public class JFlexGeneratorMojo extends AbstractMojo {
         build.setDirectory(new File(projectDir, "target").getAbsolutePath());
         mavenProject.setBuild(build);
 
-        JFlexGeneratorMojo.executeImpl(mavenProject, new SystemStreamLog());
+        JFlexGeneratorMojo.executeImpl(new SystemStreamLog(), mavenProject);
     }
 }
