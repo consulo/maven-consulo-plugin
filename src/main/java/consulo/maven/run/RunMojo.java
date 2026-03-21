@@ -30,9 +30,6 @@ public abstract class RunMojo extends AbstractConsuloMojo {
         @Parameter(property = "useDefaultWorkspaceDirectory", defaultValue = "true")
         public boolean useDefaultWorkspaceDirectory = true;
 
-        @Parameter(property = "useOldMainClass", defaultValue = "false")
-        public boolean useOldMainClass = false;
-
         @Parameter(property = "pluginDirectories")
         public List<String> pluginDirectories = new ArrayList<>();
 
@@ -198,6 +195,6 @@ public abstract class RunMojo extends AbstractConsuloMojo {
     }
 
     protected String getMainClassQualifiedName(String repositoryChannel) {
-        return RunDesktopAWTMojo.getMainClassQualifiedNameImpl(execution.useOldMainClass);
+        return RunDesktopAWTMojo.ourMainClassV3;
     }
 }

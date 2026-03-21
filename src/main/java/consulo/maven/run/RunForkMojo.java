@@ -44,6 +44,12 @@ public abstract class RunForkMojo extends RunMojo {
             throw new MojoFailureException(e.getMessage());
         }
 
+        String forkDebugPort = System.getProperty("consulo.run.fork.debug.port");
+        if (forkDebugPort != null) {
+            String suspend = System.getProperty("consulo.run.fork.debug.suspend", "n");
+            args.add("-agentlib:jdwp=transport=dt_socket,address=" + forkDebugPort + ",suspend=" + suspend + ",server=y");
+        }
+
         for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
             args.add("-D" + entry.getKey() + "=" + entry.getValue());
         }

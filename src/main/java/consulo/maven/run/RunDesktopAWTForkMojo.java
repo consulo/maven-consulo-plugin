@@ -19,9 +19,6 @@ public class RunDesktopAWTForkMojo extends RunForkMojo {
 
     @Override
     protected String getMainClassQualifiedName(String repositoryChannel) {
-        if (execution.useOldMainClass) {
-            return RunDesktopAWTMojo.ourMainClassV2;
-        }
         return RunDesktopAWTMojo.ourMainClassV3;
     }
 }
