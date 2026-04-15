@@ -88,18 +88,18 @@ public class PatchPluginXmlMojo extends AbstractPackagingMojo {
     public static String findConsuloVersion(MavenProject mavenProject) throws MojoFailureException {
         Map<String, Artifact> artifactMap = mavenProject.getArtifactMap();
 
-        Artifact ideApiArtifact = artifactMap.get("consulo:consulo-ide-api");
-        if (ideApiArtifact == null) {
-            throw new MojoFailureException("Artifact 'consulo:consulo-ide-api' not resolved");
+        Artifact applicationApiArtifact = artifactMap.get("consulo:consulo-application-api");
+        if (applicationApiArtifact == null) {
+            throw new MojoFailureException("Artifact 'consulo:consulo-application-api' not resolved");
         }
 
-        File coreApiJarFile = ideApiArtifact.getFile();
+        File coreApiJarFile = applicationApiArtifact.getFile();
 
         String platformVersion;
         try (JarFile jarFile = new JarFile(coreApiJarFile)) {
             String buildNumber = jarFile.getManifest().getMainAttributes().getValue("Consulo-Build-Number");
             if (buildNumber == null) {
-                throw new MojoFailureException("Artifact 'consulo:consulo-core-api' not contains 'Consulo-Build-Number' attribute");
+                throw new MojoFailureException("Artifact 'consulo:consulo-application-api' not contains 'Consulo-Build-Number' attribute");
             }
 
             platformVersion = buildNumber;
