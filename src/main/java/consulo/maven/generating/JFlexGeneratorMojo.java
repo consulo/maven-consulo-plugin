@@ -36,12 +36,15 @@ import java.util.Map;
  */
 @Mojo(name = "generate-lexers", threadSafe = true, requiresDependencyResolution = ResolutionScope.NONE)
 public class JFlexGeneratorMojo extends AbstractMojo {
+    private static final Object lock = new Object();
+
     @Parameter(property = "project", defaultValue = "${project}")
     private MavenProject myMavenProject;
 
     public JFlexGeneratorMojo() {
         Options.no_constructor = true;
         Options.no_backup = true;
+        Options.encoding = StandardCharsets.UTF_8;
         // integrated by default Options.char_at = true;
     }
 
@@ -80,8 +83,6 @@ public class JFlexGeneratorMojo extends AbstractMojo {
 
             mavenProject.addCompileSourceRoot(outputDirectoryFile.getPath());
 
-            Options.encoding = StandardCharsets.UTF_8;
-
             for (Map.Entry<File, File> info : toGenerateFiles) {
                 File file = info.getKey();
                 File sourceDirectory = info.getValue();
@@ -109,29 +110,31 @@ public class JFlexGeneratorMojo extends AbstractMojo {
 
                 logic.putCacheEntry(file);
 
-                File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
-                if (skeletonFile.exists()) {
-                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8))) {
-                        Skeleton.readSkel(stream);
+                synchronized (lock) {
+                    File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
+                    if (skeletonFile.exists()) {
+                        try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8))) {
+                            Skeleton.readSkel(stream);
+                        }
+                        Options.no_constructor = true;
                     }
-                    Options.no_constructor = true;
-                }
-                else {
-                    File marker = new File(file.getParentFile(), file.getName() + ".idea");
-                    // marker for using old IDEA skeleton or Consulo skeleton
-                    boolean ideaMarker = marker.exists();
-                    String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
-                    try (BufferedReader stream = new BufferedReader(new InputStreamReader(JFlexGeneratorMojo.class.getResourceAsStream(name), StandardCharsets.UTF_8))) {
-                        Skeleton.readSkel(stream);
+                    else {
+                        File marker = new File(file.getParentFile(), file.getName() + ".idea");
+                        // marker for using old IDEA skeleton or Consulo skeleton
+                        boolean ideaMarker = marker.exists();
+                        String name = ideaMarker ? "/META-INF/skeleton/idea-jflex.skeleton" : "/META-INF/skeleton/consulo-jflex.skeleton";
+                        try (BufferedReader stream = new BufferedReader(new InputStreamReader(JFlexGeneratorMojo.class.getResourceAsStream(name), StandardCharsets.UTF_8))) {
+                            Skeleton.readSkel(stream);
+                        }
+                        Options.no_constructor = !ideaMarker;
                     }
-                    Options.no_constructor = !ideaMarker;
+
+                    Options.setRootDirectory(sourceDirectory);
+
+                    Options.output_mode = OutputMode.JAVA;
+
+                    new LexGenerator(file).generate();
                 }
-
-                Options.setRootDirectory(sourceDirectory);
-
-                Options.output_mode = OutputMode.JAVA;
-
-                new LexGenerator(file).generate();
             }
 
             logic.write();
