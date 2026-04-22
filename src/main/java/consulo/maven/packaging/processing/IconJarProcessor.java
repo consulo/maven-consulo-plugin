@@ -7,8 +7,17 @@ import com.github.weisj.jsvg.parser.SVGLoader;
 import com.google.protobuf.ByteString;
 import consulo.maven.protobuf.IconIndex;
 import org.apache.maven.shared.utils.StringUtils;
+import org.jdom.Comment;
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Parent;
+import org.jdom.input.SAXBuilder;
+import org.jdom.input.sax.XMLReaders;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -46,7 +55,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
                     SVGDocument document = null;
                     try {
-                        document = loader.load(new ByteArrayInputStream(data = dataRequestor.get()), null, loaderContext);
+                        document = loader.load(new ByteArrayInputStream(data = cleanupXml(dataRequestor.get())), null, loaderContext);
                     }
                     catch (Exception e) {
                         throw new IllegalArgumentException("Failed to parse: " + jarEntryPath, e);
@@ -131,6 +140,37 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         IconIndex.IconGroupIndex index = iconIndexBuilder.build();
 
         consumer.accept("icon-index.bin", index.toByteArray());
+    }
+
+    private byte[] cleanupXml(byte[] data) throws Exception {
+        try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+
+            SAXBuilder builder = new SAXBuilder();
+            builder.setXMLReaderFactory(XMLReaders.NONVALIDATING);
+
+            Document document = builder.build(in);
+
+            removeComments(document);
+            
+            XMLOutputter outputter = new XMLOutputter();
+            outputter.setFormat(Format.getCompactFormat());
+            outputter.output(document, stream);
+
+            return stream.toByteArray();
+        }
+    }
+
+    private void removeComments(Parent parent) {
+        ArrayList<Content> contents = new ArrayList<>(parent.getContent());
+
+        for (Content child : contents) {
+            if (child instanceof Comment) {
+                child.detach();
+            }
+            else if (child instanceof Parent) {
+                removeComments((Parent) child);
+            }
+        }
     }
 
     @Override
