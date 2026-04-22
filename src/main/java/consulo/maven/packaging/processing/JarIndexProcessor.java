@@ -1,7 +1,5 @@
 package consulo.maven.packaging.processing;
 
-import consulo.maven.protobuf.JarIndexOuterClass;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
