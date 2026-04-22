@@ -10,7 +10,6 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +47,11 @@ public class BuildIndexMojo extends AbstractMojo {
                     }
                 }
 
-                metaFiles.writeIndex((filePath, data) -> {
+                metaFiles.writeIndexFiles((filePath, data) -> {
                     try {
                         File outFile = new File(pluginRoot, filePath);
                         outFile.getParentFile().mkdirs();
-                        Files.writeString(outFile.toPath(), data, StandardCharsets.UTF_8);
+                        Files.write(outFile.toPath(), data);
                     }
                     catch (IOException e) {
                         throw new IllegalArgumentException(e);

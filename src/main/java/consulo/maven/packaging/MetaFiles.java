@@ -1,14 +1,18 @@
 package consulo.maven.packaging;
 
-import consulo.maven.generating.LocalizeGeneratorMojo;
+import consulo.maven.packaging.processing.IconJarProcessor;
+import consulo.maven.packaging.processing.JarIndexProcessor;
+import consulo.maven.packaging.processing.JarProcessor;
+import consulo.maven.packaging.processing.JarProcessorSession;
 import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -24,44 +28,63 @@ public class MetaFiles {
     );
 
     private Map<String, String> myMetaData = new LinkedHashMap<>();
-    private List<String> myIndexData = new ArrayList<>();
+
+    private List<JarProcessor> myJarProcessors = new ArrayList<>();
 
     public MetaFiles() {
+        myJarProcessors.add(new JarIndexProcessor());
+        myJarProcessors.add(new IconJarProcessor());
     }
 
     public void readFromJar(File jarFile) throws IOException {
-        myIndexData.add("#" + jarFile.getName());
+        List<JarProcessorSession> sessions = new ArrayList<>();
+        for (JarProcessor jarProcessor : myJarProcessors) {
+            sessions.add(jarProcessor.newSession(jarFile.getName()));
+        }
 
         try (JarFile jar = new JarFile(jarFile)) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 JarEntry jarEntry = entries.nextElement();
-                String jarName = jarEntry.getName();
+                String jarEntryPath = jarEntry.getName();
 
-                if (META_FILES.contains(jarName)) {
+                Supplier<byte[]> dataRequestor = () -> {
                     try (InputStream stream = jar.getInputStream(jarEntry)) {
-                        myMetaData.put(jarName, IOUtil.toString(stream));
+                        return IOUtil.toByteArray(stream);
                     }
+                    catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                };
+
+                if (META_FILES.contains(jarEntryPath)) {
+                    myMetaData.put(jarEntryPath, new String(dataRequestor.get(), StandardCharsets.UTF_8));
                 }
 
                 if (!jarEntry.isDirectory()) {
-                    myIndexData.add(jarName);
+                    for (JarProcessorSession session : sessions) {
+                        session.visit(jarEntryPath, dataRequestor);
+                    }
                 }
             }
         }
-    }
 
-    public void writeIndex(BiConsumer<String, String> consumer) {
-        if (!myIndexData.isEmpty()) {
-            consumer.accept("lib/index.txt", String.join("\n", myIndexData));
+        for (JarProcessorSession session : sessions) {
+            session.close();
         }
     }
 
-    public void forEachData(BiConsumer<String, String> consumer) {
-        writeIndex(consumer);
+    public void writeIndexFiles(BiConsumer<String, byte[]> consumer) throws IOException {
+        for (JarProcessor jarProcessor : myJarProcessors) {
+            jarProcessor.write(consumer);
+        }
+    }
+
+    public void forEachData(BiConsumer<String, byte[]> consumer) throws IOException {
+        writeIndexFiles(consumer);
 
         for (Map.Entry<String, String> entry : myMetaData.entrySet()) {
-            consumer.accept(entry.getKey(), entry.getValue());
+            consumer.accept(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8));
         }
     }
 }
