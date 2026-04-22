@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.17</version>
+    <version>3.20</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -240,7 +240,7 @@
                 <version>4.1.2</version>
 
                 <configuration>
-                    <protoc>4.33.4</protoc>
+                    <protoc>${proto.java.version}</protoc>
                 </configuration>
 
                 <executions>

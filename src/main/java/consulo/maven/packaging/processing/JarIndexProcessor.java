@@ -44,21 +44,6 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
         }
 
         writeTextFile(consumer);
-
-        JarIndexOuterClass.JarIndex.Builder builder = JarIndexOuterClass.JarIndex.newBuilder();
-        builder.setVersion(1);
-
-        for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
-            JarIndexOuterClass.JarInfo.Builder jarInfoBuilder = JarIndexOuterClass.JarInfo.newBuilder();
-            jarInfoBuilder.setJarName(entry.getKey());
-            jarInfoBuilder.addAllPaths(entry.getValue());
-
-            builder.addJars(jarInfoBuilder);
-        }
-
-        JarIndexOuterClass.JarIndex jarIndex = builder.build();
-
-        consumer.accept("jar-index.bin", jarIndex.toByteArray());
     }
 
     private void writeTextFile(BiConsumer<String, byte[]> consumer) {
@@ -71,5 +56,6 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
         }
 
         consumer.accept("lib/index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
+        consumer.accept("index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
