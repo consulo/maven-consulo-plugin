@@ -1,9 +1,6 @@
 package consulo.maven.packaging;
 
-import consulo.maven.packaging.processing.IconJarProcessor;
-import consulo.maven.packaging.processing.JarIndexProcessor;
-import consulo.maven.packaging.processing.JarProcessor;
-import consulo.maven.packaging.processing.JarProcessorSession;
+import consulo.maven.packaging.processing.*;
 import org.apache.maven.shared.utils.io.IOUtil;
 
 import java.io.File;
@@ -34,6 +31,7 @@ public class MetaFiles {
     public MetaFiles() {
         myJarProcessors.add(new JarIndexProcessor());
         myJarProcessors.add(new IconJarProcessor());
+        myJarProcessors.add(new LocalizeJarProcessor());
     }
 
     public void readFromJar(File jarFile) throws IOException {
