@@ -21,18 +21,18 @@ import java.util.List;
 @Mojo(name = "build-index", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class BuildIndexMojo extends AbstractMojo {
     @Parameter(property = "project", defaultValue = "${project}", readonly = true)
-    public MavenProject project;
+    public MavenProject myProject;
 
     @Parameter(alias = "pluginRoots")
-    protected List<File> pluginRoots = new ArrayList<>();
+    protected List<File> myPluginRoots = new ArrayList<>();
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        for (File pluginRoot : pluginRoots) {
+        for (File pluginRoot : myPluginRoots) {
             File libDir = new File(pluginRoot, "lib");
 
             if (!libDir.exists()) {
-                getLog().info(libDir.getAbsolutePath() + " not exists");
+                getLog().info(libDir.getAbsolutePath() + " does not exist");
                 continue;
             }
 

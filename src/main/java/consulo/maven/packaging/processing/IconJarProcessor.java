@@ -41,13 +41,15 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
     private record IconKey(String themeId, String groupId, String imageId) {
     }
 
-    private record RawEntry(String jarEntryPath,
-                            String themeId,
-                            String groupId,
-                            String imageId,
-                            boolean is2x,
-                            IconIndex.IconType type,
-                            byte[] data) {
+    private record RawEntry(
+        String jarEntryPath,
+        String themeId,
+        String groupId,
+        String imageId,
+        boolean is2x,
+        IconIndex.IconType type,
+        byte[] data
+    ) {
     }
 
     private static class IconAccumulator {
@@ -158,9 +160,11 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                     acc.firstEntryPath = entry.jarEntryPath();
                 }
                 else if (acc.type != entry.type()) {
-                    throw new IllegalStateException("Icon type mismatch for " + entry.themeId() + "/" + entry.groupId() + "/" + entry.imageId()
-                        + ": " + acc.type + " from " + acc.firstEntryPath
-                        + ", " + entry.type() + " from " + entry.jarEntryPath());
+                    throw new IllegalStateException(
+                        "Icon type mismatch for " + entry.themeId() + "/" + entry.groupId() + "/" + entry.imageId()
+                            + ": " + acc.type + " from " + acc.firstEntryPath
+                            + ", " + entry.type() + " from " + entry.jarEntryPath()
+                    );
                 }
 
                 if (entry.is2x()) {
@@ -184,14 +188,15 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                 IconAccumulator acc = entry.getValue();
 
                 if (acc.x1 == null) {
-                    throw new IllegalStateException("Missing x1 icon for " + key.themeId() + "/" + key.groupId() + "/" + key.imageId()
-                        + " (only @2x found)");
+                    throw new IllegalStateException(
+                        "Missing x1 icon for " + key.themeId() + "/" + key.groupId() + "/" + key.imageId() + " (only @2x found)"
+                    );
                 }
 
-                IconIndex.Icon.Builder iconBuilder = IconIndex.Icon.newBuilder();
-                iconBuilder.setId(key.imageId());
-                iconBuilder.setType(acc.type);
-                iconBuilder.setX1(acc.x1);
+                IconIndex.Icon.Builder iconBuilder = IconIndex.Icon.newBuilder()
+                    .setId(key.imageId())
+                    .setType(acc.type)
+                    .setX1(acc.x1);
                 if (acc.x2 != null) {
                     iconBuilder.setX2(acc.x2);
                 }
@@ -211,16 +216,16 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
             return;
         }
 
-        IconIndex.IconGroupIndex.Builder iconIndexBuilder = IconIndex.IconGroupIndex.newBuilder();
-        iconIndexBuilder.setVersion(1);
+        IconIndex.IconGroupIndex.Builder iconIndexBuilder = IconIndex.IconGroupIndex.newBuilder()
+            .setVersion(1);
 
         for (Map.Entry<IconGroupAndTheme, List<IconIndex.Icon>> entry : myIcons.entrySet()) {
-            IconIndex.IconGroup.Builder builder = IconIndex.IconGroup.newBuilder();
-
             IconGroupAndTheme groupAndTheme = entry.getKey();
-            builder.setTheme(groupAndTheme.themeId());
-            builder.setId(groupAndTheme.iconGroupId());
-            builder.addAllIcons(entry.getValue());
+
+            IconIndex.IconGroup.Builder builder = IconIndex.IconGroup.newBuilder()
+                .setTheme(groupAndTheme.themeId())
+                .setId(groupAndTheme.iconGroupId())
+                .addAllIcons(entry.getValue());
 
             iconIndexBuilder.addIconGroups(builder);
         }
@@ -230,7 +235,6 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
     private byte[] cleanupXml(byte[] data) throws Exception {
         try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-
             SAXBuilder builder = new SAXBuilder();
             builder.setXMLReaderFactory(XMLReaders.NONVALIDATING);
 
@@ -247,14 +251,14 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
     }
 
     private void removeComments(Parent parent) {
-        ArrayList<Content> contents = new ArrayList<>(parent.getContent());
+        List<Content> contents = new ArrayList<>(parent.getContent());
 
         for (Content child : contents) {
             if (child instanceof Comment) {
                 child.detach();
             }
-            else if (child instanceof Parent) {
-                removeComments((Parent) child);
+            else if (child instanceof Parent childParent) {
+                removeComments(childParent);
             }
         }
     }

@@ -15,7 +15,7 @@ import java.util.jar.JarFile;
 
 /**
  * @author VISTALL
- * @since 26/01/2023
+ * @since 2023-01-26
  */
 public class MetaFiles {
     public static final Set<String> META_FILES = Set.of(
@@ -26,13 +26,11 @@ public class MetaFiles {
 
     private Map<String, String> myMetaData = new LinkedHashMap<>();
 
-    private List<JarProcessor> myJarProcessors = new ArrayList<>();
-
-    public MetaFiles() {
-        myJarProcessors.add(new JarIndexProcessor());
-        myJarProcessors.add(new IconJarProcessor());
-        myJarProcessors.add(new LocalizeJarProcessor());
-    }
+    private final List<JarProcessor> myJarProcessors = List.of(
+        new JarIndexProcessor(),
+        new IconJarProcessor(),
+        new LocalizationJarProcessor()
+    );
 
     public void readFromJar(File jarFile) throws IOException {
         List<JarProcessorSession> sessions = new ArrayList<>();
