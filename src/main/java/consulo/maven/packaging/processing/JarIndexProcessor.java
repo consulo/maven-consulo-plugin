@@ -44,13 +44,14 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
     private void writeTextFile(BiConsumer<String, byte[]> consumer) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
-            builder.append("#").append(entry.getKey()).append("\n");
+            builder.append('#').append(entry.getKey()).append('\n');
             for (String path : entry.getValue()) {
-                builder.append(path).append("\n");
+                builder.append(path).append('\n');
             }
         }
 
-        consumer.accept("lib/index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
-        consumer.accept("index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
+        byte[] bytes = builder.toString().getBytes(StandardCharsets.UTF_8);
+        consumer.accept("lib/index.txt", bytes);
+        consumer.accept("index.txt", bytes);
     }
 }

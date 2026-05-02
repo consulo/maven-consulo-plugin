@@ -11,8 +11,10 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author VISTALL
@@ -29,22 +31,26 @@ public class BuildIndexMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         for (File pluginRoot : myPluginRoots) {
-            File libDir = new File(pluginRoot, "lib");
+            Path libDir = pluginRoot.toPath().resolve("lib");
 
-            if (!libDir.exists()) {
-                getLog().info(libDir.getAbsolutePath() + " does not exist");
+            if (!Files.exists(libDir)) {
+                getLog().info(libDir.toAbsolutePath() + " does not exist");
                 continue;
             }
 
             try {
-                File[] files = libDir.listFiles();
-
                 MetaFiles metaFiles = new MetaFiles();
 
-                for (File possibleJarFile : files) {
-                    if (possibleJarFile.getName().endsWith(".jar")) {
-                        metaFiles.readFromJar(possibleJarFile);
-                    }
+                try (Stream<Path> pathStream = Files.walk(libDir)) {
+                    pathStream.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".jar"))
+                        .forEach(jarFile -> {
+                            try {
+                                metaFiles.readFromJar(jarFile.toFile());
+                            }
+                            catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
                 }
 
                 metaFiles.writeIndexFiles((filePath, data) -> {
