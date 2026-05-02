@@ -3,6 +3,7 @@ package consulo.maven.packaging.processing;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -25,7 +26,7 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
         }
     }
 
-    private Map<String, List<String>> myPaths = new LinkedHashMap<>();
+    private Map<String, List<String>> myPaths = new ConcurrentHashMap<>();
 
     @Override
     public Session newSession(String jarName) {

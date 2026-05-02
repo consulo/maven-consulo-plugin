@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -208,7 +209,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
     }
 
     private LoaderContext loaderContext = LoaderContext.createDefault();
-    private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new HashMap<>();
+    private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new ConcurrentHashMap<>();
 
     @Override
     public void write(BiConsumer<String, byte[]> consumer) throws IOException {

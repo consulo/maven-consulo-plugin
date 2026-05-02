@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -168,7 +169,7 @@ public class LocalizationJarProcessor implements JarProcessor<LocalizationJarPro
         }
     }
 
-    private Map<LocalizationKey, Localize> myLocalizations = new HashMap<>();
+    private Map<LocalizationKey, Localize> myLocalizations = new ConcurrentHashMap<>();
 
     @Override
     public void write(BiConsumer<String, byte[]> consumer) throws IOException {

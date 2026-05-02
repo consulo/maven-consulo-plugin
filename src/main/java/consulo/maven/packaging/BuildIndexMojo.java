@@ -43,6 +43,7 @@ public class BuildIndexMojo extends AbstractMojo {
 
                 try (Stream<Path> pathStream = Files.walk(libDir)) {
                     pathStream.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".jar"))
+                        .parallel()
                         .forEach(jarFile -> {
                             try {
                                 metaFiles.readFromJar(jarFile.toFile());
