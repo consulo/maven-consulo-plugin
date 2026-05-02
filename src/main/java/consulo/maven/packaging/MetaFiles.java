@@ -46,7 +46,8 @@ public class MetaFiles {
 
                 Supplier<byte[]> dataRequestor = () -> {
                     try (InputStream stream = jar.getInputStream(jarEntry)) {
-                        return IOUtil.toByteArray(stream);
+                        long size = jarEntry.getSize();
+                        return size >= 0 ? toByteArrayOfSize(stream, (int) size) : IOUtil.toByteArray(stream);
                     }
                     catch (IOException e) {
                         throw new RuntimeException(e);
@@ -82,5 +83,18 @@ public class MetaFiles {
         for (Map.Entry<String, String> entry : myMetaData.entrySet()) {
             consumer.accept(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8));
         }
+    }
+
+    private static byte[] toByteArrayOfSize(InputStream input, int size) throws IOException {
+        byte[] buffer = new byte[size];
+        for (int i = 0; i < size; ) {
+            int n = input.read(buffer, i, size - i);
+            if (n < 0) {
+                throw new IllegalStateException("JarEntry has reported size " + size + " and actual size " + i);
+            }
+            i += n;
+        }
+
+        return buffer;
     }
 }
