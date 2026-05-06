@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -25,18 +26,20 @@ import java.util.function.Supplier;
  * @since 2026-04-25
  */
 public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.Session> {
-    public static final String LOCALIZE_LIB = LocalizeGeneratorMojo.LOCALIZE_LIB;
+    public static final String LOCALIZATION_LIB_FOLDER = LocalizeGeneratorMojo.LOCALIZE_LIB + "/";
     public static final String YAML_EXT = ".yaml";
 
-    private record LocalizeKey(String locale, String localizeId) {
+    private record LocalizationKey(String locale, String localizationId) {
     }
 
-    private record RawEntry(String jarEntryPath,
-                            String locale,
-                            String localizeId,
-                            boolean isSubFile,
-                            String subKey,
-                            byte[] data) {
+    private record RawEntry(
+        String jarEntryPath,
+        String locale,
+        String localizationId,
+        boolean isSubFile,
+        String subKey,
+        byte[] data
+    ) {
     }
 
     public class Session implements JarProcessorSession {
@@ -44,11 +47,11 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
 
         @Override
         public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
-            if (!jarEntryPath.startsWith(LOCALIZE_LIB + "/")) {
+            if (!jarEntryPath.startsWith(LOCALIZATION_LIB_FOLDER)) {
                 return;
             }
 
-            String rest = jarEntryPath.substring(LOCALIZE_LIB.length() + 1);
+            String rest = jarEntryPath.substring(LOCALIZATION_LIB_FOLDER.length());
             int slash = rest.indexOf('/');
             if (slash <= 0) {
                 return;
@@ -62,11 +65,11 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
                 if (!afterLocale.endsWith(YAML_EXT)) {
                     return;
                 }
-                String localizeId = afterLocale.substring(0, afterLocale.length() - YAML_EXT.length());
-                myEntries.add(new RawEntry(jarEntryPath, locale, localizeId, false, null, dataRequestor.get()));
+                String localizationId = afterLocale.substring(0, afterLocale.length() - YAML_EXT.length());
+                myEntries.add(new RawEntry(jarEntryPath, locale, localizationId, false, null, dataRequestor.get()));
             }
             else {
-                String localizeId = afterLocale.substring(0, subSlash);
+                String localizationId = afterLocale.substring(0, subSlash);
                 String subPath = afterLocale.substring(subSlash + 1);
 
                 int dot = subPath.lastIndexOf('.');
@@ -76,32 +79,36 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
 
                 String subKey = subPath.replace('\\', '/').replace('/', '.').toLowerCase(Locale.ROOT);
 
-                myEntries.add(new RawEntry(jarEntryPath, locale, localizeId, true, subKey, dataRequestor.get()));
+                myEntries.add(new RawEntry(jarEntryPath, locale, localizationId, true, subKey, dataRequestor.get()));
             }
         }
 
         @Override
         public void close() {
-            Map<LocalizeKey, Map<String, String>> textsByKey = new LinkedHashMap<>();
-            Map<LocalizeKey, String> mainSourcePath = new HashMap<>();
+            Map<LocalizationKey, Map<String, String>> textsByKey = new LinkedHashMap<>();
+            Map<LocalizationKey, String> mainSourcePath = new HashMap<>();
 
             for (RawEntry entry : myEntries) {
-                LocalizeKey key = new LocalizeKey(entry.locale(), entry.localizeId());
+                LocalizationKey key = new LocalizationKey(entry.locale(), entry.localizationId());
                 Map<String, String> texts = textsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>());
 
                 if (entry.isSubFile()) {
                     String text = new String(entry.data(), StandardCharsets.UTF_8);
                     if (texts.put(entry.subKey(), text) != null) {
-                        throw new IllegalStateException("Duplicate localize key '" + entry.subKey()
-                            + "' for " + entry.locale() + "/" + entry.localizeId()
-                            + " (entry: " + entry.jarEntryPath() + ")");
+                        throw new IllegalStateException(
+                            "Duplicate localization key '" + entry.subKey() + "'"
+                                + " for " + entry.locale() + "/" + entry.localizationId()
+                                + " (entry: " + entry.jarEntryPath() + ")"
+                        );
                     }
                 }
                 else {
                     String prev = mainSourcePath.put(key, entry.jarEntryPath());
                     if (prev != null) {
-                        throw new IllegalStateException("Duplicate main YAML for " + entry.locale() + "/"
-                            + entry.localizeId() + ": " + prev + " and " + entry.jarEntryPath());
+                        throw new IllegalStateException(
+                            "Duplicate main YAML for " + entry.locale() + "/" + entry.localizationId() + ": " +
+                                prev + " and " + entry.jarEntryPath()
+                        );
                     }
 
                     Map<String, Map<String, Object>> data;
@@ -129,9 +136,11 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
                         }
 
                         if (texts.put(yamlKey, text) != null) {
-                            throw new IllegalStateException("Duplicate localize key '" + yamlKey
-                                + "' for " + entry.locale() + "/" + entry.localizeId()
-                                + " (entry: " + entry.jarEntryPath() + ")");
+                            throw new IllegalStateException(
+                                "Duplicate localization key '" + yamlKey + "'"
+                                    + " for " + entry.locale() + "/" + entry.localizationId()
+                                    + " (entry: " + entry.jarEntryPath() + ")"
+                            );
                         }
                     }
                 }
@@ -139,41 +148,40 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
 
             myEntries.clear();
 
-            for (Map.Entry<LocalizeKey, Map<String, String>> entry : textsByKey.entrySet()) {
-                LocalizeKey key = entry.getKey();
+            for (Map.Entry<LocalizationKey, Map<String, String>> entry : textsByKey.entrySet()) {
+                LocalizationKey key = entry.getKey();
 
-                Localize.Builder localizeBuilder = Localize.newBuilder();
-                localizeBuilder.setId(key.localizeId());
-                localizeBuilder.setLocale(key.locale());
+                Localize.Builder localizationBuilder = Localize.newBuilder()
+                    .setId(key.localizationId())
+                    .setLocale(key.locale());
 
                 for (Map.Entry<String, String> txt : entry.getValue().entrySet()) {
-                    Text.Builder textBuilder = Text.newBuilder();
-                    textBuilder.setId(txt.getKey());
-                    textBuilder.setText(txt.getValue());
-                    localizeBuilder.addTexts(textBuilder);
+                    localizationBuilder.addTexts(Text.newBuilder().setId(txt.getKey()).setText(txt.getValue()));
                 }
 
-                if (myLocalizes.putIfAbsent(key, localizeBuilder.build()) != null) {
-                    throw new IllegalStateException("Duplicate localize across jars: locale=" + key.locale()
-                        + ", id=" + key.localizeId());
+                Localize localization = localizationBuilder.build();
+                if (myLocalizations.putIfAbsent(key, localization) != null) {
+                    throw new IllegalStateException(
+                        "Duplicate localization across jars: locale=" + key.locale() + ", id=" + key.localizationId()
+                    );
                 }
             }
         }
     }
 
-    private Map<LocalizeKey, Localize> myLocalizes = new HashMap<>();
+    private Map<LocalizationKey, Localize> myLocalizations = new ConcurrentHashMap<>();
 
     @Override
     public void write(BiConsumer<String, byte[]> consumer) throws IOException {
-        if (myLocalizes.isEmpty()) {
+        if (myLocalizations.isEmpty()) {
             return;
         }
 
-        LocalizeIndex.Builder indexBuilder = LocalizeIndex.newBuilder();
-        indexBuilder.setVersion(1);
+        LocalizeIndex.Builder indexBuilder = LocalizeIndex.newBuilder()
+            .setVersion(1);
 
-        for (Localize localize : myLocalizes.values()) {
-            indexBuilder.addLocalizes(localize);
+        for (Localize localization : myLocalizations.values()) {
+            indexBuilder.addLocalizes(localization);
         }
 
         consumer.accept("localize-index.bin", indexBuilder.build().toByteArray());

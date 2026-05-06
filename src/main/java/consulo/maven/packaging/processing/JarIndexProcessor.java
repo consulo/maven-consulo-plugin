@@ -2,10 +2,8 @@ package consulo.maven.packaging.processing;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -14,7 +12,7 @@ import java.util.function.Supplier;
  * @since 2026-01-17
  */
 public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session> {
-    public record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession{
+    public record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession {
         @Override
         public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
             paths().add(jarEntryPath);
@@ -28,7 +26,7 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
         }
     }
 
-    private Map<String, List<String>> myPaths = new LinkedHashMap<>();
+    private Map<String, List<String>> myPaths = new ConcurrentHashMap<>();
 
     @Override
     public Session newSession(String jarName) {
@@ -46,14 +44,15 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
 
     private void writeTextFile(BiConsumer<String, byte[]> consumer) {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
-            builder.append("#").append(entry.getKey()).append("\n");
+        for (Map.Entry<String, List<String>> entry : new TreeMap<>(myPaths).entrySet()) {
+            builder.append('#').append(entry.getKey()).append('\n');
             for (String path : entry.getValue()) {
-                builder.append(path).append("\n");
+                builder.append(path).append('\n');
             }
         }
 
-        consumer.accept("lib/index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
-        consumer.accept("index.txt", builder.toString().getBytes(StandardCharsets.UTF_8));
+        byte[] bytes = builder.toString().getBytes(StandardCharsets.UTF_8);
+        consumer.accept("lib/index.txt", bytes);
+        consumer.accept("index.txt", bytes);
     }
 }

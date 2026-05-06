@@ -22,7 +22,7 @@ import java.util.function.Function;
 
 /**
  * @author VISTALL
- * @since 24-Nov-17
+ * @since 2017-11-24
  */
 @Mojo(name = "package", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.PACKAGE)
 public class PackageMojo extends AbstractPackagingMojo {
@@ -79,13 +79,16 @@ public class PackageMojo extends AbstractPackagingMojo {
 
             File distDirectory = new File(myProject.getBasedir(), "src/main/dist");
             if (distDirectory.exists()) {
-                archiveFileOrDirectory(zipStream, distDirectory, child ->
-                {
-                    String path = distDirectory.getPath();
-                    String childPath = child.getPath();
-                    // + 1 - eat path separator
-                    return childPath.substring(path.length() + 1, childPath.length());
-                });
+                archiveFileOrDirectory(
+                    zipStream,
+                    distDirectory,
+                    child -> {
+                        String path = distDirectory.getPath();
+                        String childPath = child.getPath();
+                        // + 1 - eat path separator
+                        return childPath.substring(path.length() + 1, childPath.length());
+                    }
+                );
             }
 
             for (Copy copy : packaging.copies) {
@@ -101,7 +104,11 @@ public class PackageMojo extends AbstractPackagingMojo {
         }
     }
 
-    private void archiveFileOrDirectory(ZipArchiveOutputStream zipStream, File file, Function<File, String> relativePathFunc) throws IOException {
+    private void archiveFileOrDirectory(
+        ZipArchiveOutputStream zipStream,
+        File file,
+        Function<File, String> relativePathFunc
+    ) throws IOException {
         if (file.isFile()) {
             ArchiveEntry entry = zipStream.createArchiveEntry(file, myId + "/" + relativePathFunc.apply(file));
 

@@ -29,7 +29,7 @@ import java.util.zip.ZipEntry;
 
 /**
  * @author VISTALL
- * @since 24-Nov-17
+ * @since 2017-11-24
  */
 public abstract class AbstractPackagingMojo extends AbstractConsuloMojo {
     public static class PackagingConfig {
@@ -68,7 +68,7 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo {
     public static MavenArtifactWrapper getAndCheckArtifact(Artifact artifact) throws MojoFailureException {
         File artifactFile = artifact.getFile();
         if (artifactFile == null || !artifactFile.exists()) {
-            throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not build");
+            throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not built");
         }
 
         return new MavenArtifactWrapper(artifactFile, artifact);
@@ -78,7 +78,7 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo {
     public static File getAndCheckArtifactFile(Artifact artifact) throws MojoFailureException {
         File artifactFile = artifact.getFile();
         if (artifactFile == null || !artifactFile.exists()) {
-            throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not build");
+            throw new MojoFailureException("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " is not built");
         }
         return artifactFile;
     }
@@ -104,17 +104,28 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo {
             Pattern p = Pattern.compile("([^: ]+):([^: ]+)(:([^: ]*)(:([^: ]+))?)?:([^: ]+)");
             Matcher m = p.matcher(coords);
             if (!m.matches()) {
-                throw new IllegalArgumentException("Bad artifact coordinates" + ", expected format is <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>");
+                throw new IllegalArgumentException(
+                    "Bad artifact coordinates" +
+                        ", expected format is <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>"
+                );
             }
             String groupId = m.group(1);
             String artifactId = m.group(2);
-            String extension = get(m.group(4), "jar");
-            String classifier = get(m.group(6), "");
+            String extension = StringUtils.defaultString(m.group(4), "jar");
+            String classifier = StringUtils.defaultString(m.group(6));
             String version = m.group(7);
 
             ArtifactHandler handler = artifactHandlerManager.getArtifactHandler(extension);
 
-            DefaultArtifact target = new DefaultArtifact(groupId, artifactId, version, Artifact.SCOPE_COMPILE, extension, StringUtils.isEmpty(classifier) ? null : classifier, handler);
+            DefaultArtifact target = new DefaultArtifact(
+                groupId,
+                artifactId,
+                version,
+                Artifact.SCOPE_COMPILE,
+                extension,
+                StringUtils.isEmpty(classifier) ? null : classifier,
+                handler
+            );
 
             ArtifactResolutionRequest request = new ArtifactResolutionRequest();
             request.setRemoteRepositories(myProject.getRemoteArtifactRepositories());
@@ -148,10 +159,6 @@ public abstract class AbstractPackagingMojo extends AbstractConsuloMojo {
         }
 
         throw new MojoFailureException("Artifact " + coords + " is not found");
-    }
-
-    private static String get(String value, String defaultValue) {
-        return (value == null || value.length() <= 0) ? defaultValue : value;
     }
 
     protected static String getRelativePathForCopy(Copy copy, String fileName) {

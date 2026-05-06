@@ -7,24 +7,20 @@ import com.github.weisj.jsvg.parser.SVGLoader;
 import com.google.protobuf.ByteString;
 import consulo.maven.protobuf.IconIndex;
 import org.apache.maven.shared.utils.StringUtils;
-import org.jdom.Comment;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Parent;
-import org.jdom.input.SAXBuilder;
-import org.jdom.input.sax.XMLReaders;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.xml.sax.InputSource;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -39,15 +35,21 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
     }
 
     private record IconKey(String themeId, String groupId, String imageId) {
+        @Override
+        public String toString() {
+            return ICON_LIB + '/' + themeId() + '/' + groupId() + '/' + imageId();
+        }
     }
 
-    private record RawEntry(String jarEntryPath,
-                            String themeId,
-                            String groupId,
-                            String imageId,
-                            boolean is2x,
-                            IconIndex.IconType type,
-                            byte[] data) {
+    private record RawEntry(
+        String jarEntryPath,
+        String themeId,
+        String groupId,
+        String imageId,
+        boolean is2x,
+        IconIndex.IconType type,
+        byte[] data
+    ) {
     }
 
     private static class IconAccumulator {
@@ -116,12 +118,9 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                 if (entry.type() == IconIndex.IconType.SVG) {
                     SVGLoader loader = new SVGLoader();
 
-                    SVGDocument document;
-                    try {
-                        document = loader.load(new ByteArrayInputStream(entry.data()), null, loaderContext);
-                    }
-                    catch (Exception e) {
-                        throw new IllegalArgumentException("Failed to parse: " + entry.jarEntryPath(), e);
+                    SVGDocument document = loader.load(new ByteArrayInputStream(entry.data()), null, loaderContext);
+                    if (document == null) {
+                        throw new IllegalArgumentException("Failed to parse: " + entry.jarEntryPath());
                     }
 
                     height = (int) document.size().getHeight();
@@ -158,9 +157,11 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                     acc.firstEntryPath = entry.jarEntryPath();
                 }
                 else if (acc.type != entry.type()) {
-                    throw new IllegalStateException("Icon type mismatch for " + entry.themeId() + "/" + entry.groupId() + "/" + entry.imageId()
-                        + ": " + acc.type + " from " + acc.firstEntryPath
-                        + ", " + entry.type() + " from " + entry.jarEntryPath());
+                    throw new IllegalStateException(
+                        "Icon type mismatch for " + key
+                            + ": " + acc.type + " from " + acc.firstEntryPath
+                            + ", " + entry.type() + " from " + entry.jarEntryPath()
+                    );
                 }
 
                 if (entry.is2x()) {
@@ -184,26 +185,57 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                 IconAccumulator acc = entry.getValue();
 
                 if (acc.x1 == null) {
-                    throw new IllegalStateException("Missing x1 icon for " + key.themeId() + "/" + key.groupId() + "/" + key.imageId()
-                        + " (only @2x found)");
+                    throw new IllegalStateException("Missing x1 icon for " + key + " (only @2x found)");
                 }
 
-                IconIndex.Icon.Builder iconBuilder = IconIndex.Icon.newBuilder();
-                iconBuilder.setId(key.imageId());
-                iconBuilder.setType(acc.type);
-                iconBuilder.setX1(acc.x1);
+                IconIndex.Icon.Builder iconBuilder = IconIndex.Icon.newBuilder()
+                    .setId(key.imageId())
+                    .setType(acc.type)
+                    .setX1(acc.x1);
                 if (acc.x2 != null) {
                     iconBuilder.setX2(acc.x2);
                 }
 
-                myIcons.computeIfAbsent(new IconGroupAndTheme(key.groupId(), key.themeId()), t -> new ArrayList<>())
+                myIcons.computeIfAbsent(
+                        new IconGroupAndTheme(key.groupId(), key.themeId()),
+                        t -> Collections.synchronizedList(new ArrayList<>())
+                    )
                     .add(iconBuilder.build());
+            }
+        }
+
+        private SAXParser saxParser = null;
+
+        byte[] cleanupXml(byte[] data) throws Exception {
+            try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                XMLStreamWriter writer = XML_OUTPUT_FACTORY.get().createXMLStreamWriter(out, StandardCharsets.UTF_8.name());
+
+                if (saxParser == null) {
+                    saxParser = SAX_PARSER_FACTORY.get().newSAXParser();
+                }
+
+                saxParser.parse(new InputSource(in), new SvgCleanupHandler(writer));
+
+                return out.toByteArray();
             }
         }
     }
 
+    private static final ThreadLocal<XMLOutputFactory> XML_OUTPUT_FACTORY = ThreadLocal.withInitial(XMLOutputFactory::newInstance);
+    private static final ThreadLocal<SAXParserFactory> SAX_PARSER_FACTORY = ThreadLocal.withInitial(() -> {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            return factory;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    });
+
     private LoaderContext loaderContext = LoaderContext.createDefault();
-    private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new HashMap<>();
+    private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new ConcurrentHashMap<>();
 
     @Override
     public void write(BiConsumer<String, byte[]> consumer) throws IOException {
@@ -211,52 +243,21 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
             return;
         }
 
-        IconIndex.IconGroupIndex.Builder iconIndexBuilder = IconIndex.IconGroupIndex.newBuilder();
-        iconIndexBuilder.setVersion(1);
+        IconIndex.IconGroupIndex.Builder iconIndexBuilder = IconIndex.IconGroupIndex.newBuilder()
+            .setVersion(1);
 
         for (Map.Entry<IconGroupAndTheme, List<IconIndex.Icon>> entry : myIcons.entrySet()) {
-            IconIndex.IconGroup.Builder builder = IconIndex.IconGroup.newBuilder();
-
             IconGroupAndTheme groupAndTheme = entry.getKey();
-            builder.setTheme(groupAndTheme.themeId());
-            builder.setId(groupAndTheme.iconGroupId());
-            builder.addAllIcons(entry.getValue());
+
+            IconIndex.IconGroup.Builder builder = IconIndex.IconGroup.newBuilder()
+                .setTheme(groupAndTheme.themeId())
+                .setId(groupAndTheme.iconGroupId())
+                .addAllIcons(entry.getValue());
 
             iconIndexBuilder.addIconGroups(builder);
         }
 
         consumer.accept("icon-index.bin", iconIndexBuilder.build().toByteArray());
-    }
-
-    private byte[] cleanupXml(byte[] data) throws Exception {
-        try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-
-            SAXBuilder builder = new SAXBuilder();
-            builder.setXMLReaderFactory(XMLReaders.NONVALIDATING);
-
-            Document document = builder.build(in);
-
-            removeComments(document);
-
-            XMLOutputter outputter = new XMLOutputter();
-            outputter.setFormat(Format.getCompactFormat());
-            outputter.output(document, stream);
-
-            return stream.toByteArray();
-        }
-    }
-
-    private void removeComments(Parent parent) {
-        ArrayList<Content> contents = new ArrayList<>(parent.getContent());
-
-        for (Content child : contents) {
-            if (child instanceof Comment) {
-                child.detach();
-            }
-            else if (child instanceof Parent) {
-                removeComments((Parent) child);
-            }
-        }
     }
 
     @Override

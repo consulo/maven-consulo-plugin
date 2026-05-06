@@ -11,8 +11,10 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author VISTALL
@@ -21,30 +23,35 @@ import java.util.List;
 @Mojo(name = "build-index", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class BuildIndexMojo extends AbstractMojo {
     @Parameter(property = "project", defaultValue = "${project}", readonly = true)
-    public MavenProject project;
+    public MavenProject myProject;
 
     @Parameter(alias = "pluginRoots")
-    protected List<File> pluginRoots = new ArrayList<>();
+    protected List<File> myPluginRoots = new ArrayList<>();
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        for (File pluginRoot : pluginRoots) {
-            File libDir = new File(pluginRoot, "lib");
+        for (File pluginRoot : myPluginRoots) {
+            Path libDir = pluginRoot.toPath().resolve("lib");
 
-            if (!libDir.exists()) {
-                getLog().info(libDir.getAbsolutePath() + " not exists");
+            if (!Files.exists(libDir)) {
+                getLog().info(libDir.toAbsolutePath() + " does not exist");
                 continue;
             }
 
             try {
-                File[] files = libDir.listFiles();
-
                 MetaFiles metaFiles = new MetaFiles();
 
-                for (File possibleJarFile : files) {
-                    if (possibleJarFile.getName().endsWith(".jar")) {
-                        metaFiles.readFromJar(possibleJarFile);
-                    }
+                try (Stream<Path> pathStream = Files.walk(libDir)) {
+                    pathStream.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".jar"))
+                        .parallel()
+                        .forEach(jarFile -> {
+                            try {
+                                metaFiles.readFromJar(jarFile.toFile());
+                            }
+                            catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
                 }
 
                 metaFiles.writeIndexFiles((filePath, data) -> {

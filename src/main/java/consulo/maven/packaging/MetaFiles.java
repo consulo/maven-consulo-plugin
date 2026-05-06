@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.jar.JarEntry;
@@ -15,7 +16,7 @@ import java.util.jar.JarFile;
 
 /**
  * @author VISTALL
- * @since 26/01/2023
+ * @since 2023-01-26
  */
 public class MetaFiles {
     public static final Set<String> META_FILES = Set.of(
@@ -24,15 +25,13 @@ public class MetaFiles {
         "META-INF/plugin.xml"
     );
 
-    private Map<String, String> myMetaData = new LinkedHashMap<>();
+    private Map<String, String> myMetaData = new ConcurrentHashMap<>();
 
-    private List<JarProcessor> myJarProcessors = new ArrayList<>();
-
-    public MetaFiles() {
-        myJarProcessors.add(new JarIndexProcessor());
-        myJarProcessors.add(new IconJarProcessor());
-        myJarProcessors.add(new LocalizeJarProcessor());
-    }
+    private final List<JarProcessor> myJarProcessors = List.of(
+        new JarIndexProcessor(),
+        new IconJarProcessor(),
+        new LocalizeJarProcessor()
+    );
 
     public void readFromJar(File jarFile) throws IOException {
         List<JarProcessorSession> sessions = new ArrayList<>();
@@ -48,7 +47,8 @@ public class MetaFiles {
 
                 Supplier<byte[]> dataRequestor = () -> {
                     try (InputStream stream = jar.getInputStream(jarEntry)) {
-                        return IOUtil.toByteArray(stream);
+                        long size = jarEntry.getSize();
+                        return 0 <= size && size < Integer.MAX_VALUE ? toByteArrayOfSize(stream, (int) size) : IOUtil.toByteArray(stream);
                     }
                     catch (IOException e) {
                         throw new RuntimeException(e);
@@ -81,8 +81,17 @@ public class MetaFiles {
     public void forEachData(BiConsumer<String, byte[]> consumer) throws IOException {
         writeIndexFiles(consumer);
 
-        for (Map.Entry<String, String> entry : myMetaData.entrySet()) {
+        for (Map.Entry<String, String> entry : new TreeMap<>(myMetaData).entrySet()) {
             consumer.accept(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8));
         }
+    }
+
+    private static byte[] toByteArrayOfSize(InputStream input, int size) throws IOException {
+        byte[] buffer = new byte[size];
+        int n = input.readNBytes(buffer, 0, size);
+        if (n < size) {
+            throw new IllegalStateException("JarEntry has reported size " + size + " and actual size " + n);
+        }
+        return buffer;
     }
 }
