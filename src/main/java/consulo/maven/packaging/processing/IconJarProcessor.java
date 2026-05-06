@@ -9,6 +9,7 @@ import consulo.maven.protobuf.IconIndex;
 import org.apache.maven.shared.utils.StringUtils;
 import org.xml.sax.InputSource;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -195,7 +196,10 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                     iconBuilder.setX2(acc.x2);
                 }
 
-                myIcons.computeIfAbsent(new IconGroupAndTheme(key.groupId(), key.themeId()), t -> new ArrayList<>())
+                myIcons.computeIfAbsent(
+                        new IconGroupAndTheme(key.groupId(), key.themeId()),
+                        t -> Collections.synchronizedList(new ArrayList<>())
+                    )
                     .add(iconBuilder.build());
             }
         }
@@ -204,10 +208,10 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
         byte[] cleanupXml(byte[] data) throws Exception {
             try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                XMLStreamWriter writer = XML_OUTPUT_FACTORY.createXMLStreamWriter(out, StandardCharsets.UTF_8.name());
+                XMLStreamWriter writer = XML_OUTPUT_FACTORY.get().createXMLStreamWriter(out, StandardCharsets.UTF_8.name());
 
                 if (saxParser == null) {
-                    saxParser = SAX_PARSER_FACTORY.newSAXParser();
+                    saxParser = SAX_PARSER_FACTORY.get().newSAXParser();
                 }
 
                 saxParser.parse(new InputSource(in), new SvgCleanupHandler(writer));
@@ -217,8 +221,18 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         }
     }
 
-    private static final SAXParserFactory SAX_PARSER_FACTORY = SAXParserFactory.newInstance();
-    private static final XMLOutputFactory XML_OUTPUT_FACTORY = XMLOutputFactory.newInstance();
+    private static final ThreadLocal<XMLOutputFactory> XML_OUTPUT_FACTORY = ThreadLocal.withInitial(XMLOutputFactory::newInstance);
+    private static final ThreadLocal<SAXParserFactory> SAX_PARSER_FACTORY = ThreadLocal.withInitial(() -> {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            return factory;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    });
 
     private LoaderContext loaderContext = LoaderContext.createDefault();
     private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new ConcurrentHashMap<>();

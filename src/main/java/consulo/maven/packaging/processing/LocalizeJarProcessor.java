@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * @author VISTALL
  * @since 2026-04-25
  */
-public class LocalizationJarProcessor implements JarProcessor<LocalizationJarProcessor.Session> {
+public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.Session> {
     public static final String LOCALIZATION_LIB_FOLDER = LocalizeGeneratorMojo.LOCALIZE_LIB + "/";
     public static final String YAML_EXT = ".yaml";
 

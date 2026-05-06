@@ -44,7 +44,7 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
 
     private void writeTextFile(BiConsumer<String, byte[]> consumer) {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, List<String>> entry : myPaths.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : new TreeMap<>(myPaths).entrySet()) {
             builder.append('#').append(entry.getKey()).append('\n');
             for (String path : entry.getValue()) {
                 builder.append(path).append('\n');

@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 /**
-* @author UNV
-* @since 2026-05-04
-*/
+ * @author UNV
+ * @since 2026-05-04
+ */
 public class SvgCleanupHandler extends DefaultHandler {
     private record Attribute(String qName, String value) {
         public void writeTo(XMLStreamWriter writer) throws XMLStreamException {

@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author UNV
  * @since 2026-05-05
  */
-public class LocalizationJarProcessorTest extends JarProcessorTestBase {
+public class LocalizeJarProcessorTest extends JarProcessorTestBase {
     static final String LOCALIZATION_ROOT = "LOCALIZE-LIB";
     static final String LOCALE = "en_US";
     static final String PATH_PREFIX = LOCALIZATION_ROOT + "/" + LOCALE + '/';
@@ -37,8 +37,8 @@ public class LocalizationJarProcessorTest extends JarProcessorTestBase {
     static final Entry FOO_LOC_ENTRY = Entry.of(PATH_PREFIX + FOO_LOC_YAML, FOO_LOC_YAML_CONTENTS);
     static final Entry BAR_LOC_ENTRY = Entry.of(PATH_PREFIX + BAR_LOC_HTML, BAR_LOC_HTML_CONTENTS);
 
-    LocalizationJarProcessor myProcessor = new LocalizationJarProcessor();
-    LocalizationJarProcessor.Session mySession = myProcessor.newSession("Test.jar");
+    LocalizeJarProcessor myProcessor = new LocalizeJarProcessor();
+    LocalizeJarProcessor.Session mySession = myProcessor.newSession("Test.jar");
 
     @Test
     void visitNonLocalizationLib() throws IOException {
@@ -91,7 +91,7 @@ public class LocalizationJarProcessorTest extends JarProcessorTestBase {
         FOO_LOC_ENTRY.visitBy(mySession);
         mySession.close();
 
-        LocalizationJarProcessor.Session session2 = myProcessor.newSession("Test2.jar");
+        LocalizeJarProcessor.Session session2 = myProcessor.newSession("Test2.jar");
         FOO_LOC_ENTRY.visitBy(session2);
         assertThatThrownBy(session2::close)
             .isInstanceOf(IllegalStateException.class)

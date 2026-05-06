@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.jar.JarEntry;
@@ -24,12 +25,12 @@ public class MetaFiles {
         "META-INF/plugin.xml"
     );
 
-    private Map<String, String> myMetaData = new LinkedHashMap<>();
+    private Map<String, String> myMetaData = new ConcurrentHashMap<>();
 
     private final List<JarProcessor> myJarProcessors = List.of(
         new JarIndexProcessor(),
         new IconJarProcessor(),
-        new LocalizationJarProcessor()
+        new LocalizeJarProcessor()
     );
 
     public void readFromJar(File jarFile) throws IOException {
@@ -47,7 +48,7 @@ public class MetaFiles {
                 Supplier<byte[]> dataRequestor = () -> {
                     try (InputStream stream = jar.getInputStream(jarEntry)) {
                         long size = jarEntry.getSize();
-                        return size >= 0 ? toByteArrayOfSize(stream, (int) size) : IOUtil.toByteArray(stream);
+                        return 0 <= size && size < Integer.MAX_VALUE ? toByteArrayOfSize(stream, (int) size) : IOUtil.toByteArray(stream);
                     }
                     catch (IOException e) {
                         throw new RuntimeException(e);
@@ -80,21 +81,17 @@ public class MetaFiles {
     public void forEachData(BiConsumer<String, byte[]> consumer) throws IOException {
         writeIndexFiles(consumer);
 
-        for (Map.Entry<String, String> entry : myMetaData.entrySet()) {
+        for (Map.Entry<String, String> entry : new TreeMap<>(myMetaData).entrySet()) {
             consumer.accept(entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8));
         }
     }
 
     private static byte[] toByteArrayOfSize(InputStream input, int size) throws IOException {
         byte[] buffer = new byte[size];
-        for (int i = 0; i < size; ) {
-            int n = input.read(buffer, i, size - i);
-            if (n < 0) {
-                throw new IllegalStateException("JarEntry has reported size " + size + " and actual size " + i);
-            }
-            i += n;
+        int n = input.readNBytes(buffer, 0, size);
+        if (n < size) {
+            throw new IllegalStateException("JarEntry has reported size " + size + " and actual size " + n);
         }
-
         return buffer;
     }
 }
