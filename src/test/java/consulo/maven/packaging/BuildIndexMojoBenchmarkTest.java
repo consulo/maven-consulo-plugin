@@ -21,7 +21,7 @@ public class BuildIndexMojoBenchmarkTest {
 
     @Setup(Level.Invocation)
     @SuppressWarnings("unused")
-    public void setupInvoсation() throws Exception {
+    public void setupInvocation() throws Exception {
         File pluginRoot = getSourcePluginRoot();
         System.out.println(pluginRoot);
 
