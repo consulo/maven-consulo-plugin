@@ -2,12 +2,12 @@ package consulo.maven.packaging.processing;
 
 import com.google.protobuf.ByteString;
 import consulo.maven.protobuf.IconIndex;
-import maven.bnf.consulo.util.nodep.Base64;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,13 +31,13 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
         """;
 
     @SuppressWarnings("SpellCheckingInspection")
-    static final byte[] BLACK_16_PNG = Base64.decode(
+    static final byte[] BLACK_16_PNG = Base64.getDecoder().decode(
         "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAS0lEQVQ4jWNkYGB4ycDAwMPAwMDEgAn+" +
             "ERD7wQLVzIVFITGABZutJAEmBuxOJ8kAil0w8AZgiyr6umAYGDDEA5GFgYHhB5QmB/wAAIcLCBsQodqvAAAAAElFTkSuQmCC"
     );
 
     @SuppressWarnings("SpellCheckingInspection")
-    static final byte[] BLACK_32_PNG = Base64.decode(
+    static final byte[] BLACK_32_PNG = Base64.getDecoder().decode(
         "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAbUlEQVRYhe3VsQ2AMAxE0Y/lIgNQULD/OqyCMgCihCKSG4yRuKu" +
             "iNH6JLsoEbMACOGBcua9HOR7Y6w6swBwMy0qLTpkeI77qdEBpBFAHBBDAGH8WrwJKI4AAegUCfAKgEgpQDvh3CR3oQCuav58qlAw73kKCSgAAAABJRU5ErkJggg=="
     );
