@@ -35,5 +35,12 @@
                 </lifecycles>
             </configuration>
         </component>
+
+        <component>
+            <role>org.codehaus.plexus.archiver.Archiver</role>
+            <role-hint>dirHardlink</role-hint>
+            <implementation>consulo.maven.archiver.DirectoryHardlinkArchiver</implementation>
+            <instantiation-strategy>per-lookup</instantiation-strategy>
+        </component>
     </components>
 </component-set>
