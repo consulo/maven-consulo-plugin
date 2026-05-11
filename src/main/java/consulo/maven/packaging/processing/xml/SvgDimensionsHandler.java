@@ -1,6 +1,6 @@
 package consulo.maven.packaging.processing.xml;
 
-import maven.bnf.consulo.util.lang.StringUtil;
+import org.apache.maven.shared.utils.StringUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -37,7 +37,7 @@ public class SvgDimensionsHandler extends DefaultHandler {
     }
 
     private static double parseDimension(String value, double defaultValue) {
-        if (!StringUtil.isNotEmpty(value)) {
+        if (!StringUtils.isNotEmpty(value)) {
             return defaultValue;
         }
         if (value.endsWith("px")) {
