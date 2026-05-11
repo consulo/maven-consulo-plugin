@@ -31,11 +31,11 @@ public class BuildIndexMojoBenchmarkTest {
         build.setOutputDirectory(workDir.getAbsolutePath());
         build.setDirectory(workDir.getAbsolutePath());
 
-        MavenProject mavenProject;
-        mavenProject = new MavenProject();
+        MavenProject mavenProject = new MavenProject();
         mavenProject.setBuild(build);
 
         mojo = new BuildIndexMojo();
+        mojo.myTargetDir = workDir.getParentFile();
         mojo.myProject = mavenProject;
         mojo.myPluginRoots = List.of(pluginRoot);
     }

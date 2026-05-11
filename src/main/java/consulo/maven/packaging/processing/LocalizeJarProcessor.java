@@ -1,6 +1,7 @@
 package consulo.maven.packaging.processing;
 
 import consulo.maven.generating.LocalizeGeneratorMojo;
+import consulo.maven.protobuf.BuildIndexCache;
 import consulo.maven.protobuf.LocalizeProto.Localize;
 import consulo.maven.protobuf.LocalizeProto.LocalizeIndex;
 import consulo.maven.protobuf.LocalizeProto.Text;
@@ -11,42 +12,47 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
  * @author VISTALL
+ * @author UNV
  * @since 2026-04-25
  */
 public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.Session> {
     public static final String LOCALIZATION_LIB_FOLDER = LocalizeGeneratorMojo.LOCALIZE_LIB + "/";
     public static final String YAML_EXT = ".yaml";
 
-    private record LocalizationKey(String locale, String localizationId) {
-    }
+    private record LocalizationKey(String locale, String id) implements Comparable<LocalizationKey> {
+        @Override
+        public int compareTo(LocalizationKey that) {
+            int result = locale().compareTo(that.locale());
+            if (result != 0) {
+                return result;
+            }
+            return id().compareTo(that.id());
+        }
 
-    private record RawEntry(
-        String jarEntryPath,
-        String locale,
-        String localizationId,
-        boolean isSubFile,
-        String subKey,
-        byte[] data
-    ) {
+        public String toPath() {
+            return locale() + "/" + id();
+        }
     }
 
     public class Session implements JarProcessorSession {
-        private final List<RawEntry> myEntries = new ArrayList<>();
+        private final Map<LocalizationKey, SortedMap<String, String>> myTextsByKey = new LinkedHashMap<>();
+        private final Map<LocalizationKey, String> myYamlSourcePath = new HashMap<>();
+
+        private Map<LocalizationKey, Localize> myLocalizationsCache = null;
+        private LocalizationKey myLastTextKey = null;
+        private SortedMap<String, String> myLastTextMap = null;
 
         @Override
         public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
+            myLocalizationsCache = null;
+
             if (!jarEntryPath.startsWith(LOCALIZATION_LIB_FOLDER)) {
                 return;
             }
@@ -65,11 +71,43 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
                 if (!afterLocale.endsWith(YAML_EXT)) {
                     return;
                 }
-                String localizationId = afterLocale.substring(0, afterLocale.length() - YAML_EXT.length());
-                myEntries.add(new RawEntry(jarEntryPath, locale, localizationId, false, null, dataRequestor.get()));
+
+                LocalizationKey key = new LocalizationKey(locale, afterLocale.substring(0, afterLocale.length() - YAML_EXT.length()));
+
+                String prev = myYamlSourcePath.put(key, jarEntryPath);
+                if (prev != null) {
+                    throw new IllegalStateException("Duplicate YAML for " + key.toPath() + ": " + prev + " and " + jarEntryPath);
+                }
+
+                Map<String, Map<String, Object>> data;
+                try (Reader reader = new InputStreamReader(new ByteArrayInputStream(dataRequestor.get()), StandardCharsets.UTF_8)) {
+                    data = new Yaml().load(reader);
+                }
+                catch (Exception e) {
+                    throw new IllegalStateException("Failed to parse: " + jarEntryPath, e);
+                }
+
+                if (data == null) {
+                    return;
+                }
+
+                for (Map.Entry<String, Map<String, Object>> kv : data.entrySet()) {
+                    String yamlKey = kv.getKey().toLowerCase(Locale.ROOT);
+
+                    String text = "";
+                    Map<String, Object> valueMap = kv.getValue();
+                    if (valueMap != null) {
+                        Object t = valueMap.get("text");
+                        if (t != null) {
+                            text = t.toString();
+                        }
+                    }
+
+                    addText(jarEntryPath, key, yamlKey, text);
+                }
             }
             else {
-                String localizationId = afterLocale.substring(0, subSlash);
+                LocalizationKey key = new LocalizationKey(locale, afterLocale.substring(0, subSlash));
                 String subPath = afterLocale.substring(subSlash + 1);
 
                 int dot = subPath.lastIndexOf('.');
@@ -79,93 +117,69 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
 
                 String subKey = subPath.replace('\\', '/').replace('/', '.').toLowerCase(Locale.ROOT);
 
-                myEntries.add(new RawEntry(jarEntryPath, locale, localizationId, true, subKey, dataRequestor.get()));
+                addText(jarEntryPath, key, subKey, new String(dataRequestor.get(), StandardCharsets.UTF_8));
             }
         }
 
         @Override
-        public void close() {
-            Map<LocalizationKey, Map<String, String>> textsByKey = new LinkedHashMap<>();
-            Map<LocalizationKey, String> mainSourcePath = new HashMap<>();
-
-            for (RawEntry entry : myEntries) {
-                LocalizationKey key = new LocalizationKey(entry.locale(), entry.localizationId());
-                Map<String, String> texts = textsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>());
-
-                if (entry.isSubFile()) {
-                    String text = new String(entry.data(), StandardCharsets.UTF_8);
-                    if (texts.put(entry.subKey(), text) != null) {
-                        throw new IllegalStateException(
-                            "Duplicate localization key '" + entry.subKey() + "'"
-                                + " for " + entry.locale() + "/" + entry.localizationId()
-                                + " (entry: " + entry.jarEntryPath() + ")"
-                        );
-                    }
-                }
-                else {
-                    String prev = mainSourcePath.put(key, entry.jarEntryPath());
-                    if (prev != null) {
-                        throw new IllegalStateException(
-                            "Duplicate main YAML for " + entry.locale() + "/" + entry.localizationId() + ": " +
-                                prev + " and " + entry.jarEntryPath()
-                        );
-                    }
-
-                    Map<String, Map<String, Object>> data;
-                    try (Reader reader = new InputStreamReader(new ByteArrayInputStream(entry.data()), StandardCharsets.UTF_8)) {
-                        data = new Yaml().load(reader);
-                    }
-                    catch (Exception e) {
-                        throw new IllegalStateException("Failed to parse: " + entry.jarEntryPath(), e);
-                    }
-
-                    if (data == null) {
-                        continue;
-                    }
-
-                    for (Map.Entry<String, Map<String, Object>> kv : data.entrySet()) {
-                        String yamlKey = kv.getKey().toLowerCase(Locale.ROOT);
-
-                        String text = "";
-                        Map<String, Object> valueMap = kv.getValue();
-                        if (valueMap != null) {
-                            Object t = valueMap.get("text");
-                            if (t != null) {
-                                text = t.toString();
-                            }
-                        }
-
-                        if (texts.put(yamlKey, text) != null) {
-                            throw new IllegalStateException(
-                                "Duplicate localization key '" + yamlKey + "'"
-                                    + " for " + entry.locale() + "/" + entry.localizationId()
-                                    + " (entry: " + entry.jarEntryPath() + ")"
-                            );
-                        }
-                    }
+        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
+            myLocalizationsCache = null;
+            for (Localize localization : jarIndex.getLocalizationsList()) {
+                LocalizationKey key = new LocalizationKey(localization.getLocale(), localization.getId());
+                for (Text text : localization.getTextsList()) {
+                    addText(null, key, text.getId(), text.getText());
                 }
             }
+        }
 
-            myEntries.clear();
+        @Override
+        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
+            jarIndexBuilder.addAllLocalizations(toLocalizationsMap().values());
+        }
 
-            for (Map.Entry<LocalizationKey, Map<String, String>> entry : textsByKey.entrySet()) {
+        @Override
+        public void close() {
+            for (Map.Entry<LocalizationKey, Localize> entry : toLocalizationsMap().entrySet()) {
+                LocalizationKey key = entry.getKey();
+                if (myLocalizations.putIfAbsent(key, entry.getValue()) != null) {
+                    throw new IllegalStateException("Duplicate localization across jars: " + key);
+                }
+            }
+        }
+
+        private void addText(String jarEntryPath, LocalizationKey key, String id, String text) {
+            if (key != myLastTextKey) {
+                myLastTextKey = key;
+                myLastTextMap = myTextsByKey.computeIfAbsent(key, k -> new TreeMap<>());
+            }
+
+            if (myLastTextMap.put(id, text) != null) {
+                throw new IllegalStateException(
+                    "Duplicate localization key '" + id + "' for " + key.toPath() + " (entry: " + jarEntryPath + ")"
+                );
+            }
+        }
+
+        private Map<LocalizationKey, Localize> toLocalizationsMap() {
+            if (myLocalizationsCache != null) {
+                return myLocalizationsCache;
+            }
+
+            myLocalizationsCache = new TreeMap<>();
+            for (Map.Entry<LocalizationKey, SortedMap<String, String>> entry : myTextsByKey.entrySet()) {
                 LocalizationKey key = entry.getKey();
 
                 Localize.Builder localizationBuilder = Localize.newBuilder()
-                    .setId(key.localizationId())
+                    .setId(key.id())
                     .setLocale(key.locale());
 
                 for (Map.Entry<String, String> txt : entry.getValue().entrySet()) {
                     localizationBuilder.addTexts(Text.newBuilder().setId(txt.getKey()).setText(txt.getValue()));
                 }
 
-                Localize localization = localizationBuilder.build();
-                if (myLocalizations.putIfAbsent(key, localization) != null) {
-                    throw new IllegalStateException(
-                        "Duplicate localization across jars: locale=" + key.locale() + ", id=" + key.localizationId()
-                    );
-                }
+                myLocalizationsCache.put(key, localizationBuilder.build());
             }
+            return myLocalizationsCache;
         }
     }
 

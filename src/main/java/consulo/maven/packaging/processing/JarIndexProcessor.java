@@ -1,5 +1,7 @@
 package consulo.maven.packaging.processing;
 
+import consulo.maven.protobuf.BuildIndexCache;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -9,6 +11,7 @@ import java.util.function.Supplier;
 
 /**
  * @author VISTALL
+ * @author UNV
  * @since 2026-01-17
  */
 public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session> {
@@ -16,6 +19,16 @@ public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session
         @Override
         public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
             paths().add(jarEntryPath);
+        }
+
+        @Override
+        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
+            paths.addAll(jarIndex.getPathsList());
+        }
+
+        @Override
+        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
+            jarIndexBuilder.addAllPaths(paths());
         }
 
         @Override

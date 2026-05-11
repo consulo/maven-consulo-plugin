@@ -77,13 +77,9 @@ public class LocalizeJarProcessorTest extends JarProcessorTestBase {
     @Test
     void visitDuplicateYaml() throws IOException {
         FOO_LOC_ENTRY.visitBy(mySession);
-        FOO_LOC_ENTRY.visitBy(mySession);
-        assertThatThrownBy(() -> mySession.close())
+        assertThatThrownBy(() -> FOO_LOC_ENTRY.visitBy(mySession))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessage(
-                "Duplicate main YAML for " + LOCALE + '/' + FOO_LOC_ID + ": " +
-                    FOO_LOC_ENTRY.path() + " and " + FOO_LOC_ENTRY.path()
-            );
+            .hasMessage("Duplicate YAML for " + LOCALE + '/' + FOO_LOC_ID + ": " + FOO_LOC_ENTRY.path() + " and " + FOO_LOC_ENTRY.path());
     }
 
     @Test
@@ -95,37 +91,22 @@ public class LocalizeJarProcessorTest extends JarProcessorTestBase {
         FOO_LOC_ENTRY.visitBy(session2);
         assertThatThrownBy(session2::close)
             .isInstanceOf(IllegalStateException.class)
-            .hasMessage("Duplicate localization across jars: locale=" + LOCALE + ", id=" + FOO_LOC_ID);
+            .hasMessage("Duplicate localization across jars: LocalizationKey[locale=" + LOCALE + ", id=" + FOO_LOC_ID + "]");
     }
 
     @Test
     void visitEmptyYaml() throws IOException {
-        LocalizeProto.LocalizeIndex.Builder indexBuilder = LocalizeProto.LocalizeIndex.newBuilder()
-            .setVersion(1)
-            .addLocalizes(
-                LocalizeProto.Localize.newBuilder()
-                    .setId(FOO_LOC_ID)
-                    .setLocale(LOCALE)
-            );
-
         Entry.of(FOO_LOC_ENTRY.path()).visitBy(mySession);
         mySession.close();
 
         List<Entry> results = Entry.writtenBy(myProcessor);
 
-        assertThat(results)
-            .hasSize(1)
-            .extracting(Entry::path)
-            .containsExactly("localize-index.bin");
-
-        assertThat(LocalizeProto.LocalizeIndex.parseFrom(results.get(0).bytes()))
-            .isEqualTo(indexBuilder.build());
+        assertThat(results).isEmpty();
     }
 
     @Test
     void visitInvalidYaml() throws IOException {
-        Entry.of(FOO_LOC_ENTRY.path(), "%").visitBy(mySession);
-        assertThatThrownBy(() -> mySession.close())
+        assertThatThrownBy(() -> Entry.of(FOO_LOC_ENTRY.path(), "%").visitBy(mySession))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Failed to parse: " + FOO_LOC_ENTRY.path());
     }
@@ -158,11 +139,20 @@ public class LocalizeJarProcessorTest extends JarProcessorTestBase {
     @Test
     void visitDuplicateHtml() throws IOException {
         BAR_LOC_ENTRY.visitBy(mySession);
-        BAR_LOC_ENTRY.visitBy(mySession);
-        assertThatThrownBy(() -> mySession.close())
+        assertThatThrownBy(() -> BAR_LOC_ENTRY.visitBy(mySession))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage(
                 "Duplicate localization key 'foo.bar' for " + LOCALE + '/' + FOO_LOC_ID + " (entry: " + BAR_LOC_ENTRY.path() + ")"
+            );
+    }
+
+    @Test
+    void visitDuplicateHtmlYaml() throws IOException {
+        BAR_LOC_ENTRY.visitBy(mySession);
+        assertThatThrownBy(() -> FOO_LOC_ENTRY.visitBy(mySession))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage(
+                "Duplicate localization key 'foo.bar' for " + LOCALE + '/' + FOO_LOC_ID + " (entry: " + FOO_LOC_ENTRY.path() + ")"
             );
     }
 }

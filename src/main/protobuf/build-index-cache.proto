@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package consulo.maven.protobuf;
+
+import "icon-index.proto";
+import "localize-index.proto";
+
+message BuildIndex {
+    int32 version = 1;
+
+    repeated JarCache jars = 2;
+}
+
+message JarCache {
+    string path = 1;
+
+    JarIndex jarIndex = 2;
+}
+
+message JarIndex {
+    int64 lastModified = 1;
+
+    repeated string paths = 2;
+
+    repeated RawIcon icons = 3;
+
+    repeated Localize localizations = 4;
+}

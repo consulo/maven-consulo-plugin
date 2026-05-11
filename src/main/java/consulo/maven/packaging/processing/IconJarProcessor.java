@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import consulo.maven.packaging.processing.xml.SvgCleanupHandler;
 import consulo.maven.packaging.processing.xml.SvgDimensionsHandler;
 import consulo.maven.packaging.processing.xml.TeeHandler;
+import consulo.maven.protobuf.BuildIndexCache;
 import consulo.maven.protobuf.IconIndex;
 import org.apache.maven.shared.utils.StringUtils;
 import org.xml.sax.InputSource;
@@ -25,12 +26,13 @@ import java.util.function.Supplier;
 
 /**
  * @author VISTALL
+ * @author UNV
  * @since 2026-01-17
  */
 public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> {
     public static final String ICON_LIB = "ICON-LIB";
 
-    private record IconGroupAndTheme(String iconGroupId, String themeId) {
+    private record IconGroupAndTheme(String groupId, String themeId) {
     }
 
     private record IconKey(String themeId, String groupId, String imageId) {
@@ -38,15 +40,6 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         public String toString() {
             return ICON_LIB + '/' + themeId() + '/' + groupId() + '/' + imageId();
         }
-    }
-
-    private record RawEntry(
-        String jarEntryPath,
-        IconKey key,
-        boolean is2x,
-        IconIndex.IconType type,
-        IconIndex.IconData iconData
-    ) {
     }
 
     private static class IconAccumulator {
@@ -57,7 +50,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
     }
 
     public class Session implements JarProcessorSession {
-        private final List<RawEntry> myEntries = new ArrayList<>();
+        private final List<IconIndex.RawIcon> myRawIcons = new ArrayList<>();
 
         @Override
         public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
@@ -124,57 +117,68 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                 .setData(ByteString.copyFrom(data))
                 .build();
 
-            String[] split = StringUtils.split(jarEntryPath, "/", 4);
+            myRawIcons.add(IconIndex.RawIcon.newBuilder().setPath(jarEntryPath).setType(type).setIconData(iconData).build());
+        }
 
-            String imageId = split[3];
+        @Override
+        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
+            myRawIcons.clear();
+            myRawIcons.addAll(jarIndex.getIconsList());
+        }
 
-            int dotIndex = imageId.lastIndexOf('.');
-            imageId = imageId.substring(0, dotIndex);
-
-            boolean is2x = imageId.endsWith("@2x");
-            if (is2x) {
-                imageId = imageId.substring(0, imageId.length() - 3);
-            }
-
-            imageId = imageId.replace('\\', '/').replace('/', '.').replace('-', '_').toLowerCase(Locale.ROOT);
-
-            myEntries.add(new RawEntry(jarEntryPath, new IconKey(split[1], split[2], imageId), is2x, type, iconData));
+        @Override
+        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
+            jarIndexBuilder.addAllIcons(myRawIcons);
         }
 
         @Override
         public void close() {
             Map<IconKey, IconAccumulator> accumulators = new HashMap<>();
 
-            for (RawEntry entry : myEntries) {
-                IconAccumulator acc = accumulators.computeIfAbsent(entry.key(), k -> new IconAccumulator());
+            for (IconIndex.RawIcon rawIcon : myRawIcons) {
+                String[] split = StringUtils.split(rawIcon.getPath(), "/", 4);
+
+                String imageId = split[3];
+
+                int dotIndex = imageId.lastIndexOf('.');
+                imageId = imageId.substring(0, dotIndex);
+
+                boolean is2x = imageId.endsWith("@2x");
+                if (is2x) {
+                    imageId = imageId.substring(0, imageId.length() - 3);
+                }
+
+                imageId = imageId.replace('\\', '/').replace('/', '.').replace('-', '_').toLowerCase(Locale.ROOT);
+
+                IconKey key = new IconKey(split[1], split[2], imageId);
+
+                IconAccumulator acc = accumulators.computeIfAbsent(key, k -> new IconAccumulator());
 
                 if (acc.type == null) {
-                    acc.type = entry.type();
-                    acc.firstEntryPath = entry.jarEntryPath();
+                    acc.type = rawIcon.getType();
+                    acc.firstEntryPath = rawIcon.getPath();
                 }
-                else if (acc.type != entry.type()) {
+                else if (acc.type != rawIcon.getType()) {
                     throw new IllegalStateException(
-                        "Icon type mismatch for " + entry.key()
+                        "Icon type mismatch for " + key
                             + ": " + acc.type + " from " + acc.firstEntryPath
-                            + ", " + entry.type() + " from " + entry.jarEntryPath()
+                            + ", " + rawIcon.getType() + " from " + rawIcon.getPath()
                     );
                 }
 
-                if (entry.is2x()) {
+                if (is2x) {
                     if (acc.x2 != null) {
-                        throw new IllegalStateException("Duplicate @2x icon: " + entry.jarEntryPath());
+                        throw new IllegalStateException("Duplicate @2x icon: " + rawIcon.getPath());
                     }
-                    acc.x2 = entry.iconData();
+                    acc.x2 = rawIcon.getIconData();
                 }
                 else {
                     if (acc.x1 != null) {
-                        throw new IllegalStateException("Duplicate icon: " + entry.jarEntryPath());
+                        throw new IllegalStateException("Duplicate icon: " + rawIcon.getPath());
                     }
-                    acc.x1 = entry.iconData();
+                    acc.x1 = rawIcon.getIconData();
                 }
             }
-
-            myEntries.clear();
 
             for (Map.Entry<IconKey, IconAccumulator> entry : accumulators.entrySet()) {
                 IconKey key = entry.getKey();
@@ -239,7 +243,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
             IconIndex.IconGroup.Builder builder = IconIndex.IconGroup.newBuilder()
                 .setTheme(groupAndTheme.themeId())
-                .setId(groupAndTheme.iconGroupId())
+                .setId(groupAndTheme.groupId())
                 .addAllIcons(entry.getValue());
 
             iconIndexBuilder.addIconGroups(builder);

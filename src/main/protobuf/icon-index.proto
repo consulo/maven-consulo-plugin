@@ -38,3 +38,11 @@ enum IconType {
     SVG = 0;
     PNG = 1;
 }
+
+message RawIcon {
+    string path = 1;
+
+    IconType type = 2;
+
+    IconData iconData = 3;
+}
