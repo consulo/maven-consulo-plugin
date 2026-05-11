@@ -42,7 +42,7 @@ public class BuildIndexMojoBenchmarkTest {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-    @Fork(1)
+    @Fork(value = 1)
     @Warmup(iterations = 50, time = 1, timeUnit = TimeUnit.MILLISECONDS)
     @Measurement(iterations = 100, time = 1, timeUnit = TimeUnit.MILLISECONDS)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)

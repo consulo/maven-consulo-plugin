@@ -10,6 +10,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,8 +31,9 @@ public class BuildIndexMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        for (File pluginRoot : myPluginRoots) {
-            Path libDir = pluginRoot.toPath().resolve("lib");
+        for (File pluginRootFile : myPluginRoots) {
+            Path pluginRoot = pluginRootFile.toPath();
+            Path libDir = pluginRoot.resolve("lib");
 
             if (!Files.exists(libDir)) {
                 getLog().info(libDir.toAbsolutePath() + " does not exist");
@@ -49,23 +51,23 @@ public class BuildIndexMojo extends AbstractMojo {
                                 metaFiles.readFromJar(jarFile.toFile());
                             }
                             catch (IOException e) {
-                                throw new RuntimeException(e);
+                                throw new UncheckedIOException(e);
                             }
                         });
                 }
 
                 metaFiles.writeIndexFiles((filePath, data) -> {
                     try {
-                        File outFile = new File(pluginRoot, filePath);
-                        outFile.getParentFile().mkdirs();
-                        Files.write(outFile.toPath(), data);
+                        Path outFile = pluginRoot.resolve(filePath);
+                        Files.createDirectories(outFile.getParent());
+                        Files.write(outFile, data);
                     }
                     catch (IOException e) {
-                        throw new IllegalArgumentException(e);
+                        throw new UncheckedIOException(e);
                     }
                 });
             }
-            catch (IOException e) {
+            catch (IOException | UncheckedIOException e) {
                 throw new MojoFailureException(e.getMessage(), e);
             }
         }

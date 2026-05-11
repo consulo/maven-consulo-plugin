@@ -1,24 +1,23 @@
 package consulo.maven.packaging.processing;
 
 import ar.com.hjg.pngj.PngReader;
-import com.github.weisj.jsvg.SVGDocument;
-import com.github.weisj.jsvg.parser.LoaderContext;
-import com.github.weisj.jsvg.parser.SVGLoader;
 import com.google.protobuf.ByteString;
+import consulo.maven.packaging.processing.xml.SvgCleanupHandler;
+import consulo.maven.packaging.processing.xml.SvgDimensionsHandler;
+import consulo.maven.packaging.processing.xml.TeeHandler;
 import consulo.maven.protobuf.IconIndex;
 import org.apache.maven.shared.utils.StringUtils;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -43,12 +42,10 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
     private record RawEntry(
         String jarEntryPath,
-        String themeId,
-        String groupId,
-        String imageId,
+        IconKey key,
         boolean is2x,
         IconIndex.IconType type,
-        byte[] data
+        IconIndex.IconData iconData
     ) {
     }
 
@@ -70,28 +67,65 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
             IconIndex.IconType type;
             byte[] data;
+            int width;
+            int height;
 
             if (jarEntryPath.endsWith(".svg")) {
                 type = IconIndex.IconType.SVG;
                 try {
-                    data = cleanupXml(dataRequestor.get());
+                    byte[] svgData = dataRequestor.get();
+                    try (ByteArrayInputStream in = new ByteArrayInputStream(svgData);
+                         ByteArrayOutputStream out = new ByteArrayOutputStream(svgData.length)) {
+
+                        SvgDimensionsHandler dimensionsHandler = new SvgDimensionsHandler();
+
+                        getSaxParser().parse(new InputSource(in), new TeeHandler(new SvgCleanupHandler(out), dimensionsHandler));
+
+                        data = out.toByteArray();
+
+                        width = (int) Math.round(dimensionsHandler.getWidth());
+                        height = (int) Math.round(dimensionsHandler.getHeight());
+                    }
                 }
                 catch (Exception e) {
                     throw new IllegalArgumentException("Failed to clean up: " + jarEntryPath, e);
+                }
+
+                if (width < 0 || height < 0) {
+                    throw new IllegalArgumentException("Failed to parse SVG width and height: " + jarEntryPath);
                 }
             }
             else if (jarEntryPath.endsWith(".png")) {
                 type = IconIndex.IconType.PNG;
                 data = dataRequestor.get();
+
+                PngReader reader = null;
+                try (InputStream stream = new ByteArrayInputStream(data)) {
+                    reader = new PngReader(stream);
+                    width = reader.imgInfo.cols;
+                    height = reader.imgInfo.rows;
+                }
+                catch (Exception e) {
+                    throw new IllegalArgumentException("Failed to parse: " + jarEntryPath, e);
+                }
+                finally {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                }
             }
             else {
                 return;
             }
 
+            IconIndex.IconData iconData = IconIndex.IconData.newBuilder()
+                .setHeight(height)
+                .setWidth(width)
+                .setData(ByteString.copyFrom(data))
+                .build();
+
             String[] split = StringUtils.split(jarEntryPath, "/", 4);
 
-            String themeId = split[1];
-            String groupId = split[2];
             String imageId = split[3];
 
             int dotIndex = imageId.lastIndexOf('.');
@@ -104,7 +138,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
             imageId = imageId.replace('\\', '/').replace('/', '.').replace('-', '_').toLowerCase(Locale.ROOT);
 
-            myEntries.add(new RawEntry(jarEntryPath, themeId, groupId, imageId, is2x, type, data));
+            myEntries.add(new RawEntry(jarEntryPath, new IconKey(split[1], split[2], imageId), is2x, type, iconData));
         }
 
         @Override
@@ -112,45 +146,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
             Map<IconKey, IconAccumulator> accumulators = new HashMap<>();
 
             for (RawEntry entry : myEntries) {
-                int width;
-                int height;
-
-                if (entry.type() == IconIndex.IconType.SVG) {
-                    SVGLoader loader = new SVGLoader();
-
-                    SVGDocument document = loader.load(new ByteArrayInputStream(entry.data()), null, loaderContext);
-                    if (document == null) {
-                        throw new IllegalArgumentException("Failed to parse: " + entry.jarEntryPath());
-                    }
-
-                    height = (int) document.size().getHeight();
-                    width = (int) document.size().getWidth();
-                }
-                else {
-                    PngReader reader = null;
-                    try (InputStream stream = new ByteArrayInputStream(entry.data())) {
-                        reader = new PngReader(stream);
-                        width = reader.imgInfo.cols;
-                        height = reader.imgInfo.rows;
-                    }
-                    catch (Exception e) {
-                        throw new IllegalArgumentException("Failed to parse: " + entry.jarEntryPath(), e);
-                    }
-                    finally {
-                        if (reader != null) {
-                            reader.close();
-                        }
-                    }
-                }
-
-                IconIndex.IconData iconData = IconIndex.IconData.newBuilder()
-                    .setHeight(height)
-                    .setWidth(width)
-                    .setData(ByteString.copyFrom(entry.data()))
-                    .build();
-
-                IconKey key = new IconKey(entry.themeId(), entry.groupId(), entry.imageId());
-                IconAccumulator acc = accumulators.computeIfAbsent(key, k -> new IconAccumulator());
+                IconAccumulator acc = accumulators.computeIfAbsent(entry.key(), k -> new IconAccumulator());
 
                 if (acc.type == null) {
                     acc.type = entry.type();
@@ -158,7 +154,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                 }
                 else if (acc.type != entry.type()) {
                     throw new IllegalStateException(
-                        "Icon type mismatch for " + key
+                        "Icon type mismatch for " + entry.key()
                             + ": " + acc.type + " from " + acc.firstEntryPath
                             + ", " + entry.type() + " from " + entry.jarEntryPath()
                     );
@@ -168,13 +164,13 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
                     if (acc.x2 != null) {
                         throw new IllegalStateException("Duplicate @2x icon: " + entry.jarEntryPath());
                     }
-                    acc.x2 = iconData;
+                    acc.x2 = entry.iconData();
                 }
                 else {
                     if (acc.x1 != null) {
                         throw new IllegalStateException("Duplicate icon: " + entry.jarEntryPath());
                     }
-                    acc.x1 = iconData;
+                    acc.x1 = entry.iconData();
                 }
             }
 
@@ -206,22 +202,15 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
 
         private SAXParser saxParser = null;
 
-        byte[] cleanupXml(byte[] data) throws Exception {
-            try (ByteArrayInputStream in = new ByteArrayInputStream(data); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                XMLStreamWriter writer = XML_OUTPUT_FACTORY.get().createXMLStreamWriter(out, StandardCharsets.UTF_8.name());
-
-                if (saxParser == null) {
-                    saxParser = SAX_PARSER_FACTORY.get().newSAXParser();
-                }
-
-                saxParser.parse(new InputSource(in), new SvgCleanupHandler(writer));
-
-                return out.toByteArray();
+        SAXParser getSaxParser() throws ParserConfigurationException, SAXException {
+            SAXParser parser = saxParser;
+            if (parser == null) {
+                saxParser = parser = SAX_PARSER_FACTORY.get().newSAXParser();
             }
+            return parser;
         }
     }
 
-    private static final ThreadLocal<XMLOutputFactory> XML_OUTPUT_FACTORY = ThreadLocal.withInitial(XMLOutputFactory::newInstance);
     private static final ThreadLocal<SAXParserFactory> SAX_PARSER_FACTORY = ThreadLocal.withInitial(() -> {
         try {
             SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -234,7 +223,6 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         }
     });
 
-    private LoaderContext loaderContext = LoaderContext.createDefault();
     private Map<IconGroupAndTheme, List<IconIndex.Icon>> myIcons = new ConcurrentHashMap<>();
 
     @Override
