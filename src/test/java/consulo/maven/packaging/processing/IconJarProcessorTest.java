@@ -1,9 +1,13 @@
 package consulo.maven.packaging.processing;
 
 import com.google.protobuf.ByteString;
+import consulo.maven.packaging.processing.xml.SvgCleanupHandler;
 import consulo.maven.protobuf.IconIndex;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.InputSource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -77,14 +81,49 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
                             .setId("zoomout")
                             .setX1(
                                 IconIndex.IconData.newBuilder()
-                                    .setHeight(16)
                                     .setWidth(16)
+                                    .setHeight(16)
                                     .setData(ByteString.copyFrom(ZOOM_OUT_SVG.replace("\n", "").getBytes(StandardCharsets.ISO_8859_1)))
                             )
                     )
             );
 
         ZOOM_OUT_SVG_ENTRY.visitBy(mySession);
+        mySession.close();
+
+        List<Entry> results = Entry.writtenBy(myProcessor);
+        assertThat(results).hasSize(1);
+
+        assertThat(results.get(0).path()).isEqualTo("icon-index.bin");
+
+        assertThat(IconIndex.IconGroupIndex.parseFrom(results.get(0).bytes()))
+            .isEqualTo(indexBuilder.build());
+    }
+
+    @Test
+    void visitSvgNoDimensions() throws IOException {
+        String svgNoDimensions = "<svg viewBox=\"0 0 22 33\"/>";
+
+        @SuppressWarnings("SpellCheckingInspection")
+        IconIndex.IconGroupIndex.Builder indexBuilder = IconIndex.IconGroupIndex.newBuilder()
+            .setVersion(1)
+            .addIconGroups(
+                IconIndex.IconGroup.newBuilder()
+                    .setTheme(THEME)
+                    .setId(GROUP_ID)
+                    .addIcons(
+                        IconIndex.Icon.newBuilder()
+                            .setId("zoomout")
+                            .setX1(
+                                IconIndex.IconData.newBuilder()
+                                    .setWidth(22)
+                                    .setHeight(33)
+                                    .setData(ByteString.copyFrom(svgNoDimensions.getBytes(StandardCharsets.ISO_8859_1)))
+                            )
+                    )
+            );
+
+        Entry.of(ZOOM_OUT_SVG_ENTRY.path(), svgNoDimensions).visitBy(mySession);
         mySession.close();
 
         List<Entry> results = Entry.writtenBy(myProcessor);
@@ -105,10 +144,9 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitInvalidSvg2() throws IOException {
-        Entry.of(ZOOM_OUT_SVG_ENTRY.path(), "<foo/>").visitBy(mySession);
-        assertThatThrownBy(() -> mySession.close())
+        assertThatThrownBy(() -> Entry.of(ZOOM_OUT_SVG_ENTRY.path(), "<foo/>").visitBy(mySession))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Failed to parse: " + ZOOM_OUT_SVG_ENTRY.path());
+            .hasMessage("Failed to parse SVG width and height: " + ZOOM_OUT_SVG_ENTRY.path());
     }
 
     @Test
@@ -171,8 +209,7 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitInvalidPng() throws IOException {
-        Entry.of(BLACK_16_PNG_ENTRY.path(), ZOOM_OUT_SVG_ENTRY.bytes()).visitBy(mySession);
-        assertThatThrownBy(() -> mySession.close())
+        assertThatThrownBy(() -> Entry.of(BLACK_16_PNG_ENTRY.path(), ZOOM_OUT_SVG_ENTRY.bytes()).visitBy(mySession))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Failed to parse: " + BLACK_16_PNG_ENTRY.path());
     }
@@ -192,8 +229,14 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
             " \n\r\t<bar baz=\"\"/> \n\r\ttext \n\r\t<waldo qux=\"quux\"> \n\r\t</waldo> \n\r\t" +
             "</foo>";
         Charset charset = StandardCharsets.ISO_8859_1;
-        assertThat(mySession.cleanupXml(xml.getBytes(charset)))
-            .asString(charset)
-            .isEqualTo("<foo xmlns=\"https://garply.com\"><bar baz=\"\"/>text<waldo qux=\"quux\"/></foo>");
+        try (ByteArrayInputStream in = new ByteArrayInputStream(xml.getBytes(charset));
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            mySession.getSaxParser().parse(new InputSource(in), new SvgCleanupHandler(out));
+
+            assertThat(out.toByteArray())
+                .asString(charset)
+                .isEqualTo("<foo xmlns=\"https://garply.com\"><bar baz=\"\"/>text<waldo qux=\"quux\"/></foo>");
+        }
     }
 }

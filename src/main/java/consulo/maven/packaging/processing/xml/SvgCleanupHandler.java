@@ -1,11 +1,14 @@
-package consulo.maven.packaging.processing;
+package consulo.maven.packaging.processing.xml;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -40,13 +43,15 @@ public class SvgCleanupHandler extends DefaultHandler {
         }
     }
 
+    private static final ThreadLocal<XMLOutputFactory> XML_OUTPUT_FACTORY = ThreadLocal.withInitial(XMLOutputFactory::newInstance);
+
     private final XMLStreamWriter myWriter;
     private final StringBuilder myActiveCharacters = new StringBuilder();
     private String myActiveQName = null;
     private final CachedAttributes myActiveAttributes = new CachedAttributes();
 
-    SvgCleanupHandler(XMLStreamWriter writer) throws XMLStreamException {
-        myWriter = writer;
+    public SvgCleanupHandler(OutputStream out) throws XMLStreamException {
+        myWriter = XML_OUTPUT_FACTORY.get().createXMLStreamWriter(out, StandardCharsets.UTF_8.name());
     }
 
     @Override
@@ -81,6 +86,7 @@ public class SvgCleanupHandler extends DefaultHandler {
     @Override
     public void endDocument() throws SAXException {
         try {
+            myWriter.writeEndDocument();
             myWriter.flush();
             myWriter.close();
         }
