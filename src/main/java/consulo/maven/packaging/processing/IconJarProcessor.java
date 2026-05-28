@@ -2,6 +2,7 @@ package consulo.maven.packaging.processing;
 
 import ar.com.hjg.pngj.PngReader;
 import com.google.protobuf.ByteString;
+import consulo.maven.jar.JarEntrySupplier;
 import consulo.maven.packaging.processing.xml.SvgCleanupHandler;
 import consulo.maven.packaging.processing.xml.SvgDimensionsHandler;
 import consulo.maven.packaging.processing.xml.TeeHandler;
@@ -22,14 +23,13 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /**
  * @author VISTALL
  * @author UNV
  * @since 2026-01-17
  */
-public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> {
+public class IconJarProcessor implements JarProcessor {
     public static final String ICON_LIB = "ICON-LIB";
 
     private record IconGroupAndTheme(String groupId, String themeId) {
@@ -49,11 +49,12 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         IconIndex.IconData x2;
     }
 
-    public class Session implements JarProcessorSession {
+    class Session implements JarProcessorSession {
         private final List<IconIndex.RawIcon> myRawIcons = new ArrayList<>();
 
         @Override
-        public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
+        public void visit(JarEntrySupplier jarEntrySupplier) {
+            String jarEntryPath = jarEntrySupplier.getEntryPath();
             if (!jarEntryPath.startsWith(ICON_LIB)) {
                 return;
             }
@@ -66,7 +67,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
             if (jarEntryPath.endsWith(".svg")) {
                 type = IconIndex.IconType.SVG;
                 try {
-                    byte[] svgData = dataRequestor.get();
+                    byte[] svgData = jarEntrySupplier.get();
                     try (ByteArrayInputStream in = new ByteArrayInputStream(svgData);
                          ByteArrayOutputStream out = new ByteArrayOutputStream(svgData.length)) {
 
@@ -90,7 +91,7 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
             }
             else if (jarEntryPath.endsWith(".png")) {
                 type = IconIndex.IconType.PNG;
-                data = dataRequestor.get();
+                data = jarEntrySupplier.get();
 
                 PngReader reader = null;
                 try (InputStream stream = new ByteArrayInputStream(data)) {
@@ -121,14 +122,14 @@ public class IconJarProcessor implements JarProcessor<IconJarProcessor.Session> 
         }
 
         @Override
-        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
+        public void loadFrom(BuildIndexCache.JarCache jarCache) {
             myRawIcons.clear();
-            myRawIcons.addAll(jarIndex.getIconsList());
+            myRawIcons.addAll(jarCache.getIconsList());
         }
 
         @Override
-        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
-            jarIndexBuilder.addAllIcons(myRawIcons);
+        public void storeTo(BuildIndexCache.JarCache.Builder jarCacheBuilder) {
+            jarCacheBuilder.addAllIcons(myRawIcons);
         }
 
         @Override

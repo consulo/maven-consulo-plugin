@@ -1,9 +1,9 @@
 package consulo.maven.packaging.processing;
 
+import consulo.maven.protobuf.BuildIndexCache;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,12 +13,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2026-05-05
  */
 public class JarIndexProcessorTest extends JarProcessorTestBase {
+    static final Entry FOO_CLASS_ENTRY = Entry.of("Foo.class");
+
     JarIndexProcessor myProcessor = new JarIndexProcessor();
     JarIndexProcessor.Session mySession = myProcessor.newSession("Test.jar");
 
     @Test
     void visitJar() throws IOException {
-        Entry.of("Foo.class").visitBy(mySession);
+        mySession.visit(FOO_CLASS_ENTRY);
         mySession.close();
 
         List<Entry> results = Entry.writtenBy(myProcessor);
@@ -28,12 +30,35 @@ public class JarIndexProcessorTest extends JarProcessorTestBase {
             .extracting(Entry::path)
             .containsExactlyInAnyOrder("index.txt", "lib/index.txt");
 
-        String text1 = new String(results.get(0).bytes(), StandardCharsets.ISO_8859_1);
-        String text2 = new String(results.get(1).bytes(), StandardCharsets.ISO_8859_1);
+        assertThat(results.get(0).getString())
+            .isEqualTo(results.get(1).getString())
+            .isEqualTo("#Test.jar\n" + FOO_CLASS_ENTRY.path() + "\n");
+    }
 
-        assertThat(text1)
-            .isEqualTo(text2)
-            .isEqualTo("#Test.jar\nFoo.class\n");
+    @Test
+    void cacheJar() throws IOException {
+        BuildIndexCache.JarCache jarCache = BuildIndexCache.JarCache.newBuilder()
+            .addPaths(FOO_CLASS_ENTRY.path())
+            .build();
+
+        mySession.loadFrom(jarCache);
+
+        BuildIndexCache.JarCache.Builder storedJarCache = BuildIndexCache.JarCache.newBuilder();
+        mySession.storeTo(storedJarCache);
+        assertThat(storedJarCache.build()).isEqualTo(jarCache);
+
+        mySession.close();
+
+        List<Entry> results = Entry.writtenBy(myProcessor);
+
+        assertThat(results)
+            .hasSize(2)
+            .extracting(Entry::path)
+            .containsExactlyInAnyOrder("index.txt", "lib/index.txt");
+
+        assertThat(results.get(0).getString())
+            .isEqualTo(results.get(1).getString())
+            .isEqualTo("#Test.jar\n" + FOO_CLASS_ENTRY.path() + "\n");
     }
 
     @Test

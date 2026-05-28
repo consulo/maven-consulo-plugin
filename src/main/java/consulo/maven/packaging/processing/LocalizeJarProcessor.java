@@ -1,6 +1,7 @@
 package consulo.maven.packaging.processing;
 
 import consulo.maven.generating.LocalizeGeneratorMojo;
+import consulo.maven.jar.JarEntrySupplier;
 import consulo.maven.protobuf.BuildIndexCache;
 import consulo.maven.protobuf.LocalizeProto.Localize;
 import consulo.maven.protobuf.LocalizeProto.LocalizeIndex;
@@ -15,14 +16,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /**
  * @author VISTALL
  * @author UNV
  * @since 2026-04-25
  */
-public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.Session> {
+public class LocalizeJarProcessor implements JarProcessor {
     public static final String LOCALIZATION_LIB_FOLDER = LocalizeGeneratorMojo.LOCALIZE_LIB + "/";
     public static final String YAML_EXT = ".yaml";
 
@@ -41,7 +41,7 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
         }
     }
 
-    public class Session implements JarProcessorSession {
+    class Session implements JarProcessorSession {
         private final Map<LocalizationKey, SortedMap<String, String>> myTextsByKey = new LinkedHashMap<>();
         private final Map<LocalizationKey, String> myYamlSourcePath = new HashMap<>();
 
@@ -50,7 +50,8 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
         private SortedMap<String, String> myLastTextMap = null;
 
         @Override
-        public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
+        public void visit(JarEntrySupplier jarEntrySupplier) {
+            String jarEntryPath = jarEntrySupplier.getEntryPath();
             myLocalizationsCache = null;
 
             if (!jarEntryPath.startsWith(LOCALIZATION_LIB_FOLDER)) {
@@ -80,7 +81,7 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
                 }
 
                 Map<String, Map<String, Object>> data;
-                try (Reader reader = new InputStreamReader(new ByteArrayInputStream(dataRequestor.get()), StandardCharsets.UTF_8)) {
+                try (Reader reader = new InputStreamReader(new ByteArrayInputStream(jarEntrySupplier.get()), StandardCharsets.UTF_8)) {
                     data = new Yaml().load(reader);
                 }
                 catch (Exception e) {
@@ -117,14 +118,14 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
 
                 String subKey = subPath.replace('\\', '/').replace('/', '.').toLowerCase(Locale.ROOT);
 
-                addText(jarEntryPath, key, subKey, new String(dataRequestor.get(), StandardCharsets.UTF_8));
+                addText(jarEntryPath, key, subKey, new String(jarEntrySupplier.get(), StandardCharsets.UTF_8));
             }
         }
 
         @Override
-        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
+        public void loadFrom(BuildIndexCache.JarCache jarCache) {
             myLocalizationsCache = null;
-            for (Localize localization : jarIndex.getLocalizationsList()) {
+            for (Localize localization : jarCache.getLocalizationsList()) {
                 LocalizationKey key = new LocalizationKey(localization.getLocale(), localization.getId());
                 for (Text text : localization.getTextsList()) {
                     addText(null, key, text.getId(), text.getText());
@@ -133,8 +134,8 @@ public class LocalizeJarProcessor implements JarProcessor<LocalizeJarProcessor.S
         }
 
         @Override
-        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
-            jarIndexBuilder.addAllLocalizations(toLocalizationsMap().values());
+        public void storeTo(BuildIndexCache.JarCache.Builder jarCacheBuilder) {
+            jarCacheBuilder.addAllLocalizations(toLocalizationsMap().values());
         }
 
         @Override

@@ -3,6 +3,7 @@ package consulo.maven.packaging;
 import consulo.maven.base.util.ExtractUtil;
 import consulo.maven.base.util.HubApiUtil;
 import consulo.maven.base.util.RepositoryNode;
+import consulo.maven.jar.JarSupplier;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -75,7 +76,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
             FileUtils.copyFile(file, new File(libDirectory, file.getName()));
 
             MetaFiles metaFiles = new MetaFiles();
-            metaFiles.readFromJar(file);
+            metaFiles.readFromJar(JarSupplier.of(file));
 
             Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
             for (Artifact dependencyArtifact : dependencyArtifacts) {
@@ -86,7 +87,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
 
                     File artifactFile = artifactWrapper.copyTo(libDirectory, null);
 
-                    metaFiles.readFromJar(artifactFile);
+                    metaFiles.readFromJar(JarSupplier.of(artifactFile));
 
                     String pluginRequiresXml = readPluginRequires(artifactFile);
                     if (pluginRequiresXml != null) {
@@ -96,7 +97,7 @@ public class WorkspaceMojo extends AbstractPackagingMojo {
                 }
             }
 
-            metaFiles.forEachData((filePath, data) -> {
+            metaFiles.writeIndexFiles((filePath, data) -> {
                 try {
                     File outFile = new File(pluginDirectory, filePath);
                     outFile.getParentFile().mkdirs();

@@ -1,5 +1,10 @@
 package consulo.maven.packaging;
 
+import consulo.maven.jar.JarSupplier;
+import consulo.maven.packaging.processing.IconJarProcessor;
+import consulo.maven.packaging.processing.JarIndexProcessor;
+import consulo.maven.packaging.processing.JarProcessorGroup;
+import consulo.maven.packaging.processing.LocalizeJarProcessor;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -24,7 +29,7 @@ import java.util.stream.Stream;
  */
 @Mojo(name = "build-index", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class BuildIndexMojo extends AbstractMojo {
-    public static final String CACHE_FILE = "maven-consulo-plugin/build-index-cache.bin";
+    public static final String CACHE_FILE = "maven-consulo-plugin/build-index.cache";
 
     @Parameter(property = "project", defaultValue = "${project}", readonly = true)
     public MavenProject myProject;
@@ -47,7 +52,8 @@ public class BuildIndexMojo extends AbstractMojo {
             }
 
             try {
-                MetaFiles metaFiles = new MetaFiles();
+                JarProcessorGroup metaFiles =
+                    new JarProcessorGroup(new JarIndexProcessor(), new IconJarProcessor(), new LocalizeJarProcessor());
 
                 Path cacheFile = myTargetDir.toPath().resolve(CACHE_FILE);
                 if (Files.exists(cacheFile)) {
@@ -66,7 +72,7 @@ public class BuildIndexMojo extends AbstractMojo {
                         .parallel()
                         .forEach(jarFile -> {
                             try {
-                                metaFiles.readFromJar(jarFile.toFile());
+                                metaFiles.readFromJar(JarSupplier.of(jarFile.toFile()));
                             }
                             catch (IOException e) {
                                 throw new UncheckedIOException(e);

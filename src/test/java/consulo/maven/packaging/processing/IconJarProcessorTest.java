@@ -2,6 +2,7 @@ package consulo.maven.packaging.processing;
 
 import com.google.protobuf.ByteString;
 import consulo.maven.packaging.processing.xml.SvgCleanupHandler;
+import consulo.maven.protobuf.BuildIndexCache;
 import consulo.maven.protobuf.IconIndex;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
@@ -55,22 +56,27 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitNonIconLib() throws IOException {
-        Entry.of("foo.svg").visitBy(mySession);
+        mySession.visit(Entry.of("foo.svg"));
         mySession.close();
         assertThat(Entry.writtenBy(myProcessor)).isEmpty();
     }
 
     @Test
     void visitNonIconFile() throws IOException {
-        Entry.of(PATH_PREFIX + "foo.bmp").visitBy(mySession);
+        mySession.visit(Entry.of(PATH_PREFIX + "foo.bmp"));
         mySession.close();
         assertThat(Entry.writtenBy(myProcessor)).isEmpty();
     }
 
     @Test
     void visitSvg() throws IOException {
+        IconIndex.IconData.Builder zoomOutSvgData = IconIndex.IconData.newBuilder()
+            .setWidth(16)
+            .setHeight(16)
+            .setData(ByteString.copyFrom(ZOOM_OUT_SVG.replace("\n", "").getBytes(StandardCharsets.ISO_8859_1)));
+
         @SuppressWarnings("SpellCheckingInspection")
-        IconIndex.IconGroupIndex.Builder indexBuilder = IconIndex.IconGroupIndex.newBuilder()
+        IconIndex.IconGroupIndex iconGroupIndex = IconIndex.IconGroupIndex.newBuilder()
             .setVersion(1)
             .addIconGroups(
                 IconIndex.IconGroup.newBuilder()
@@ -79,16 +85,12 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
                     .addIcons(
                         IconIndex.Icon.newBuilder()
                             .setId("zoomout")
-                            .setX1(
-                                IconIndex.IconData.newBuilder()
-                                    .setWidth(16)
-                                    .setHeight(16)
-                                    .setData(ByteString.copyFrom(ZOOM_OUT_SVG.replace("\n", "").getBytes(StandardCharsets.ISO_8859_1)))
-                            )
+                            .setX1(zoomOutSvgData)
                     )
-            );
+            )
+            .build();
 
-        ZOOM_OUT_SVG_ENTRY.visitBy(mySession);
+        mySession.visit(ZOOM_OUT_SVG_ENTRY);
         mySession.close();
 
         List<Entry> results = Entry.writtenBy(myProcessor);
@@ -97,7 +99,55 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
         assertThat(results.get(0).path()).isEqualTo("icon-index.bin");
 
         assertThat(IconIndex.IconGroupIndex.parseFrom(results.get(0).bytes()))
-            .isEqualTo(indexBuilder.build());
+            .isEqualTo(iconGroupIndex);
+    }
+
+    @Test
+    void cacheSvg() throws IOException {
+        IconIndex.IconData.Builder zoomOutSvgData = IconIndex.IconData.newBuilder()
+            .setWidth(16)
+            .setHeight(16)
+            .setData(ByteString.copyFrom(ZOOM_OUT_SVG.replace("\n", "").getBytes(StandardCharsets.ISO_8859_1)));
+
+        @SuppressWarnings("SpellCheckingInspection")
+        IconIndex.IconGroupIndex iconGroupIndex = IconIndex.IconGroupIndex.newBuilder()
+            .setVersion(1)
+            .addIconGroups(
+                IconIndex.IconGroup.newBuilder()
+                    .setTheme(THEME)
+                    .setId(GROUP_ID)
+                    .addIcons(
+                        IconIndex.Icon.newBuilder()
+                            .setId("zoomout")
+                            .setX1(zoomOutSvgData)
+                    )
+            )
+            .build();
+
+        BuildIndexCache.JarCache jarCache = BuildIndexCache.JarCache.newBuilder()
+            .addIcons(
+                IconIndex.RawIcon.newBuilder()
+                    .setPath(ZOOM_OUT_SVG_ENTRY.path())
+                    .setType(IconIndex.IconType.SVG)
+                    .setIconData(zoomOutSvgData)
+            )
+            .build();
+
+        mySession.loadFrom(jarCache);
+
+        BuildIndexCache.JarCache.Builder storedJarCache = BuildIndexCache.JarCache.newBuilder();
+        mySession.storeTo(storedJarCache);
+        assertThat(storedJarCache.build()).isEqualTo(jarCache);
+
+        mySession.close();
+
+        List<Entry> results = Entry.writtenBy(myProcessor);
+        assertThat(results).hasSize(1);
+
+        assertThat(results.get(0).path()).isEqualTo("icon-index.bin");
+
+        assertThat(IconIndex.IconGroupIndex.parseFrom(results.get(0).bytes()))
+            .isEqualTo(iconGroupIndex);
     }
 
     @Test
@@ -123,7 +173,7 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
                     )
             );
 
-        Entry.of(ZOOM_OUT_SVG_ENTRY.path(), svgNoDimensions).visitBy(mySession);
+        mySession.visit(Entry.of(ZOOM_OUT_SVG_ENTRY.path(), svgNoDimensions));
         mySession.close();
 
         List<Entry> results = Entry.writtenBy(myProcessor);
@@ -137,22 +187,22 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitInvalidSvg() throws IOException {
-        assertThatThrownBy(() -> Entry.of(ZOOM_OUT_SVG_ENTRY.path(), BLACK_16_PNG_ENTRY.bytes()).visitBy(mySession))
+        assertThatThrownBy(() -> mySession.visit(Entry.of(ZOOM_OUT_SVG_ENTRY.path(), BLACK_16_PNG_ENTRY.bytes())))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Failed to clean up: " + ZOOM_OUT_SVG_ENTRY.path());
     }
 
     @Test
     void visitInvalidSvg2() throws IOException {
-        assertThatThrownBy(() -> Entry.of(ZOOM_OUT_SVG_ENTRY.path(), "<foo/>").visitBy(mySession))
+        assertThatThrownBy(() -> mySession.visit(Entry.of(ZOOM_OUT_SVG_ENTRY.path(), "<foo/>")))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Failed to parse SVG width and height: " + ZOOM_OUT_SVG_ENTRY.path());
     }
 
     @Test
     void visitPng() throws IOException {
-        BLACK_16_PNG_ENTRY.visitBy(mySession);
-        BLACK_32_PNG_ENTRY.visitBy(mySession);
+        mySession.visit(BLACK_16_PNG_ENTRY);
+        mySession.visit(BLACK_32_PNG_ENTRY);
         mySession.close();
 
         IconIndex.IconGroupIndex.Builder indexBuilder = IconIndex.IconGroupIndex.newBuilder()
@@ -191,8 +241,8 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitDuplicatePng() throws IOException {
-        BLACK_16_PNG_ENTRY.visitBy(mySession);
-        BLACK_16_PNG_ENTRY.visitBy(mySession);
+        mySession.visit(BLACK_16_PNG_ENTRY);
+        mySession.visit(BLACK_16_PNG_ENTRY);
         assertThatThrownBy(() -> mySession.close())
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Duplicate icon: " + BLACK_16_PNG_ENTRY.path());
@@ -200,8 +250,8 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitDuplicatePng2x() throws IOException {
-        BLACK_32_PNG_ENTRY.visitBy(mySession);
-        BLACK_32_PNG_ENTRY.visitBy(mySession);
+        mySession.visit(BLACK_32_PNG_ENTRY);
+        mySession.visit(BLACK_32_PNG_ENTRY);
         assertThatThrownBy(() -> mySession.close())
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Duplicate @2x icon: " + BLACK_32_PNG_ENTRY.path());
@@ -209,14 +259,14 @@ public class IconJarProcessorTest extends JarProcessorTestBase {
 
     @Test
     void visitInvalidPng() throws IOException {
-        assertThatThrownBy(() -> Entry.of(BLACK_16_PNG_ENTRY.path(), ZOOM_OUT_SVG_ENTRY.bytes()).visitBy(mySession))
+        assertThatThrownBy(() -> mySession.visit(Entry.of(BLACK_16_PNG_ENTRY.path(), ZOOM_OUT_SVG_ENTRY.bytes())))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Failed to parse: " + BLACK_16_PNG_ENTRY.path());
     }
 
     @Test
     void visitMissingPng() throws IOException {
-        BLACK_32_PNG_ENTRY.visitBy(mySession);
+        mySession.visit(BLACK_32_PNG_ENTRY);
         assertThatThrownBy(() -> mySession.close())
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("Missing x1 icon for " + ICON_ROOT + '/' + THEME + '/' + GROUP_ID + "/black (only @2x found)");

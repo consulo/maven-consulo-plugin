@@ -1,5 +1,6 @@
 package consulo.maven.packaging;
 
+import consulo.maven.jar.JarSupplier;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -44,13 +45,13 @@ public class PackageMojo extends AbstractPackagingMojo {
 
             File file = artifact.getFile();
             if (file == null || !file.exists()) {
-                throw new MojoFailureException("Project artifact is not build");
+                throw new MojoFailureException("Project artifact is not built");
             }
 
             writeRuntimeFile(zipStream, file);
 
             MetaFiles metaFiles = new MetaFiles();
-            metaFiles.readFromJar(file);
+            metaFiles.readFromJar(JarSupplier.of(file));
 
             Set<Artifact> dependencyArtifacts = myProject.getDependencyArtifacts();
             for (Artifact dependencyArtifact : dependencyArtifacts) {
@@ -59,7 +60,7 @@ public class PackageMojo extends AbstractPackagingMojo {
 
                     writeRuntimeFile(zipStream, artifactFile);
 
-                    metaFiles.readFromJar(artifactFile);
+                    metaFiles.readFromJar(JarSupplier.of(artifactFile));
 
                     String pluginRequiresXml = readPluginRequires(artifactFile);
                     if (pluginRequiresXml != null) {
@@ -68,7 +69,7 @@ public class PackageMojo extends AbstractPackagingMojo {
                 }
             }
 
-            metaFiles.forEachData((filePath, data) -> {
+            metaFiles.writeIndexFiles((filePath, data) -> {
                 try {
                     writeBytes(zipStream, filePath, data);
                 }

@@ -1,34 +1,37 @@
 package consulo.maven.packaging.processing;
 
+import consulo.maven.jar.JarEntrySupplier;
 import consulo.maven.protobuf.BuildIndexCache;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /**
  * @author VISTALL
  * @author UNV
  * @since 2026-01-17
  */
-public class JarIndexProcessor implements JarProcessor<JarIndexProcessor.Session> {
-    public record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession {
+public class JarIndexProcessor implements JarProcessor {
+    record Session(String jarName, List<String> paths, Map<String, List<String>> map) implements JarProcessorSession {
         @Override
-        public void visit(String jarEntryPath, Supplier<byte[]> dataRequestor) {
-            paths().add(jarEntryPath);
+        public void visit(JarEntrySupplier jarEntrySupplier) {
+            paths().add(jarEntrySupplier.getEntryPath());
         }
 
         @Override
-        public void loadFrom(BuildIndexCache.JarIndex jarIndex) {
-            paths.addAll(jarIndex.getPathsList());
+        public void loadFrom(BuildIndexCache.JarCache jarCache) {
+            paths.addAll(jarCache.getPathsList());
         }
 
         @Override
-        public void storeTo(BuildIndexCache.JarIndex.Builder jarIndexBuilder) {
-            jarIndexBuilder.addAllPaths(paths());
+        public void storeTo(BuildIndexCache.JarCache.Builder jarCacheBuilder) {
+            jarCacheBuilder.addAllPaths(paths());
         }
 
         @Override

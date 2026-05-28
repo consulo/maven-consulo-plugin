@@ -14,15 +14,19 @@ message BuildIndex {
 message JarCache {
     string path = 1;
 
-    JarIndex jarIndex = 2;
+    int64 lastModified = 2;
+
+    repeated string paths = 3;
+
+    repeated RawIcon icons = 4;
+
+    repeated Localize localizations = 5;
+
+    repeated MetaFile metaData = 6;
 }
 
-message JarIndex {
-    int64 lastModified = 1;
+message MetaFile {
+    string path = 1;
 
-    repeated string paths = 2;
-
-    repeated RawIcon icons = 3;
-
-    repeated Localize localizations = 4;
+    bytes content = 2;
 }
