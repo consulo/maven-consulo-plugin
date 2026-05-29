@@ -43,7 +43,7 @@ public class JarProcessorGroup {
         String jarFileCanonicalPath = jarSupplier.getCanonicalPath();
         BuildIndexCache.JarCache jarCache = myCache.get(jarFileCanonicalPath);
         long lastModified = jarSupplier.getLastModifiedTime();
-        if (jarCache == null || lastModified > jarCache.getLastModified()) {
+        if (jarCache == null || lastModified != jarCache.getLastModified()) {
             parseJar(jarSupplier, sessions);
 
             BuildIndexCache.JarCache.Builder jarCacheBuilder = BuildIndexCache.JarCache.newBuilder()

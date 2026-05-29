@@ -1,6 +1,7 @@
 package consulo.maven.packaging.processing;
 
 import consulo.maven.jar.JarEntryIterable;
+import consulo.maven.jar.JarEntrySupplier;
 import consulo.maven.jar.JarSupplier;
 import consulo.maven.protobuf.BuildIndexCache;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -45,9 +45,8 @@ public class JarProcessorGroupTest extends JarProcessorTestBase {
     final BiConsumer<String, byte[]> myIndexFileConsumer = mock(BiConsumer.class);
     final JarProcessorGroup myProcessorGroup = new JarProcessorGroup(myProcessor);
 
-    @SuppressWarnings("unchecked")
     public JarProcessorGroupTest() throws IOException {
-        when(myJarEntryIterable.iterator()).thenReturn((Iterator) List.of(FOO_DIR_ENTRY, BAR_CLASS_ENTRY).iterator());
+        when(myJarEntryIterable.iterator()).thenReturn(List.<JarEntrySupplier>of(FOO_DIR_ENTRY, BAR_CLASS_ENTRY).iterator());
         when(myJarSupplier.getCanonicalPath()).thenReturn(TEST_JAR_NAME);
         when(myJarSupplier.getLastModifiedTime()).thenReturn(TEST_JAR_LAST_MODIFIED);
         when(myJarSupplier.get()).thenReturn(myJarEntryIterable);
@@ -66,14 +65,12 @@ public class JarProcessorGroupTest extends JarProcessorTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void correctCache() throws IOException {
         myProcessorGroup.readCache(VALID_CACHE::toByteArray);
         assertThat(cacheWrittenBy(myProcessorGroup)).isEqualTo(VALID_CACHE);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void invalidCacheVersion() throws IOException {
         BuildIndexCache.BuildIndex wrongCache = BuildIndexCache.BuildIndex.newBuilder(VALID_CACHE).setVersion(0).build();
         myProcessorGroup.readCache(wrongCache::toByteArray);
@@ -81,7 +78,6 @@ public class JarProcessorGroupTest extends JarProcessorTestBase {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void corruptedCache() throws IOException {
         myProcessorGroup.readCache(() -> new byte[]{-1});
         assertThat(cacheWrittenBy(myProcessorGroup)).isEqualTo(EMPTY_CACHE);

@@ -66,9 +66,8 @@ public class JarEntryIterableImpl implements JarEntryIterable {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Iterator<JarEntrySupplier> iterator() {
-        return (Iterator) myJarFile.stream().map(JarEntrySupplierImpl::new).iterator();
+        return myJarFile.stream().<JarEntrySupplier>map(JarEntrySupplierImpl::new).iterator();
     }
 
     @Override

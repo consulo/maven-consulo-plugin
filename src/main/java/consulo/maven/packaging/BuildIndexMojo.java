@@ -91,12 +91,7 @@ public class BuildIndexMojo extends AbstractMojo {
                     }
                 });
 
-                if (Files.exists(cacheFile)) {
-                    Files.delete(cacheFile);
-                }
-                else {
-                    Files.createDirectories(cacheFile.getParent());
-                }
+                Files.createDirectories(cacheFile.getParent());
 
                 metaFiles.writeCache(bytes -> {
                     try {
