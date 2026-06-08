@@ -4,7 +4,7 @@
 
     <groupId>consulo.maven</groupId>
     <artifactId>maven-consulo-plugin</artifactId>
-    <version>3.27</version>
+    <version>3.28</version>
     <packaging>maven-plugin</packaging>
 
     <name>Maven Consulo Plugin</name>
@@ -140,12 +140,12 @@
         <dependency>
             <groupId>consulo.internal</groupId>
             <artifactId>compiler.apt.shared</artifactId>
-            <version>2.0</version>
+            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>consulo.internal</groupId>
             <artifactId>compiler.apt.java.generation</artifactId>
-            <version>2.0</version>
+            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>consulo.maven</groupId>
@@ -197,11 +197,6 @@
             <groupId>consulo</groupId>
             <artifactId>kava.beans</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.ibm.icu</groupId>
-            <artifactId>icu4j</artifactId>
-            <version>70.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
