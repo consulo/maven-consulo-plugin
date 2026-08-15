@@ -1,7 +1,6 @@
 package consulo.maven.base.util;
 
 import com.google.gson.Gson;
-import consulo.maven.run.RunDesktopMojo;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.shared.utils.io.IOUtil;

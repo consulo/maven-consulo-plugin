@@ -1,5 +1,6 @@
 package consulo.maven.run;
 
+import consulo.maven.base.util.SystemInfo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -19,6 +20,11 @@ public class RunDesktopAWTForkMojo extends RunForkMojo {
 
     @Override
     protected String getMainClassQualifiedName(String repositoryChannel) {
-        return RunDesktopAWTMojo.ourMainClassV3;
+        return "consulo.desktop.awt.boot.main.Main";
+    }
+
+    @Override
+    protected String getPlatformId() {
+        return SystemInfo.getOS().getPlatformId();
     }
 }

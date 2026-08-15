@@ -107,6 +107,8 @@ public abstract class RunMojo extends AbstractConsuloMojo {
         return map;
     }
 
+    protected abstract String getPlatformId();
+
     private boolean validateBuild(RunContext context) throws MojoExecutionException, MojoFailureException {
         if (execution.buildDirectory != null) {
             context.setBuildDirectory(new File(execution.buildDirectory));
@@ -144,7 +146,7 @@ public abstract class RunMojo extends AbstractConsuloMojo {
         }
         else {
             getLog().info("Fetching platform info...");
-            RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, getLog());
+            RepositoryNode repositoryNode = HubApiUtil.requestRepositoryNodeInfo(myRepositoryChannel, myApiUrl, getPlatformId(), execution.buildNumber, null, getLog());
             if (repositoryNode == null) {
                 if (oldBuildNumber == null) {
                     getLog().error("No connection and no old Consulo build.");
@@ -171,7 +173,7 @@ public abstract class RunMojo extends AbstractConsuloMojo {
                     File tempFile = File.createTempFile("consulo_build", "tar.gz");
                     tempFile.deleteOnExit();
 
-                    HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, SystemInfo.getOS().getPlatformId(), execution.buildNumber, null, tempFile, getLog());
+                    HubApiUtil.downloadRepositoryNode(myRepositoryChannel, myApiUrl, getPlatformId(), execution.buildNumber, null, tempFile, getLog());
 
                     if (oldBuildNumber != null) {
                         getLog().info("Deleting old build");
@@ -194,7 +196,5 @@ public abstract class RunMojo extends AbstractConsuloMojo {
         }
     }
 
-    protected String getMainClassQualifiedName(String repositoryChannel) {
-        return RunDesktopAWTMojo.ourMainClassV3;
-    }
+    protected abstract String getMainClassQualifiedName(String repositoryChannel);
 }
