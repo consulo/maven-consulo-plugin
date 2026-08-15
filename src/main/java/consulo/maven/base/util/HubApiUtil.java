@@ -1,6 +1,7 @@
 package consulo.maven.base.util;
 
 import com.google.gson.Gson;
+import consulo.maven.run.RunMojo;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.shared.utils.io.IOUtil;
@@ -20,11 +21,11 @@ import java.nio.charset.StandardCharsets;
 public class HubApiUtil {
     public static RepositoryNode requestRepositoryNodeInfo(String channel, String baseUrl, String id, String platformVersion, String version, Log log) throws MojoFailureException {
         if (platformVersion == null) {
-            platformVersion = RunDesktopMojo.SNAPSHOT;
+            platformVersion = RunMojo.SNAPSHOT;
         }
 
         if (version == null) {
-            version = RunDesktopMojo.SNAPSHOT;
+            version = RunMojo.SNAPSHOT;
         }
 
         String urlStr = String.format("%sinfo?id=%s&platformVersion=%s&version=%s&channel=%s", baseUrl, id, platformVersion, version, channel);
@@ -39,11 +40,11 @@ public class HubApiUtil {
 
     public static void downloadRepositoryNode(String channel, String baseUrl, String id, String platformVersion, String version, File file, Log log) throws Exception {
         if (platformVersion == null) {
-            platformVersion = RunDesktopMojo.SNAPSHOT;
+            platformVersion = RunMojo.SNAPSHOT;
         }
 
         if (version == null) {
-            version = RunDesktopMojo.SNAPSHOT;
+            version = RunMojo.SNAPSHOT;
         }
 
         String urlStr = String.format("%sdownload?id=%s&platformVersion=%s&version=%s&channel=%s&noTracking=true&platformBuildSelect=true", baseUrl, id, platformVersion, version, channel);
