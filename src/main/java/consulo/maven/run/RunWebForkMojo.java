@@ -10,8 +10,8 @@ import javax.annotation.Nonnull;
  * @author VISTALL
  * @since 2026-08-15
  */
-@Mojo(name = "run-desktop-web-fork", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
-public class RunDesktopWebForkMojo extends RunForkMojo {
+@Mojo(name = "run-web-fork", threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
+public class RunWebForkMojo extends RunForkMojo {
     @Override
     protected String getMainModuleName(@Nonnull String repositoryChannel) {
         return "consulo.web.bootstrap";
