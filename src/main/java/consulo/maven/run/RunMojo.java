@@ -63,13 +63,14 @@ public abstract class RunMojo extends AbstractConsuloMojo {
 
     protected Map<String, String> getSystemProperties(RunContext context) throws MojoFailureException {
         Map<String, String> map = new HashMap<>();
-        map.put("idea.home.path", context.getPlatformDirectory().getPath());
+        map.put("consulo.home.path", context.getPlatformDirectory().getPath());
         map.put("consulo.in.sandbox", "true");  // sandbox mode
         map.put("consulo.maven.console.log", "true"); // redirect file log to console
         map.put("consulo.config.path", context.getSandboxDirectory().getPath() + "/config");
         map.put("consulo.system.path", context.getSandboxDirectory().getPath() + "/system");
 
         // deprecated option
+        map.put("idea.home.path", context.getPlatformDirectory().getPath());
         map.put("idea.is.internal", "true");
         map.put("idea.config.path", context.getSandboxDirectory().getPath() + "/config");
         map.put("idea.system.path", context.getSandboxDirectory().getPath() + "/system");
