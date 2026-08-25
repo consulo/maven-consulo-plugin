@@ -27,4 +27,9 @@ public class RunDesktopAWTForkMojo extends RunForkMojo {
     protected String getPlatformId() {
         return SystemInfo.getOS().getPlatformId();
     }
+
+    @Override
+    public String getPlatformDirSuffix() {
+        return "desktop-awt";
+    }
 }

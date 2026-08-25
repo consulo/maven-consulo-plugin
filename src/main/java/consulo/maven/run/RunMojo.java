@@ -43,7 +43,7 @@ public abstract class RunMojo extends AbstractConsuloMojo {
             execution.arguments = new String[0];
         }
 
-        RunContext context = new RunContext(myProject);
+        RunContext context = new RunContext(myProject, getPlatformDirSuffix());
 
         if (!validateBuild(context)) {
             return;
@@ -109,6 +109,8 @@ public abstract class RunMojo extends AbstractConsuloMojo {
     }
 
     protected abstract String getPlatformId();
+
+    public abstract String getPlatformDirSuffix();
 
     private boolean validateBuild(RunContext context) throws MojoExecutionException, MojoFailureException {
         if (execution.buildDirectory != null) {

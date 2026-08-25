@@ -23,6 +23,11 @@ public class RunWebForkMojo extends RunForkMojo {
     }
 
     @Override
+    public String getPlatformDirSuffix() {
+        return "web";
+    }
+
+    @Override
     protected String getMainClassQualifiedName(String repositoryChannel) {
         return "consulo.web.boot.main.Main";
     }

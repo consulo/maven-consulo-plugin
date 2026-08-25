@@ -16,11 +16,11 @@ public class RunContext {
 
     private String myInnerBuildNumber;
 
-    public RunContext(MavenProject project) {
+    public RunContext(MavenProject project, String suffix) {
         mySandboxDirectory = new File(project.getBasedir(), "sandbox");
         mySandboxDirectory.mkdirs();
 
-        myBuildDirectory = new File(mySandboxDirectory, "platform");
+        myBuildDirectory = new File(mySandboxDirectory, "platform-" + suffix);
     }
 
     public File getLibraryDirectory() {
