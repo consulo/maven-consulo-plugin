@@ -35,6 +35,8 @@ public class PatchBindModuleInfoMojo extends AbstractMojo {
         patchModuleInfo("consulo/component/bind/InjectingBinding");
 
         patchModuleInfo("consulo/component/bind/TopicBinding");
+
+        patchModuleInfo("com/dslplatform/json/Configuration");
     }
 
     private void patchModuleInfo(String serviceClassName) throws MojoExecutionException, MojoFailureException {
