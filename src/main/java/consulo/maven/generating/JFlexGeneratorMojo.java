@@ -100,17 +100,16 @@ public class JFlexGeneratorMojo extends AbstractMojo {
 
                 String relativePath = sourcePath.relativize(parentPath).toString();
 
-                if (relativePath != null) {
-                    File outDirWithPackage = new File(outputDirectoryFile, relativePath);
-                    outDirWithPackage.mkdirs();
-                    OptionUtils.setDir(outDirWithPackage);
-                }
+                File outDirWithPackage = new File(outputDirectoryFile, relativePath);
+                outDirWithPackage.mkdirs();
 
                 log.info("JFlex: Generated file: " + file.getPath() + " to " + outputDirectoryFile.getPath());
 
                 logic.putCacheEntry(file);
 
                 synchronized (lock) {
+                    OptionUtils.setDir(outDirWithPackage);
+
                     File skeletonFile = new File(file.getParent(), file.getName() + ".skeleton");
                     if (skeletonFile.exists()) {
                         try (BufferedReader stream = new BufferedReader(new InputStreamReader(Files.newInputStream(skeletonFile.toPath()), StandardCharsets.UTF_8))) {
