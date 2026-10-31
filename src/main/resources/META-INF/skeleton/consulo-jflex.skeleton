@@ -49,6 +49,8 @@
 
   private IElementType myTokenType;
   private int myState;
+  /** true while advanceImpl() runs: actions may call getTokenStart()/getTokenEnd()/getTokenText() without re-entering the scanner */
+  private boolean myLocating;
 
 --- user class code
 
@@ -111,7 +113,8 @@
   }
 
    protected void locateToken() {
-     if (myTokenType != null) return;
+     if (myTokenType != null || myLocating) return;
+     myLocating = true;
      try {
        myState = yystate();
        myTokenType = advanceImpl();
@@ -122,6 +125,9 @@
        final Error error = new Error(getClass().getName() + ": " + e.getMessage());
        error.setStackTrace(e.getStackTrace());
        throw error;
+     }
+     finally {
+       myLocating = false;
      }
    }
 
