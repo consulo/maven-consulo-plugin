@@ -2,6 +2,8 @@ package consulo.maven.generating;
 
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
@@ -198,7 +200,7 @@ class JavaParserJavaHelper extends JavaHelper {
                 continue;
             }
 
-            if (!t.equals(paramType)) {
+            if (!t.equals(paramType) && !isSubtypeOf(paramType, t, new HashSet<>())) {
                 //System.out.println(t + "<>" + paramType);
                 return false;
             }
@@ -317,6 +319,11 @@ class JavaParserJavaHelper extends JavaHelper {
             return r;
         }
 
+        String qualifiedByImports = qualifyByImports(type, callableDeclaration);
+        if (qualifiedByImports != null) {
+            return qualifiedByImports;
+        }
+
         if (typeString.startsWith("Trinity")) {
             ClassOrInterfaceType cls = type.asClassOrInterfaceType();
 
@@ -365,6 +372,111 @@ class JavaParserJavaHelper extends JavaHelper {
         }
         return typeString;
     }
+
+    /**
+     * Checks whether {@code className} (a class from the source or generated roots) extends or implements {@code superQName}.
+     * Lets psiImplUtil methods take a super interface of the rule class, as grammar-kit of IntelliJ does.
+     */
+    private boolean isSubtypeOf(String className, String superQName, Set<String> visited) {
+        if (className == null || !visited.add(className)) {
+            return false;
+        }
+        NavigatablePsiElement element = findClass(className);
+        if (!(element instanceof TypeDeclarationDelegate)) {
+            return false;
+        }
+        TypeDeclaration<?> declaration = ((TypeDeclarationDelegate) element).getDelegate();
+        if (!(declaration instanceof ClassOrInterfaceDeclaration)) {
+            return false;
+        }
+        ClassOrInterfaceDeclaration classDeclaration = (ClassOrInterfaceDeclaration) declaration;
+        List<ClassOrInterfaceType> superTypes = new ArrayList<>(classDeclaration.getExtendedTypes());
+        superTypes.addAll(classDeclaration.getImplementedTypes());
+        for (ClassOrInterfaceType superType : superTypes) {
+            String superName = qualifyName(superType.getNameWithScope(), classDeclaration);
+            if (superName == null) {
+                continue;
+            }
+            if (superName.equals(superQName) || isSubtypeOf(superName, superQName, visited)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Qualifies a type which the symbol solver can not resolve (types from dependencies are not on its path)
+     * by the imports and the package of the compilation unit which declares it. Type arguments and arrays are kept.
+     */
+    @Nullable
+    private String qualifyByImports(Type type, Node context) {
+        if (type.isArrayType()) {
+            String component = qualifyByImports(type.asArrayType().getComponentType(), context);
+            return component == null ? null : component + "[]";
+        }
+        if (!type.isClassOrInterfaceType()) {
+            return null;
+        }
+        ClassOrInterfaceType classType = type.asClassOrInterfaceType();
+        String name = qualifyName(classType.getNameWithScope(), context);
+        if (name == null) {
+            return null;
+        }
+        Optional<NodeList<Type>> typeArguments = classType.getTypeArguments();
+        if (typeArguments.isEmpty() || typeArguments.get().isEmpty()) {
+            return name;
+        }
+        List<String> args = new ArrayList<>();
+        for (Type arg : typeArguments.get()) {
+            String qualifiedArg = qualifyByImports(arg, context);
+            args.add(qualifiedArg != null ? qualifiedArg : arg.asString());
+        }
+        return name + "<" + String.join(",", args) + ">";
+    }
+
+    @Nullable
+    private String qualifyName(String name, Node context) {
+        Optional<CompilationUnit> unit = context.findCompilationUnit();
+        if (unit.isEmpty()) {
+            return null;
+        }
+        int dot = name.indexOf('.');
+        String first = dot < 0 ? name : name.substring(0, dot);
+        String rest = dot < 0 ? "" : name.substring(dot);
+        for (ImportDeclaration importDeclaration : unit.get().getImports()) {
+            if (importDeclaration.isStatic() || importDeclaration.isAsterisk()) {
+                continue;
+            }
+            String imported = importDeclaration.getNameAsString();
+            if (imported.equals(first) || imported.endsWith("." + first)) {
+                return imported + rest;
+            }
+        }
+        for (ImportDeclaration importDeclaration : unit.get().getImports()) {
+            if (!importDeclaration.isStatic() && importDeclaration.isAsterisk()) {
+                String candidate = importDeclaration.getNameAsString() + "." + first;
+                if (findClass(candidate) != null) {
+                    return candidate + rest;
+                }
+            }
+        }
+        if (Character.isLowerCase(first.charAt(0)) && dot > 0) {
+            // already qualified
+            return name;
+        }
+        String packageName = unit.get().getPackageDeclaration().map(PackageDeclaration::getNameAsString).orElse("");
+        String samePackage = packageName.isEmpty() ? name : packageName + "." + name;
+        if (findClass(samePackage) != null) {
+            return samePackage;
+        }
+        if (dot < 0 && JAVA_LANG.contains(name)) {
+            return "java.lang." + name;
+        }
+        return null;
+    }
+
+    private static final Set<String> JAVA_LANG = Set.of("Object", "String", "Integer", "Long", "Boolean", "Character", "Byte", "Short",
+        "Double", "Float", "Number", "Void", "Class", "Iterable", "CharSequence", "Enum", "Comparable", "Runnable", "Throwable");
 
     public void setRuleClassNames(BiMap<String, String> rules) {
         myRuleClassNames = rules;
